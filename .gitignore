@@ -1,0 +1,9 @@
+/.quarto/
+**/*.quarto_ipynb
+/_site/
+/_cache/
+/_freeze/
+*.log
+*.aux
+*.out
+*.toc

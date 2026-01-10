@@ -1,0 +1,253 @@
+---
+title: "Synthetic Control and Synthetic Difference-in-Differences"
+subtitle: "A modern, design-first view of panel counterfactuals"
+author: "Valentin Klotzbücher"
+date: last-modified
+
+# one source → two decks
+format:
+  revealjs:
+    theme: [default, custom-unibas.scss]
+    slide-number: true
+    incremental: true
+    toc: false
+    center: false
+    width: 1280
+    height: 720
+    format-links: [beamer]
+  beamer:
+    aspectratio: 169
+
+bibliography: references.bib
+csl: nature.csl
+
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+## Sample slide with bullets
+
+This is a sample slide to test the styling:
+
+- First bullet point
+- Second bullet point with **bold** and *italic*
+- Third point with `inline code`
+
+::: notes
+Speaker notes appear here.
+:::
+
+---
+
+## Sample slide with equations
+
+Inline math: $Y_{it} = \alpha_i + \lambda_t + \varepsilon_{it}$
+
+Display equation:
+$$
+\tau = \frac{1}{T-T_0+1}\sum_{t=T_0}^{T}\Big(Y_{1t}(1)-Y_{1t}(0)\Big)
+$$
+
+Another equation with fractions and sums:
+$$
+\widehat{Y}_{1t}(0) = \sum_{j\in \mathcal{D}} w_j Y_{jt} \quad \text{where } \sum_j w_j = 1
+$$
+
+---
+
+## Sample slide with code
+
+```r
+# Example R code
+library(tidyverse)
+df <- data |>
+  filter(year >= 2020) |>
+  summarise(mean = mean(outcome))
+```
+
+---
+
+## Sample reference
+
+Testing citation: @Abadie2021SyntheticControls
+
+---
+
+```{r}
+#| label: setup
+#| echo: true
+#| message: false
+#| warning: false
+
+
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(fixest)
+library(quadprog)
+library(purrr)
+
+set.seed(1)
+```
+
+
+```{r}
+#| label: simulate-panel
+#| echo: true
+
+# "Swiss hospitals" panel: outcome = 30-day mortality per 1,000 admissions
+hospitals <- c(
+  "Basel", "Zurich", "Bern", "Geneva", "Lausanne", "St_Gallen", "Luzern",
+  "Aarau", "Winterthur", "Fribourg", "Chur", "Bellinzona"
+)
+years <- 2008:2023
+
+T0 <- 2016              # intervention year (Basel treated from here)
+treated_unit <- "Basel"
+
+# latent time patterns (common + latent factor)
+time_trend <- tibble(
+  year = years,
+  # common secular improvement
+  lambda = -0.25 * (year - min(year)),
+  # latent factor: non-linear system-wide shock + recovery (e.g., coding/clinical practice change)
+  f = 1.5 * exp(-0.5 * ((year - 2012) / 1.6)^2) - 0.7 * exp(-0.5 * ((year - 2018) / 1.8)^2)
+)
+
+# hospital effects + factor loadings (Basel slightly different, breaking "parallel trends")
+hosp_par <- tibble(
+  hospital = hospitals,
+  alpha_i  = rnorm(length(hospitals), 0, 0.8),
+  gamma_i  = rnorm(length(hospitals), 1.0, 0.25)
+) %>%
+  mutate(
+    gamma_i = if_else(hospital == treated_unit, gamma_i + 0.35, gamma_i)  # Basel loads more on latent factor
+  )
+
+df <- tidyr::expand_grid(hospital = hospitals, year = years) %>%
+  left_join(time_trend, by = "year") %>%
+  left_join(hosp_par,  by = "hospital") %>%
+  mutate(
+    treated = (hospital == treated_unit),
+    post    = (year >= T0),
+    # baseline level around 15/1000
+    mu0 = 15 + alpha_i + lambda + gamma_i * f,
+    # treatment effect: Basel mortality improves by 1.2/1000 after 2016
+    tau = if_else(treated & post, -1.2, 0),
+    # noise (measurement + case-mix residual)
+    y = mu0 + tau + rnorm(n(), 0, 0.6)
+  ) %>%
+  select(hospital, year, treated, post, y)
+
+dplyr::glimpse(df)
+```
+
+```{r}
+#| label: plot-panel
+#| echo: true
+
+ggplot(df, aes(year, y, group = hospital)) +
+  geom_line(alpha = 0.25) +
+  geom_line(data = df %>% filter(hospital == treated_unit),
+            aes(year, y), linewidth = 1) +
+  geom_vline(xintercept = T0, linetype = 2) +
+  labs(
+    title = "Simulated 30-day mortality (per 1,000 admissions): Swiss hospitals",
+    subtitle = "Basel is treated from 2016 (dashed line)",
+    x = NULL, y = "Mortality per 1,000"
+  )
+```
+
+```{r}
+#| label: did-twfe
+#| echo: true
+
+# Two-way FE DiD (will be biased if Basel has different latent-factor loading)
+m_did <- feols(y ~ treated * post | hospital + year, data = df, cluster = "hospital")
+etable(m_did, dict = c(`treated:post` = "DiD ATT (Basel × post)"))
+```
+
+```{r}
+#| label: scm-helpers
+#| echo: true
+
+scm_fit <- function(df, treated_unit, T0, ridge = 1e-6) {
+  wide <- df %>%
+    select(hospital, year, y) %>%
+    pivot_wider(names_from = hospital, values_from = y) %>%
+    arrange(year)
+
+  pre_idx <- wide$year < T0
+  donors  <- setdiff(names(wide), c("year", treated_unit))
+
+  y1_pre <- as.numeric(wide[[treated_unit]][pre_idx])
+  Y0_pre <- as.matrix(wide[pre_idx, donors, drop = FALSE])
+
+  # QP: min 1/2 w'Dw - d'w  s.t.  sum(w)=1, w>=0
+  Dmat <- 2 * crossprod(Y0_pre) + diag(ridge, ncol(Y0_pre))
+  dvec <- 2 * crossprod(Y0_pre, y1_pre)
+
+  J <- length(donors)
+  Amat <- cbind(rep(1, J), diag(J))
+  bvec <- c(1, rep(0, J))
+  sol  <- solve.QP(Dmat, dvec, Amat, bvec, meq = 1)
+
+  w <- sol$solution
+  names(w) <- donors
+
+  Y0_all  <- as.matrix(wide[, donors, drop = FALSE])
+  y_synth <- as.numeric(Y0_all %*% w)
+
+  list(
+    weights = w,
+    series = tibble(
+      year      = wide$year,
+      y_treated = wide[[treated_unit]],
+      y_synth   = y_synth,
+      gap       = wide[[treated_unit]] - y_synth
+    )
+  )
+}
+
+scm <- scm_fit(df, treated_unit = treated_unit, T0 = T0)
+head(scm$series)
+
+
+```
+
+```{r}
+#| label: scm-plot
+#| echo: true
+
+p1 <- ggplot(scm$series, aes(year)) +
+  geom_line(aes(y = y_treated), linewidth = 1) +
+  geom_line(aes(y = y_synth), linetype = 2, linewidth = 1) +
+  geom_vline(xintercept = T0, linetype = 3) +
+  labs(
+    title = "Synthetic Control: Basel vs weighted donor average",
+    subtitle = "Dashed = synthetic control; vertical line = treatment start",
+    x = NULL, y = "Mortality per 1,000"
+  )
+
+p2 <- ggplot(scm$series, aes(year, gap)) +
+  geom_hline(yintercept = 0) +
+  geom_line(linewidth = 1) +
+  geom_vline(xintercept = T0, linetype = 3) +
+  labs(
+    title = "SCM gap (Basel − synthetic)",
+    x = NULL, y = "Gap"
+  )
+
+p1
+p2
+```
+
+
+
+
+
+---
+
+## References

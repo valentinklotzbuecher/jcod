@@ -1,0 +1,119 @@
+/*-- scss:defaults --*/
+
+// University of Basel Brand Colors
+$unibas-mint: #A5D7D2;
+$unibas-mint-light: #D2EBE9;
+$unibas-red: #D20537;
+$unibas-anthracite: #2D373C;
+$unibas-anthracite-light: #46505A;
+
+// RevealJS theme variables
+$body-bg: $unibas-anthracite;
+$body-color: #FFFFFF;
+$link-color: $unibas-mint;
+$link-color-hover: $unibas-mint-light;
+$selection-bg: $unibas-mint;
+$selection-color: $unibas-anthracite;
+
+// Headings
+$presentation-heading-color: $unibas-mint;
+$presentation-heading-font-weight: 600;
+
+// Code
+$code-bg: $unibas-anthracite-light;
+$code-color: #FFFFFF;
+
+/*-- scss:rules --*/
+
+// Title slide styling (same as content slides)
+.reveal .slides section.title-slide,
+.reveal .slides section#title-slide {
+  background-color: $unibas-anthracite;
+
+  h1, h2, .title {
+    color: $unibas-mint;
+  }
+
+  .subtitle, .author, .date, p {
+    color: #FFFFFF;
+  }
+}
+
+// Ensure good contrast for text
+.reveal .slides {
+  h1, h2, h3 {
+    color: $unibas-mint;
+  }
+
+  p, li, td, th {
+    color: #FFFFFF;
+  }
+}
+
+// Links with red accent
+.reveal a {
+  color: $unibas-mint;
+
+  &:hover {
+    color: $unibas-mint-light;
+  }
+}
+
+// Progress bar
+.reveal .progress {
+  background: rgba($unibas-mint, 0.2);
+
+  span {
+    background: $unibas-mint;
+  }
+}
+
+// Slide number
+.reveal .slide-number {
+  color: $unibas-mint;
+  background-color: transparent;
+}
+
+// Controls (navigation arrows)
+.reveal .controls {
+  color: $unibas-mint;
+}
+
+// Code blocks
+.reveal pre {
+  background-color: $unibas-anthracite-light;
+  border: 1px solid rgba($unibas-mint, 0.3);
+}
+
+.reveal code {
+  color: $unibas-mint-light;
+}
+
+// Math equations - ensure white color
+.reveal .math {
+  color: #FFFFFF;
+}
+
+// Block quotes
+.reveal blockquote {
+  border-left: 4px solid $unibas-mint;
+  background-color: rgba($unibas-mint, 0.1);
+}
+
+// Tables
+.reveal table {
+  th {
+    background-color: $unibas-anthracite-light;
+    color: $unibas-mint;
+  }
+
+  td {
+    border-color: $unibas-anthracite-light;
+  }
+}
+
+// Speaker notes styling
+.reveal .speaker-notes {
+  background-color: $unibas-anthracite-light;
+  color: #FFFFFF;
+}
