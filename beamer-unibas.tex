@@ -1,0 +1,169 @@
+% Custom Beamer theme for University of Basel / DKF
+% Modern, clean design with UniBas colors
+
+% ============================================
+% Color Definitions
+% ============================================
+\definecolor{unibasmint}{HTML}{A5D7D2}
+\definecolor{unibasmintlight}{HTML}{D2EBE9}
+\definecolor{unibasred}{HTML}{D20537}
+\definecolor{unibasanthracite}{HTML}{2D373C}
+\definecolor{unibasanthracitelight}{HTML}{46505A}
+
+% ============================================
+% Theme Settings
+% ============================================
+\usetheme{default}
+\usecolortheme{default}
+
+% Remove navigation symbols
+\setbeamertemplate{navigation symbols}{}
+
+% ============================================
+% Color Theme
+% ============================================
+
+% Background
+\setbeamercolor{background canvas}{bg=white}
+
+% Title page
+\setbeamercolor{title}{fg=unibasanthracite}
+\setbeamercolor{subtitle}{fg=unibasanthracitelight}
+\setbeamercolor{author}{fg=unibasanthracite}
+\setbeamercolor{date}{fg=unibasanthracitelight}
+\setbeamercolor{institute}{fg=unibasanthracitelight}
+
+% Frame title
+\setbeamercolor{frametitle}{fg=unibasanthracite,bg=white}
+\setbeamercolor{framesubtitle}{fg=unibasanthracitelight}
+
+% Structure elements
+\setbeamercolor{structure}{fg=unibasmint}
+\setbeamercolor{alerted text}{fg=unibasred}
+\setbeamercolor{example text}{fg=unibasmint!80!black}
+
+% Normal text
+\setbeamercolor{normal text}{fg=unibasanthracite,bg=white}
+
+% Itemize/enumerate
+\setbeamercolor{item}{fg=unibasmint!80!unibasanthracite}
+\setbeamercolor{subitem}{fg=unibasmint!60!unibasanthracite}
+\setbeamercolor{itemize item}{fg=unibasmint!80!unibasanthracite}
+\setbeamercolor{itemize subitem}{fg=unibasmint!60!unibasanthracite}
+\setbeamercolor{enumerate item}{fg=unibasmint!80!unibasanthracite}
+\setbeamercolor{enumerate subitem}{fg=unibasmint!60!unibasanthracite}
+
+% Block environments
+\setbeamercolor{block title}{fg=white,bg=unibasanthracite}
+\setbeamercolor{block body}{fg=unibasanthracite,bg=unibasmintlight!30}
+
+\setbeamercolor{block title alerted}{fg=white,bg=unibasred}
+\setbeamercolor{block body alerted}{fg=unibasanthracite,bg=unibasred!10}
+
+\setbeamercolor{block title example}{fg=white,bg=unibasmint!80!unibasanthracite}
+\setbeamercolor{block body example}{fg=unibasanthracite,bg=unibasmint!15}
+
+% Footer/headline
+\setbeamercolor{footline}{fg=unibasanthracitelight}
+\setbeamercolor{headline}{fg=unibasanthracite}
+
+% ============================================
+% Font Theme
+% ============================================
+
+% Use sans-serif throughout
+\usefonttheme{professionalfonts}
+\setbeamerfont{title}{size=\Large,series=\bfseries}
+\setbeamerfont{subtitle}{size=\normalsize}
+\setbeamerfont{author}{size=\normalsize}
+\setbeamerfont{date}{size=\small}
+\setbeamerfont{frametitle}{size=\large,series=\bfseries}
+\setbeamerfont{framesubtitle}{size=\normalsize}
+\setbeamerfont{block title}{size=\normalsize,series=\bfseries}
+\setbeamerfont{footnote}{size=\tiny}
+
+% ============================================
+% Inner Theme - Itemize/Enumerate Styles
+% ============================================
+
+% Modern bullet style
+\setbeamertemplate{itemize item}{\textbullet}
+\setbeamertemplate{itemize subitem}{\textendash}
+\setbeamertemplate{itemize subsubitem}{\guillemotright}
+
+% Numbered lists
+\setbeamertemplate{enumerate item}{\insertenumlabel.}
+\setbeamertemplate{enumerate subitem}{\insertsubenumlabel.}
+
+% ============================================
+% Outer Theme - Frame Title
+% ============================================
+
+% Modern frame title with accent line
+\setbeamertemplate{frametitle}{%
+  \vskip0.5em%
+  \nointerlineskip%
+  \begin{beamercolorbox}[wd=\paperwidth,leftskip=1em,rightskip=1em]{frametitle}%
+    \usebeamerfont{frametitle}\insertframetitle%
+    \ifx\insertframesubtitle\@empty\else%
+      \\[0.2em]{\usebeamerfont{framesubtitle}\usebeamercolor[fg]{framesubtitle}\insertframesubtitle}%
+    \fi%
+  \end{beamercolorbox}%
+  \vskip-0.2em%
+  \nointerlineskip%
+  \begin{beamercolorbox}[wd=\paperwidth,ht=0.08em]{structure}%
+    \hspace{1em}{\color{unibasmint}\rule{3cm}{0.08em}}%
+  \end{beamercolorbox}%
+  \vskip0.5em%
+}
+
+% ============================================
+% Title Page
+% ============================================
+
+\setbeamertemplate{title page}{%
+  \vfill%
+  \begin{beamercolorbox}[leftskip=1em]{title}%
+    \usebeamerfont{title}\inserttitle%
+  \end{beamercolorbox}%
+  \vskip0.3em%
+  \begin{beamercolorbox}[wd=\paperwidth,ht=0.08em]{structure}%
+    \hspace{1em}{\color{unibasmint}\rule{5cm}{0.08em}}%
+  \end{beamercolorbox}%
+  \vskip0.5em%
+  \ifx\insertsubtitle\@empty\else%
+    \begin{beamercolorbox}[leftskip=1em]{subtitle}%
+      \usebeamerfont{subtitle}\insertsubtitle%
+    \end{beamercolorbox}%
+    \vskip0.5em%
+  \fi%
+  \begin{beamercolorbox}[leftskip=1em]{author}%
+    \usebeamerfont{author}\insertauthor%
+  \end{beamercolorbox}%
+  \vskip0.3em%
+  \begin{beamercolorbox}[leftskip=1em]{date}%
+    \usebeamerfont{date}\insertdate%
+  \end{beamercolorbox}%
+  \vfill%
+}
+
+% ============================================
+% Footer with page number
+% ============================================
+
+\setbeamertemplate{footline}{%
+  \hfill%
+  \usebeamercolor[fg]{footline}%
+  \usebeamerfont{footnote}%
+  \insertframenumber\,/\,\inserttotalframenumber%
+  \hspace{1em}%
+  \vskip1em%
+}
+
+% ============================================
+% Code block styling
+% ============================================
+
+% Better code appearance
+\setbeamercolor{verbatim text}{fg=unibasanthracite}
+\setbeamerfont{verbatim}{size=\footnotesize}

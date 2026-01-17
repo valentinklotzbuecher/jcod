@@ -17,6 +17,10 @@ format:
     format-links: [beamer]
   beamer:
     aspectratio: 169
+    include-in-header: beamer-unibas.tex
+    fonttheme: professionalfonts
+    classoption:
+      - "t"  # Top-align content
 
 bibliography: references.bib
 csl: nature.csl
@@ -86,10 +90,12 @@ library(dplyr)
 library(tidyr)
 library(ggplot2)
 library(fixest)
-library(quadprog)
-library(purrr)
 
-set.seed(1)
+# SCM packages
+library(tidysynth)
+library(gsynth)
+
+set.seed(420)
 ```
 
 
@@ -97,34 +103,28 @@ set.seed(1)
 #| label: simulate-panel
 #| echo: true
 
-# "Swiss hospitals" panel: outcome = 30-day mortality per 1,000 admissions
+
 hospitals <- c(
   "Basel", "Zurich", "Bern", "Geneva", "Lausanne", "St_Gallen", "Luzern",
   "Aarau", "Winterthur", "Fribourg", "Chur", "Bellinzona"
 )
 years <- 2008:2023
 
-T0 <- 2016              # intervention year (Basel treated from here)
+T0 <- 2016
 treated_unit <- "Basel"
 
-# latent time patterns (common + latent factor)
 time_trend <- tibble(
   year = years,
-  # common secular improvement
   lambda = -0.25 * (year - min(year)),
-  # latent factor: non-linear system-wide shock + recovery (e.g., coding/clinical practice change)
   f = 1.5 * exp(-0.5 * ((year - 2012) / 1.6)^2) - 0.7 * exp(-0.5 * ((year - 2018) / 1.8)^2)
 )
 
-# hospital effects + factor loadings (Basel slightly different, breaking "parallel trends")
 hosp_par <- tibble(
   hospital = hospitals,
   alpha_i  = rnorm(length(hospitals), 0, 0.8),
   gamma_i  = rnorm(length(hospitals), 1.0, 0.25)
 ) %>%
-  mutate(
-    gamma_i = if_else(hospital == treated_unit, gamma_i + 0.35, gamma_i)  # Basel loads more on latent factor
-  )
+  mutate(gamma_i = if_else(hospital == treated_unit, gamma_i + 0.35, gamma_i))
 
 df <- tidyr::expand_grid(hospital = hospitals, year = years) %>%
   left_join(time_trend, by = "year") %>%
@@ -132,122 +132,212 @@ df <- tidyr::expand_grid(hospital = hospitals, year = years) %>%
   mutate(
     treated = (hospital == treated_unit),
     post    = (year >= T0),
-    # baseline level around 15/1000
     mu0 = 15 + alpha_i + lambda + gamma_i * f,
-    # treatment effect: Basel mortality improves by 1.2/1000 after 2016
-    tau = if_else(treated & post, -1.2, 0),
-    # noise (measurement + case-mix residual)
-    y = mu0 + tau + rnorm(n(), 0, 0.6)
+    tau = if_else(treated & post, -1.2, 0),   # Basel improves post-2016
+    y   = mu0 + tau + rnorm(n(), 0, 0.6)
   ) %>%
   select(hospital, year, treated, post, y)
 
-dplyr::glimpse(df)
+
 ```
 
-```{r}
-#| label: plot-panel
-#| echo: true
-
-ggplot(df, aes(year, y, group = hospital)) +
-  geom_line(alpha = 0.25) +
-  geom_line(data = df %>% filter(hospital == treated_unit),
-            aes(year, y), linewidth = 1) +
-  geom_vline(xintercept = T0, linetype = 2) +
-  labs(
-    title = "Simulated 30-day mortality (per 1,000 admissions): Swiss hospitals",
-    subtitle = "Basel is treated from 2016 (dashed line)",
-    x = NULL, y = "Mortality per 1,000"
-  )
-```
+---
 
 ```{r}
 #| label: did-twfe
 #| echo: true
 
-# Two-way FE DiD (will be biased if Basel has different latent-factor loading)
-m_did <- feols(y ~ treated * post | hospital + year, data = df, cluster = "hospital")
-etable(m_did, dict = c(`treated:post` = "DiD ATT (Basel × post)"))
-```
 
-```{r}
-#| label: scm-helpers
-#| echo: true
-
-scm_fit <- function(df, treated_unit, T0, ridge = 1e-6) {
-  wide <- df %>%
-    select(hospital, year, y) %>%
-    pivot_wider(names_from = hospital, values_from = y) %>%
-    arrange(year)
-
-  pre_idx <- wide$year < T0
-  donors  <- setdiff(names(wide), c("year", treated_unit))
-
-  y1_pre <- as.numeric(wide[[treated_unit]][pre_idx])
-  Y0_pre <- as.matrix(wide[pre_idx, donors, drop = FALSE])
-
-  # QP: min 1/2 w'Dw - d'w  s.t.  sum(w)=1, w>=0
-  Dmat <- 2 * crossprod(Y0_pre) + diag(ridge, ncol(Y0_pre))
-  dvec <- 2 * crossprod(Y0_pre, y1_pre)
-
-  J <- length(donors)
-  Amat <- cbind(rep(1, J), diag(J))
-  bvec <- c(1, rep(0, J))
-  sol  <- solve.QP(Dmat, dvec, Amat, bvec, meq = 1)
-
-  w <- sol$solution
-  names(w) <- donors
-
-  Y0_all  <- as.matrix(wide[, donors, drop = FALSE])
-  y_synth <- as.numeric(Y0_all %*% w)
-
-  list(
-    weights = w,
-    series = tibble(
-      year      = wide$year,
-      y_treated = wide[[treated_unit]],
-      y_synth   = y_synth,
-      gap       = wide[[treated_unit]] - y_synth
-    )
+df2 <- df %>%
+  mutate(
+    treated_i = as.integer(treated),
+    post_i    = as.integer(post),
+    tp        = treated_i * post_i
   )
-}
 
-scm <- scm_fit(df, treated_unit = treated_unit, T0 = T0)
-head(scm$series)
-
+m_did2 <- feols(y ~ tp | hospital + year, data = df2, cluster = "hospital")
+att_did <- unname(coef(m_did2)["tp"])
+att_did
 
 ```
 
+---
+
 ```{r}
-#| label: scm-plot
+#| label: scm-tidysynth-fit
 #| echo: true
 
-p1 <- ggplot(scm$series, aes(year)) +
-  geom_line(aes(y = y_treated), linewidth = 1) +
-  geom_line(aes(y = y_synth), linetype = 2, linewidth = 1) +
+pre_years <- min(years):(T0 - 1)
+
+# sanity check: your panel should be unique hospital-year
+stopifnot(nrow(df) == nrow(dplyr::distinct(df, hospital, year)))
+
+scm_ts <- df %>%
+  synthetic_control(
+    outcome = y,
+    unit = hospital,
+    time = year,
+    i_unit = treated_unit,
+    i_time = T0
+  ) %>%
+  # 1) Pre-period mean outcome as a single predictor (safe)
+  generate_predictor(
+    time_window = pre_years,
+    y_mean_pre = mean(y)
+  ) %>%
+  # 2) Add a few single-year lags, EACH with a unique name (critical!)
+  generate_predictor(time_window = 2010, y_2010 = y) %>%
+  generate_predictor(time_window = 2012, y_2012 = y) %>%
+  generate_predictor(time_window = 2014, y_2014 = y) %>%
+  generate_predictor(time_window = 2015, y_2015 = y) %>%
+  generate_weights(optimization_window = pre_years) %>%
+  generate_control()
+
+```
+
+---
+
+```{r}
+#| label: scm-tidysynth-plot
+#| echo: true
+
+plot_trends(scm_ts) +
   geom_vline(xintercept = T0, linetype = 3) +
   labs(
-    title = "Synthetic Control: Basel vs weighted donor average",
-    subtitle = "Dashed = synthetic control; vertical line = treatment start",
-    x = NULL, y = "Mortality per 1,000"
+    title = "tidysynth SCM: Basel vs Synthetic",
+    subtitle = "Vertical line: treatment starts (2016)"
   )
 
-p2 <- ggplot(scm$series, aes(year, gap)) +
+```
+
+```{r}
+#| label: scm-tidysynth-att
+#| echo: true
+
+# Extract series + compute post-period average gap (Basel - synth)
+scm_series <- grab_synthetic_control(scm_ts)
+
+att_scm_ts <- scm_series %>%
+  filter(time_unit >= T0) %>%
+  summarise(att = mean(real_y - synth_y)) %>%
+  pull(att)
+
+att_scm_ts
+
+
+```
+
+---
+
+```{r}
+#| label: gsynth-fit
+#| echo: true
+
+# gsynth expects: outcome y, treatment indicator D (0/1), panel index
+df_gs <- df %>%
+  mutate(D = as.integer(treated & post)) %>%  # treated turns on at 2016 for Basel
+  arrange(hospital, year)
+
+# Interactive fixed effects (IFE) version
+# r = number of latent factors; CV chooses r if r is a vector.
+gs_ife <- gsynth(
+  y ~ D,
+  data = df_gs,
+  index = c("hospital", "year"),
+  force = "two-way",
+  CV = TRUE,
+  r = 0:3,          # try 0..3 factors, pick by CV
+  se = FALSE        # keep fast for slides; turn on later if needed
+)
+```
+
+```{r}
+#| label: gsynth-mc
+#| echo: true
+#| eval: true
+
+gs_mc <- gsynth(
+  y ~ D,
+  data = df_gs,
+  index = c("hospital", "year"),
+  force = "two-way",
+  estimator = "mc",
+  CV = TRUE,
+  r = 0:3,
+  se = FALSE
+)
+
+
+```
+
+---
+
+
+```{r}
+#| label: gsynth-mc-gap-ggplot
+#| echo: true
+
+
+
+# gs_mc$id should be length 12 (unit names, in column order of eff)
+basel_col <- match(treated_unit, as.character(gs_mc$id))
+if (is.na(basel_col)) stop("treated_unit not found in gs_mc$id")
+
+gap_df <- tibble(
+  year = gs_mc$time,
+  gap  = as.numeric(gs_mc$eff[, basel_col])
+)
+
+xT0 = 0
+
+ggplot(gap_df, aes(year, gap)) +
   geom_hline(yintercept = 0) +
   geom_line(linewidth = 1) +
-  geom_vline(xintercept = T0, linetype = 3) +
+  geom_vline(xintercept = xT0, linetype = 3) +
   labs(
-    title = "SCM gap (Basel − synthetic)",
+    title = "gsynth (MC) gap: Basel -- counterfactual",
     x = NULL, y = "Gap"
   )
 
-p1
-p2
+c(att = gs_mc$att, att_avg = gs_mc$att.avg)
+
 ```
 
-
-
-
-
 ---
+
+```{r}
+#| label: compare-estimates
+#| echo: true
+
+
+
+tibble(
+  method = c("TWFE DiD", "SCM (tidysynth)", "gsynth IFE (avg ATT)"),
+  att = c(att_did, att_scm_ts, gs_ife$att.avg)
+)
+
+
+```
+
+```{r}
+#| label: gsynth-ife-eff-path
+#| echo: true
+
+basel_col_ife <- match(treated_unit, as.character(gs_ife$id))
+if (is.na(basel_col_ife)) stop("treated_unit not found in gs_ife$id")
+
+ife_df <- tibble(
+  year = gs_ife$time,
+  gap  = as.numeric(gs_ife$eff[, basel_col_ife])
+)
+
+ggplot(ife_df, aes(year, gap)) +
+  geom_hline(yintercept = 0) +
+  geom_line(linewidth = 1) +
+  geom_vline(xintercept = xT0, linetype = 3) +
+  labs(title = "gsynth IFE gap: Basel \u2212 counterfactual", x = NULL, y = "Gap")
+
+```
+
 
 ## References
