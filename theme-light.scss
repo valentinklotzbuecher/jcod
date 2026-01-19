@@ -1,0 +1,250 @@
+/*-- scss:defaults --*/
+/*-----------------------------------
+  Modern Light Theme - 2026 Refresh
+------------------------------------*/
+
+/* Typography - Modern, clean fonts */
+$font-family-sans-serif: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+$headings-font-weight: 600;
+$font-size-base: 1.05rem;
+$line-height-base: 1.7;
+
+/* Color Palette - Deep purple with warm neutrals */
+$body-bg: #FAFAFA;
+$body-color: #1a1a2e;
+$primary: #5A317E;              // Deep, rich purple
+$primary-hover: #7A4EA0;
+$primary-subtle: rgba(90, 49, 126, 0.08);
+
+/* Accent colors */
+$secondary: #94A3B8;
+$link-color: $primary;
+
+/*-- scss:rules --*/
+
+/* Import Inter font */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  --bs-body-bg: #{$body-bg};
+  --bs-body-color: #{$body-color};
+  --bs-primary: #{$primary};
+  --bs-link-color: #{$primary};
+}
+
+/* Body */
+body {
+  background-color: $body-bg;
+  color: $body-color;
+  font-family: $font-family-sans-serif;
+  line-height: $line-height-base;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Headings */
+h1, h2, h3, h4, h5, h6 {
+  color: $body-color;
+  font-weight: $headings-font-weight;
+  letter-spacing: -0.02em;
+}
+
+h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+}
+
+/* Links - animated underline */
+a {
+  color: $primary;
+  text-decoration: none;
+  position: relative;
+  transition: color 0.2s ease;
+
+  &:hover {
+    color: $primary-hover;
+  }
+}
+
+/* Content links get underline animation */
+.content a:not(.btn):not(.nav-link),
+#quarto-content a:not(.btn):not(.nav-link):not(.citation) {
+  background-image: linear-gradient($primary-hover, $primary-hover);
+  background-size: 0% 2px;
+  background-repeat: no-repeat;
+  background-position: left bottom;
+  transition: background-size 0.3s ease, color 0.2s ease;
+
+  &:hover {
+    background-size: 100% 2px;
+  }
+}
+
+/* Primary Buttons - Modern pill style */
+.btn-primary {
+  background-color: $primary;
+  border: none;
+  border-radius: 50px;
+  padding: 0.6rem 1.4rem;
+  font-weight: 500;
+  font-size: 0.9rem;
+  letter-spacing: 0.01em;
+  box-shadow: 0 2px 8px rgba(90, 49, 126, 0.25);
+  transition: all 0.25s ease;
+
+  &:hover {
+    background-color: $primary-hover;
+    box-shadow: 0 4px 16px rgba(90, 49, 126, 0.35);
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+/* Navbar - Dark purple header */
+.navbar {
+  background-color: $primary !important;
+  padding: 0.8rem 0;
+}
+
+.navbar-brand, .navbar-title {
+  font-weight: 600;
+  font-size: 1.15rem;
+  letter-spacing: -0.01em;
+  color: #ffffff !important;
+}
+
+.navbar .nav-link,
+.navbar .navbar-nav .nav-link {
+  color: rgba(255, 255, 255, 0.85) !important;
+  font-weight: 500;
+  transition: color 0.2s ease;
+
+  &:hover {
+    color: #ffffff !important;
+  }
+}
+
+/* Navbar icons */
+.navbar .bi {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 1.1rem;
+  transition: color 0.2s ease;
+
+  &:hover {
+    color: #ffffff;
+  }
+}
+
+/* About section - Floating card effect */
+#hero-heading {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 1.5rem 2rem;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  margin: 2rem 0;
+}
+
+/* Larger profile image */
+.quarto-about-solana .about-image img {
+  max-width: 280px !important;
+  width: 280px !important;
+}
+
+/* Profile image refinement */
+.about-image img,
+.quarto-about-solana .about-image img {
+  border-radius: 16px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+/* Footer - Minimal and elegant */
+.page-footer {
+  border-top: 1px solid rgba(0, 0, 0, 0.06) !important;
+  padding: 1.5rem 0;
+  font-size: 0.85rem;
+  color: $secondary;
+}
+
+/* References section */
+#refs {
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+#refs p {
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: rgba(26, 26, 46, 0.75);
+}
+
+/* Main content - wider layout */
+#quarto-content {
+  padding-top: 1rem;
+}
+
+.quarto-about-solana {
+  max-width: 1100px !important;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+/* Let the about section use more horizontal space */
+.quarto-about-solana .about-entity {
+  flex-wrap: nowrap !important;
+  gap: 3rem;
+}
+
+.quarto-about-solana .about-contents {
+  flex: 1;
+  max-width: none;
+}
+
+/* Horizontal rule */
+hr {
+  border: none;
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(0,0,0,0.08), transparent);
+  margin: 2.5rem 0;
+}
+
+/* Selection color */
+::selection {
+  background-color: rgba(90, 49, 126, 0.2);
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Plotly figure containers */
+.js-plotly-plot {
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 0.5rem;
+  margin: 1rem 0;
+}
+
+/* Callout styling for figures */
+.callout-note {
+  border-left-color: $primary !important;
+  background-color: rgba(90, 49, 126, 0.03);
+  border-radius: 8px;
+}
+
+.callout-note .callout-title {
+  color: $primary;
+}
+
+/* Panel tabset within callouts */
+.callout .panel-tabset .nav-tabs {
+  border-bottom-color: rgba(90, 49, 126, 0.2);
+}
+
+.callout .panel-tabset .nav-tabs .nav-link.active {
+  color: $primary;
+  border-bottom-color: $primary;
+}

@@ -1,28 +1,28 @@
-% Clean minimal beamer theme - Deep Space Purple
-% Matches the HTML theme-dark.scss
+% Clean minimal beamer theme - Light
+% Matches the HTML theme-light.scss
 
-% Colors (from theme-dark.scss)
-\definecolor{deepspace}{HTML}{0f0a1a}      % $body-bg - deep space purple-black
-\definecolor{lavenderwhite}{HTML}{e8e4f0}  % $body-color - soft lavender white
-\definecolor{vibrantpurple}{HTML}{9D6EE8}  % $primary - vibrant purple accent
-\definecolor{surface}{HTML}{1a1225}        % $surface - card backgrounds
-\definecolor{purplehover}{HTML}{B48EF0}    % $primary-hover
+% Colors (from theme-light.scss)
+\definecolor{lightbg}{HTML}{FAFAFA}        % $body-bg - light background
+\definecolor{darktext}{HTML}{1a1a2e}       % $body-color - dark text
+\definecolor{deeppurple}{HTML}{5A317E}     % $primary - deep rich purple
+\definecolor{purplehover}{HTML}{7A4EA0}    % $primary-hover
+\definecolor{secondary}{HTML}{94A3B8}      % $secondary - muted gray
 
 % Set colors
-\setbeamercolor{background canvas}{bg=deepspace}
-\setbeamercolor{normal text}{fg=lavenderwhite}
-\setbeamercolor{frametitle}{fg=white}
-\setbeamercolor{title}{fg=white}
-\setbeamercolor{subtitle}{fg=vibrantpurple}
-\setbeamercolor{author}{fg=lavenderwhite}
-\setbeamercolor{date}{fg=lavenderwhite}
-\setbeamercolor{item}{fg=vibrantpurple}
-\setbeamercolor{block title}{fg=vibrantpurple}
-\setbeamercolor{structure}{fg=vibrantpurple}
+\setbeamercolor{background canvas}{bg=lightbg}
+\setbeamercolor{normal text}{fg=darktext}
+\setbeamercolor{frametitle}{fg=darktext}
+\setbeamercolor{title}{fg=darktext}
+\setbeamercolor{subtitle}{fg=deeppurple}
+\setbeamercolor{author}{fg=darktext}
+\setbeamercolor{date}{fg=secondary}
+\setbeamercolor{item}{fg=deeppurple}
+\setbeamercolor{block title}{fg=deeppurple}
+\setbeamercolor{structure}{fg=deeppurple}
 \setbeamercolor{alerted text}{fg=purplehover}
 
 % Code block colors
-\setbeamercolor{block body}{bg=surface}
+\setbeamercolor{block body}{bg=white}
 
 % Remove navigation symbols
 \setbeamertemplate{navigation symbols}{}
@@ -33,33 +33,33 @@
   \insertframetitle
   \par
   \vspace{-0.3em}
-  \textcolor{vibrantpurple}{\rule{2cm}{1.5pt}}
+  \textcolor{deeppurple}{\rule{2cm}{1.5pt}}
 }
 
 % Clean footline with page numbers
 \setbeamertemplate{footline}{
   \hfill
-  \textcolor{lavenderwhite!50}{\footnotesize\insertframenumber/\inserttotalframenumber}
+  \textcolor{secondary}{\footnotesize\insertframenumber/\inserttotalframenumber}
   \hspace{1em}
   \vspace{0.5em}
 }
 
 % Itemize styling - purple bullets
-\setbeamertemplate{itemize item}{\textcolor{vibrantpurple}{\textbullet}}
-\setbeamertemplate{itemize subitem}{\textcolor{vibrantpurple}{\textendash}}
-\setbeamertemplate{itemize subsubitem}{\textcolor{vibrantpurple}{\guillemotright}}
+\setbeamertemplate{itemize item}{\textcolor{deeppurple}{\textbullet}}
+\setbeamertemplate{itemize subitem}{\textcolor{deeppurple}{\textendash}}
+\setbeamertemplate{itemize subsubitem}{\textcolor{deeppurple}{\guillemotright}}
 
 % Enumerate styling
-\setbeamertemplate{enumerate item}{\textcolor{vibrantpurple}{\insertenumlabel.}}
+\setbeamertemplate{enumerate item}{\textcolor{deeppurple}{\insertenumlabel.}}
 
 % Table of contents styling
-\setbeamercolor{section in toc}{fg=lavenderwhite}
-\setbeamercolor{subsection in toc}{fg=lavenderwhite!70}
+\setbeamercolor{section in toc}{fg=darktext}
+\setbeamercolor{subsection in toc}{fg=darktext!70}
 
 % Hyperlink colors
 \hypersetup{
   colorlinks=true,
-  linkcolor=vibrantpurple,
+  linkcolor=deeppurple,
   urlcolor=purplehover,
-  citecolor=vibrantpurple
+  citecolor=deeppurple
 }

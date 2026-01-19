@@ -1,8 +1,12 @@
+base
+methods
+datasets
+utils
+grDevices
+graphics
+stats
 dplyr
 tidyr
 ggplot2
-fixest
-tidysynth
-gsynth
-lubridate
 scpi
+lubridate
