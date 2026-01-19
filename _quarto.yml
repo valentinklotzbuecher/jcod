@@ -9,8 +9,6 @@ website:
         text: Home
       - href: slides.qmd
         text: Slides
-      - href: about.qmd
-        text: About
 
 format:
   html:
