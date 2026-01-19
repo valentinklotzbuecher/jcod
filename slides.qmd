@@ -41,8 +41,7 @@ library(dplyr)
 library(tidyr)
 library(ggplot2)
 library(fixest)
-library(tidysynth)
-library(gsynth)
+library(scpi)
 library(lubridate)
 set.seed(420)
 
@@ -114,72 +113,37 @@ df2 <- df %>%
 m_did <- feols(y ~ tp | hospital + t, data = df2, cluster = "hospital")
 att_did <- unname(coef(m_did)["tp"])
 
-# ── tidysynth SCM (uses numeric time index) ──
-scm_ts <- df %>%
-  synthetic_control(
-    outcome = y, unit = hospital, time = t,
-    i_unit = treated_unit, i_time = T0
-  ) %>%
-  # Pre-period mean
-  generate_predictor(time_window = pre_periods, y_mean_pre = mean(y)) %>%
-  # Several pre-treatment periods as predictors
-  generate_predictor(time_window = 12, y_t12 = y) %>%   # Dec 2012
-  generate_predictor(time_window = 24, y_t24 = y) %>%   # Dec 2013
-  generate_predictor(time_window = 48, y_t48 = y) %>%   # Dec 2015
-  generate_predictor(time_window = 60, y_t60 = y) %>%   # Dec 2016
-  generate_predictor(time_window = 72, y_t72 = y) %>%   # Dec 2017
-  generate_predictor(time_window = 78, y_t78 = y) %>%   # Jun 2018
-  generate_weights(optimization_window = pre_periods) %>%
-  generate_control()
+# ── scpi SCM ──
+post_periods <- T0:max(time_idx)
 
-# Robust ATT extraction for tidysynth
-scm_series <- grab_synthetic_control(scm_ts)
-time_col <- names(scm_series)[1]
-real_col <- grep("^real|^treated", names(scm_series), value = TRUE)[1]
-synth_col <- grep("^synth", names(scm_series), value = TRUE)[1]
-stopifnot(!is.na(time_col), !is.na(real_col), !is.na(synth_col))
+dat_sc <- scdata(
+  df = df, id.var = "hospital", time.var = "t", outcome.var = "y",
+  period.pre = pre_periods, period.post = post_periods,
+  unit.tr = treated_unit, unit.co = setdiff(hospitals, treated_unit),
+  constant = TRUE, verbose = FALSE
+)
 
-att_scm_ts <- scm_series %>%
-  filter(.data[[time_col]] >= T0) %>%
-  summarise(att = mean(.data[[real_col]] - .data[[synth_col]])) %>%
-  pull(att)
+res_scpi <- scpi(data = dat_sc, w.constr = list(name = "simplex"),
+                 sims = 200, e.method = "gaussian", u.missp = TRUE)
 
-# ── gsynth IFE ──
-df_gs <- df %>%
-  mutate(D = as.integer(treated & post)) %>%
-  arrange(hospital, t)
+# Robust ATT extraction
+Y_post_actual <- res_scpi$data$Y.post
+Y_post_fit <- res_scpi$est.results$Y.post.fit
+att_scpi <- mean(Y_post_actual - Y_post_fit)
 
-gs_ife <- gsynth(y ~ D, data = df_gs, index = c("hospital", "t"),
-                 force = "two-way", CV = TRUE, r = 0:5, se = FALSE)
-att_ife_avg <- gs_ife$att.avg
-
-# ── gsynth MC ──
-gs_mc <- gsynth(y ~ D, data = df_gs, index = c("hospital", "t"),
-                force = "two-way", estimator = "mc", CV = TRUE,
-                r = 0:5, se = FALSE)
-att_mc_avg <- gs_mc$att.avg
-
-# ── Gap dataframes (eff is time × units) ──
-basel_col_ife <- match(treated_unit, as.character(gs_ife$id))
-basel_col_mc  <- match(treated_unit, as.character(gs_mc$id))
-
-# gsynth time is the actual time index from data
-gap_df_ife <- tibble(
-  t = as.integer(gs_ife$time),
-  gap = as.numeric(gs_ife$eff[, basel_col_ife])
-) %>%
-  left_join(time_trend %>% select(t, month), by = "t")
-
-gap_df_mc <- tibble(
-  t = as.integer(gs_mc$time),
-  gap = as.numeric(gs_mc$eff[, basel_col_mc])
-) %>%
-  left_join(time_trend %>% select(t, month), by = "t")
+# Series for plotting
+Y_pre_actual <- res_scpi$data$Y.pre
+Y_pre_fit <- res_scpi$est.results$Y.pre.fit
+scm_series <- tibble(
+  t = c(pre_periods, post_periods),
+  real = c(as.numeric(Y_pre_actual), as.numeric(Y_post_actual)),
+  synth = c(as.numeric(Y_pre_fit), as.numeric(Y_post_fit))
+) %>% left_join(time_trend %>% select(t, month), by = "t")
 
 # ── Comparison table ──
 cmp_tbl <- tibble(
-  Method = c("TWFE DiD", "SCM (tidysynth)", "gsynth IFE", "gsynth MC"),
-  ATT = c(att_did, att_scm_ts, att_ife_avg, att_mc_avg)
+  Method = c("TWFE DiD", "SCM (scpi)"),
+  ATT = c(att_did, att_scpi)
 )
 
 # ── Pre-built plots ──
@@ -195,10 +159,8 @@ p_raw <- ggplot(df, aes(month, y, group = hospital,
        x = NULL, y = "Outcome", colour = NULL) +
   theme_minimal()
 
-# SCM trends (tidysynth uses numeric t, so we rebuild with dates)
+# SCM trends (scpi)
 scm_plot_df <- scm_series %>%
-  mutate(month = months[.data[[time_col]]]) %>%
-  rename(real = !!real_col, synth = !!synth_col) %>%
   pivot_longer(cols = c(real, synth), names_to = "series", values_to = "y")
 
 p_scm_trends <- ggplot(scm_plot_df, aes(month, y, colour = series)) +
@@ -210,28 +172,6 @@ p_scm_trends <- ggplot(scm_plot_df, aes(month, y, colour = series)) +
   labs(title = "SCM: Basel vs Synthetic Control",
        subtitle = paste0("Vertical line: treatment (", format(T0_date, "%b %Y"), ")"),
        x = NULL, y = "Outcome", colour = NULL) +
-  theme_minimal()
-
-# gsynth IFE gap
-p_gap_ife <- ggplot(gap_df_ife, aes(month, gap)) +
-  geom_hline(yintercept = 0, colour = "grey40") +
-  geom_line(linewidth = 0.8, colour = "steelblue") +
-  geom_vline(xintercept = T0_date, linetype = 2, colour = "red") +
-  scale_x_date(date_breaks = "2 years", date_labels = "%Y") +
-  labs(title = "gsynth IFE: Basel - counterfactual",
-       subtitle = paste0("Treatment: ", format(T0_date, "%b %Y")),
-       x = NULL, y = "Gap") +
-  theme_minimal()
-
-# gsynth MC gap
-p_gap_mc <- ggplot(gap_df_mc, aes(month, gap)) +
-  geom_hline(yintercept = 0, colour = "grey40") +
-  geom_line(linewidth = 0.8, colour = "darkorange") +
-  geom_vline(xintercept = T0_date, linetype = 2, colour = "red") +
-  scale_x_date(date_breaks = "2 years", date_labels = "%Y") +
-  labs(title = "gsynth MC: Basel - counterfactual",
-       subtitle = paste0("Treatment: ", format(T0_date, "%b %Y")),
-       x = NULL, y = "Gap") +
   theme_minimal()
 
 # Format treatment date for slides
@@ -272,15 +212,52 @@ DiD works well with many treated/control units and credible parallel trends. Wit
 
 ---
 
+## One estimand, three levers
+
+**Target:** ATT = $\mathbb{E}[Y_{1}^{(1)} - Y_{1}^{(0)} \mid D_1 = 1]$
+
+Three design dimensions distinguish modern panel methods:
+
+| Dimension | What it controls |
+|-----------|------------------|
+| **Unit weights** | How to weight donor units |
+| **Time weights** | How to weight pre-treatment periods |
+| **Outcome model** | Whether to model $Y^{(0)}$ directly |
+
+All methods combine these three levers differently.
+
+::: notes
+This framework helps organize the zoo of methods. Classical SCM optimizes unit weights only. SDID adds time weights. IFE adds outcome modeling.
+:::
+
+---
+
+## Matching → SCM → SDID
+
+| Method | Unit weights | Time weights |
+|--------|--------------|--------------|
+| DiD | Equal (or propensity) | Equal |
+| SCM | Optimized (pre-fit) | Equal |
+| SDID | Optimized | Optimized |
+
+**Progression:** From assuming comparability to constructing it.
+
+::: notes
+SCM optimizes which donors to use; SDID also optimizes which pre-periods matter most. More flexible = more data-adaptive.
+:::
+
+---
+
 ## Key papers
 
 Foundational and applied references:
 
 - @Abadie2021SyntheticControls — comprehensive review of SCM
+- @CattaneoEtAl2025scpi — inference and prediction intervals
+- @AbadieZhao2025SCD — SCM as experimental design
 - @Kreif2016ExaminationSCM — health policy applications
 - @Bonander2021SCMTutorial — practical tutorial
 - @Cunningham2021SyntheticControlChapter — textbook treatment
-- @Kuosmanen2021DesignFlawSCM — design considerations and pitfalls
 
 ::: notes
 These cover theory, health applications, and practical guidance. The Cunningham chapter is excellent for intuition.
@@ -383,6 +360,23 @@ gsynth implements IFE and MC. These are more flexible than classical SCM but req
 
 ---
 
+## What scpi buys you
+
+The **scpi** package [@CattaneoEtAl2025scpi] provides:
+
+- **Prediction intervals** — not just point estimates
+- **Multiple weight constraints** — simplex, lasso, ridge
+- **Staggered adoption** — built-in support for multiple treatment times
+- **Covariate adjustment** — integrate auxiliary predictors
+
+**Workflow:** `scdata()` → `scpi()` → `scplot()`
+
+::: notes
+scpi is now the canonical implementation. It handles inference properly, unlike older packages.
+:::
+
+---
+
 <!-- ═══════════════════════════════════════════════════════════════════════ -->
 <!-- SECTION D — Simulation Illustration                                     -->
 <!-- ═══════════════════════════════════════════════════════════════════════ -->
@@ -481,28 +475,23 @@ DiD gives a number, but we can't trust it without parallel trends.
 
 ---
 
-## tidysynth: Fitting SCM
+## scpi: Fitting SCM
 
 ```{r}
-#| label: show-tidysynth-code
+#| label: show-scpi-code
 #| echo: true
 #| eval: false
-#| code-line-numbers: "1-5|7-12|13-14"
+#| code-line-numbers: "1-5|7-9"
 
-scm_ts <- df %>%
-  synthetic_control(
-    outcome = y, unit = hospital, time = t,
-    i_unit = "Basel", i_time = T0
-  ) %>%
-  # Pre-period mean + selected lags as predictors
-  generate_predictor(time_window = pre_periods,
-                     y_mean_pre = mean(y)) %>%
-  generate_predictor(time_window = 48, y_t48 = y) %>%
-  generate_predictor(time_window = 72, y_t72 = y) %>%
-  generate_predictor(time_window = 78, y_t78 = y) %>%
-  # Optimize weights over pre-period
-  generate_weights(optimization_window = pre_periods) %>%
-  generate_control()
+# Step 1: Prepare data structure
+dat_sc <- scdata(
+  df = df, id.var = "hospital", time.var = "t", outcome.var = "y",
+  period.pre = pre_periods, period.post = post_periods,
+  unit.tr = "Basel", unit.co = setdiff(hospitals, "Basel"))
+
+# Step 2: Estimate with simplex constraints + inference
+res_scpi <- scpi(data = dat_sc, w.constr = list(name = "simplex"),
+                 sims = 200, e.method = "gaussian")
 ```
 
 ---
@@ -516,7 +505,7 @@ p_scm_trends
 
 ```{r}
 #| label: show-scm-att
-cat("SCM (tidysynth) ATT:", round(att_scm_ts, 3))
+cat("SCM (scpi) ATT:", round(att_scpi, 3))
 ```
 
 ::: notes
@@ -525,61 +514,40 @@ The synthetic control tracks Basel well pre-treatment, then diverges post-July 2
 
 ---
 
-## gsynth: IFE and Matrix Completion
+## Imputation family: IFE / MC
 
-```{r}
-#| label: show-gsynth-code
-#| echo: true
-#| eval: false
-#| code-line-numbers: "1-4|6-9"
+**Interactive Fixed Effects (IFE):**
+$$Y_{it} = \alpha_i + \gamma_t + \sum_{k=1}^{K} \lambda_{ik} f_{kt} + \varepsilon_{it}$$
 
-# Interactive Fixed Effects
-gs_ife <- gsynth(y ~ D, data = df,
-                 index = c("hospital", "t"),
-                 force = "two-way", CV = TRUE, r = 0:5)
+Latent factors $f_{kt}$ with unit-specific loadings $\lambda_{ik}$.
 
-# Matrix Completion
-gs_mc <- gsynth(y ~ D, data = df,
-                index = c("hospital", "t"),
-                force = "two-way", estimator = "mc", CV = TRUE)
-```
+**Matrix Completion (MC):**
+Low-rank imputation — treat missing $Y_{1t}^{(0)}$ as matrix completion problem.
 
-Cross-validation selects the number of latent factors.
-
----
-
-## gsynth IFE gap plot
-
-```{r}
-#| label: show-gap-ife
-p_gap_ife
-```
-
-```{r}
-#| label: show-att-ife
-cat("gsynth IFE ATT:", round(att_ife_avg, 3))
-```
+**Package:** `fect` (successor to `gsynth`) — not run here, but excellent for factor-augmented estimation.
 
 ::: notes
-IFE estimates latent factors and loadings jointly. Gap should be near zero pre-treatment.
+These methods model the outcome directly, estimating latent factors from the data. More flexible than SCM but requires stronger assumptions about factor structure.
 :::
 
 ---
 
-## gsynth MC gap plot
+## Hybrid family: SDID / AugSCM
 
-```{r}
-#| label: show-gap-mc
-p_gap_mc
-```
+**Synthetic Difference-in-Differences (SDID):**
 
-```{r}
-#| label: show-att-mc
-cat("gsynth MC ATT:", round(att_mc_avg, 3))
-```
+- SCM-style unit weights + DiD-style time weights
+- Reweights both donors and pre-periods
+- Package: `synthdid`
+
+**Augmented SCM:**
+
+- SCM + ridge regression bias correction
+- Reduces interpolation bias
+- Package: `augsynth`
 
 ::: notes
-Matrix completion uses low-rank structure. Often performs well with limited pre-periods.
+These hybrids combine the best of both worlds: data-adaptive weighting with bias correction.
 :::
 
 ---
@@ -593,10 +561,10 @@ knitr::kable(cmp_tbl, digits = 3, col.names = c("Method", "ATT Estimate"))
 
 **True ATT = −2.5**
 
-All methods recover the treatment effect reasonably well in this simulation.
+Both methods recover the treatment effect well; SCM does better when parallel trends fail.
 
 ::: notes
-In practice, methods will diverge more when assumptions are violated differently.
+DiD can be biased when parallel trends fail. SCM constructs a better comparison.
 :::
 
 ---
@@ -630,11 +598,45 @@ These are necessary conditions. Violations lead to unreliable estimates.
 
 1. **SCM constructs** a counterfactual rather than assuming parallel trends
 2. **Diagnostics are essential:** pre-fit, weights, placebos
-3. **Modern extensions** (IFE, MC) handle complex factor structures
-4. **Design matters more than estimator:** clean setting → all methods work; violated assumptions → all struggle
+3. **Modern extensions** (IFE, MC, SDID) handle complex factor structures
+4. **scpi is the canonical package** — use it for inference and prediction intervals
+5. **Design matters more than estimator:** clean setting → all methods work; violated assumptions → all struggle
 
 ::: notes
 The method is only as good as the setting. Focus on design.
+:::
+
+---
+
+## SCM as experimental design
+
+@AbadieZhao2025SCD perspective:
+
+- **Design with SCM in mind** — choose treated unit where good donors exist
+- **Pre-register the donor pool** — reduces researcher degrees of freedom
+- **Balance as design criterion** — not just an estimation property
+
+**Key insight:** SCM works best when the study is designed for it, not retrofitted.
+
+::: notes
+This is a shift in thinking: from "how do I analyze this data?" to "how do I design this study so SCM will work?"
+:::
+
+---
+
+## Package recommendations
+
+| Use case | Package |
+|----------|---------|
+| Canonical SCM + inference | `scpi` |
+| Factor-augmented (IFE/MC) | `fect` |
+| Synthetic DiD | `synthdid` |
+| Augmented SCM | `augsynth` |
+
+**Rule of thumb:** Start with `scpi`. Consider alternatives when factor structure is complex or you need hybrid estimators.
+
+::: notes
+scpi should be the default. The others are for specialized cases.
 :::
 
 ---

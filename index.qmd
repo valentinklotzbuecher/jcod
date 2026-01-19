@@ -1,48 +1,64 @@
 ---
 title: "Synthetic Control Methods"
-subtitle: "Resources for causal inference with panel data"
+subtitle: "Slides + key resources"
+format:
+  html:
+    toc: false
+    page-layout: full
 ---
 
-## Overview
+::: columns
+::: {.column width="65%"}
 
-This site collects resources on **Synthetic Control Methods (SCM)** and related approaches for causal inference with panel data, particularly when only a single (or few) treated units are available.
-
-The methods covered include:
-
-- **Classical SCM** — weighted combination of donor units
-- **Interactive Fixed Effects (IFE)** — latent factor models
-- **Matrix Completion (MC)** — low-rank imputation
-- **Synthetic Difference-in-Differences** — combining SCM with DiD
-
-## Slides
+This site collects a **small set of practical resources** on synthetic-control-style counterfactuals for **panel data** (single/few treated units, extensions to multiple/staggered).
 
 ::: {.callout-note appearance="simple"}
-### Presentation: SCM & SDID
+## Quick links
 
-A modern, design-first view of panel counterfactuals. Covers motivation, methodology, and a simulation illustration.
+[Slides (HTML)](slides.html){.btn .btn-primary}
+[Slides (PDF)](slides.pdf){.btn .btn-outline-primary style="margin-left: .5rem;"}
 
-[View Slides (HTML)](slides.qmd){.btn .btn-primary}
-[Download PDF](slides.pdf){.btn .btn-outline-primary style="margin-left: 0.5rem;"}
+[NotebookLM (literature + audio summaries)](https://notebooklm.google.com/notebook/8954ba79-fcda-4a65-a662-5d0542909037?pli=1){.btn .btn-outline-secondary style="margin-left: .5rem;"}
+
+<!-- Optional: add your repo once you have it -->
+<!-- [GitHub repo](https://github.com/<you>/<repo>){.btn .btn-outline-secondary style="margin-left: .5rem;"} -->
 :::
 
-## Key References
+**What’s in the slides**
+- Motivation via **single treated unit** (comparative case study)
+- SCM as “**construct a counterfactual trajectory**”
+- A compact map of extensions (SCM ↔ SDID ↔ outcome-model/low-rank ideas)
+- Minimal simulation notebook + code you can reuse
 
-- Abadie (2021) — "Using Synthetic Controls: Feasibility, Data Requirements, and Methodological Aspects" *Journal of Economic Literature*
-- Arkhangelsky et al. (2021) — "Synthetic Difference-in-Differences" *American Economic Review*
-- Xu (2017) — "Generalized Synthetic Control Method" *Political Analysis*
-- Ben-Michael et al. (2021) — "The Augmented Synthetic Control Method" *Journal of the American Statistical Association*
+::: {.callout-tip appearance="simple"}
+If you only remember one thing: **diagnostics** (pre-fit, placebo tests, donor pool sanity) matter more than the estimator label.
+:::
 
-## R Packages
+:::
 
-| Package | Description |
-|---------|-------------|
-| [`tidysynth`](https://github.com/edunford/tidysynth) | Tidy implementation of classical SCM |
-| [`gsynth`](https://yiqingxu.org/packages/gsynth/) | IFE and Matrix Completion estimators |
-| [`synthdid`](https://synth-inference.github.io/synthdid/) | Synthetic DiD (Arkhangelsky et al.) |
-| [`augsynth`](https://github.com/ebenmichael/augsynth) | Augmented SCM with outcome modeling |
+::: {.column width="35%"}
+
+**QR code (site)**
+
+![](https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=https%3A%2F%2Fvalentink.quarto.pub%2Fjcod-scm%2F){width=220}
+
+Small-print: this QR is generated via a public image endpoint; if you prefer an **offline/local** QR image, tell me and I’ll give you a short R chunk that writes `qr.png` into your project.
+
+:::
+:::
+
+## Key references (starter set)
+
+- Abadie (2021) — SCM overview and practical guidance  
+- Arkhangelsky et al. (2021) — Synthetic Difference-in-Differences  
+- Ben-Michael et al. (2021) — Augmented SCM
+
+## Software (what to use)
+
+- **`scpi`** — classical SCM + inference tooling (and implementations across languages)
+- `synthdid` — SDID reference implementation
+- `augsynth` — augmented / bias-corrected SCM workflows
 
 ## About
-
-These materials were prepared for the **Journal Club on Observational Data (JCOD)** seminar series.
 
 Contact: [Valentin Klotzbücher](about.qmd)
