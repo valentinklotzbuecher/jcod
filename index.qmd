@@ -1,343 +1,48 @@
 ---
-title: "Synthetic Control and Synthetic Difference-in-Differences"
-subtitle: "A modern, design-first view of panel counterfactuals"
-author: "Valentin Klotzbücher"
-date: last-modified
-
-# one source → two decks
-format:
-  revealjs:
-    theme: [default, custom-unibas.scss]
-    slide-number: true
-    incremental: true
-    toc: false
-    center: false
-    width: 1280
-    height: 720
-    format-links: [beamer]
-  beamer:
-    aspectratio: 169
-    include-in-header: beamer-unibas.tex
-    fonttheme: professionalfonts
-    classoption:
-      - "t"  # Top-align content
-
-bibliography: references.bib
-csl: nature.csl
-
-execute:
-  echo: false
-  warning: false
-  message: false
+title: "Synthetic Control Methods"
+subtitle: "Resources for causal inference with panel data"
 ---
 
-## Sample slide with bullets
+## Overview
 
-This is a sample slide to test the styling:
+This site collects resources on **Synthetic Control Methods (SCM)** and related approaches for causal inference with panel data, particularly when only a single (or few) treated units are available.
 
-- First bullet point
-- Second bullet point with **bold** and *italic*
-- Third point with `inline code`
+The methods covered include:
 
-::: notes
-Speaker notes appear here.
+- **Classical SCM** — weighted combination of donor units
+- **Interactive Fixed Effects (IFE)** — latent factor models
+- **Matrix Completion (MC)** — low-rank imputation
+- **Synthetic Difference-in-Differences** — combining SCM with DiD
+
+## Slides
+
+::: {.callout-note appearance="simple"}
+### Presentation: SCM & SDID
+
+A modern, design-first view of panel counterfactuals. Covers motivation, methodology, and a simulation illustration.
+
+[View Slides (HTML)](slides.qmd){.btn .btn-primary}
+[Download PDF](slides.pdf){.btn .btn-outline-primary style="margin-left: 0.5rem;"}
 :::
 
----
+## Key References
 
-## Sample slide with equations
+- Abadie (2021) — "Using Synthetic Controls: Feasibility, Data Requirements, and Methodological Aspects" *Journal of Economic Literature*
+- Arkhangelsky et al. (2021) — "Synthetic Difference-in-Differences" *American Economic Review*
+- Xu (2017) — "Generalized Synthetic Control Method" *Political Analysis*
+- Ben-Michael et al. (2021) — "The Augmented Synthetic Control Method" *Journal of the American Statistical Association*
 
-Inline math: $Y_{it} = \alpha_i + \lambda_t + \varepsilon_{it}$
+## R Packages
 
-Display equation:
-$$
-\tau = \frac{1}{T-T_0+1}\sum_{t=T_0}^{T}\Big(Y_{1t}(1)-Y_{1t}(0)\Big)
-$$
+| Package | Description |
+|---------|-------------|
+| [`tidysynth`](https://github.com/edunford/tidysynth) | Tidy implementation of classical SCM |
+| [`gsynth`](https://yiqingxu.org/packages/gsynth/) | IFE and Matrix Completion estimators |
+| [`synthdid`](https://synth-inference.github.io/synthdid/) | Synthetic DiD (Arkhangelsky et al.) |
+| [`augsynth`](https://github.com/ebenmichael/augsynth) | Augmented SCM with outcome modeling |
 
-Another equation with fractions and sums:
-$$
-\widehat{Y}_{1t}(0) = \sum_{j\in \mathcal{D}} w_j Y_{jt} \quad \text{where } \sum_j w_j = 1
-$$
+## About
 
----
+These materials were prepared for the **Journal Club on Observational Data (JCOD)** seminar series.
 
-## Sample slide with code
-
-```r
-# Example R code
-library(tidyverse)
-df <- data |>
-  filter(year >= 2020) |>
-  summarise(mean = mean(outcome))
-```
-
----
-
-## Sample reference
-
-Testing citation: @Abadie2021SyntheticControls
-
----
-
-```{r}
-#| label: setup
-#| echo: true
-#| message: false
-#| warning: false
-
-
-library(dplyr)
-library(tidyr)
-library(ggplot2)
-library(fixest)
-
-# SCM packages
-library(tidysynth)
-library(gsynth)
-
-set.seed(420)
-```
-
-
-```{r}
-#| label: simulate-panel
-#| echo: true
-
-
-hospitals <- c(
-  "Basel", "Zurich", "Bern", "Geneva", "Lausanne", "St_Gallen", "Luzern",
-  "Aarau", "Winterthur", "Fribourg", "Chur", "Bellinzona"
-)
-years <- 2008:2023
-
-T0 <- 2016
-treated_unit <- "Basel"
-
-time_trend <- tibble(
-  year = years,
-  lambda = -0.25 * (year - min(year)),
-  f = 1.5 * exp(-0.5 * ((year - 2012) / 1.6)^2) - 0.7 * exp(-0.5 * ((year - 2018) / 1.8)^2)
-)
-
-hosp_par <- tibble(
-  hospital = hospitals,
-  alpha_i  = rnorm(length(hospitals), 0, 0.8),
-  gamma_i  = rnorm(length(hospitals), 1.0, 0.25)
-) %>%
-  mutate(gamma_i = if_else(hospital == treated_unit, gamma_i + 0.35, gamma_i))
-
-df <- tidyr::expand_grid(hospital = hospitals, year = years) %>%
-  left_join(time_trend, by = "year") %>%
-  left_join(hosp_par,  by = "hospital") %>%
-  mutate(
-    treated = (hospital == treated_unit),
-    post    = (year >= T0),
-    mu0 = 15 + alpha_i + lambda + gamma_i * f,
-    tau = if_else(treated & post, -1.2, 0),   # Basel improves post-2016
-    y   = mu0 + tau + rnorm(n(), 0, 0.6)
-  ) %>%
-  select(hospital, year, treated, post, y)
-
-
-```
-
----
-
-```{r}
-#| label: did-twfe
-#| echo: true
-
-
-df2 <- df %>%
-  mutate(
-    treated_i = as.integer(treated),
-    post_i    = as.integer(post),
-    tp        = treated_i * post_i
-  )
-
-m_did2 <- feols(y ~ tp | hospital + year, data = df2, cluster = "hospital")
-att_did <- unname(coef(m_did2)["tp"])
-att_did
-
-```
-
----
-
-```{r}
-#| label: scm-tidysynth-fit
-#| echo: true
-
-pre_years <- min(years):(T0 - 1)
-
-# sanity check: your panel should be unique hospital-year
-stopifnot(nrow(df) == nrow(dplyr::distinct(df, hospital, year)))
-
-scm_ts <- df %>%
-  synthetic_control(
-    outcome = y,
-    unit = hospital,
-    time = year,
-    i_unit = treated_unit,
-    i_time = T0
-  ) %>%
-  # 1) Pre-period mean outcome as a single predictor (safe)
-  generate_predictor(
-    time_window = pre_years,
-    y_mean_pre = mean(y)
-  ) %>%
-  # 2) Add a few single-year lags, EACH with a unique name (critical!)
-  generate_predictor(time_window = 2010, y_2010 = y) %>%
-  generate_predictor(time_window = 2012, y_2012 = y) %>%
-  generate_predictor(time_window = 2014, y_2014 = y) %>%
-  generate_predictor(time_window = 2015, y_2015 = y) %>%
-  generate_weights(optimization_window = pre_years) %>%
-  generate_control()
-
-```
-
----
-
-```{r}
-#| label: scm-tidysynth-plot
-#| echo: true
-
-plot_trends(scm_ts) +
-  geom_vline(xintercept = T0, linetype = 3) +
-  labs(
-    title = "tidysynth SCM: Basel vs Synthetic",
-    subtitle = "Vertical line: treatment starts (2016)"
-  )
-
-```
-
-```{r}
-#| label: scm-tidysynth-att
-#| echo: true
-
-# Extract series + compute post-period average gap (Basel - synth)
-scm_series <- grab_synthetic_control(scm_ts)
-
-att_scm_ts <- scm_series %>%
-  filter(time_unit >= T0) %>%
-  summarise(att = mean(real_y - synth_y)) %>%
-  pull(att)
-
-att_scm_ts
-
-
-```
-
----
-
-```{r}
-#| label: gsynth-fit
-#| echo: true
-
-# gsynth expects: outcome y, treatment indicator D (0/1), panel index
-df_gs <- df %>%
-  mutate(D = as.integer(treated & post)) %>%  # treated turns on at 2016 for Basel
-  arrange(hospital, year)
-
-# Interactive fixed effects (IFE) version
-# r = number of latent factors; CV chooses r if r is a vector.
-gs_ife <- gsynth(
-  y ~ D,
-  data = df_gs,
-  index = c("hospital", "year"),
-  force = "two-way",
-  CV = TRUE,
-  r = 0:3,          # try 0..3 factors, pick by CV
-  se = FALSE        # keep fast for slides; turn on later if needed
-)
-```
-
-```{r}
-#| label: gsynth-mc
-#| echo: true
-#| eval: true
-
-gs_mc <- gsynth(
-  y ~ D,
-  data = df_gs,
-  index = c("hospital", "year"),
-  force = "two-way",
-  estimator = "mc",
-  CV = TRUE,
-  r = 0:3,
-  se = FALSE
-)
-
-
-```
-
----
-
-
-```{r}
-#| label: gsynth-mc-gap-ggplot
-#| echo: true
-
-
-
-# gs_mc$id should be length 12 (unit names, in column order of eff)
-basel_col <- match(treated_unit, as.character(gs_mc$id))
-if (is.na(basel_col)) stop("treated_unit not found in gs_mc$id")
-
-gap_df <- tibble(
-  year = gs_mc$time,
-  gap  = as.numeric(gs_mc$eff[, basel_col])
-)
-
-xT0 = 0
-
-ggplot(gap_df, aes(year, gap)) +
-  geom_hline(yintercept = 0) +
-  geom_line(linewidth = 1) +
-  geom_vline(xintercept = xT0, linetype = 3) +
-  labs(
-    title = "gsynth (MC) gap: Basel -- counterfactual",
-    x = NULL, y = "Gap"
-  )
-
-c(att = gs_mc$att, att_avg = gs_mc$att.avg)
-
-```
-
----
-
-```{r}
-#| label: compare-estimates
-#| echo: true
-
-
-
-tibble(
-  method = c("TWFE DiD", "SCM (tidysynth)", "gsynth IFE (avg ATT)"),
-  att = c(att_did, att_scm_ts, gs_ife$att.avg)
-)
-
-
-```
-
-```{r}
-#| label: gsynth-ife-eff-path
-#| echo: true
-
-basel_col_ife <- match(treated_unit, as.character(gs_ife$id))
-if (is.na(basel_col_ife)) stop("treated_unit not found in gs_ife$id")
-
-ife_df <- tibble(
-  year = gs_ife$time,
-  gap  = as.numeric(gs_ife$eff[, basel_col_ife])
-)
-
-ggplot(ife_df, aes(year, gap)) +
-  geom_hline(yintercept = 0) +
-  geom_line(linewidth = 1) +
-  geom_vline(xintercept = xT0, linetype = 3) +
-  labs(title = "gsynth IFE gap: Basel \u2212 counterfactual", x = NULL, y = "Gap")
-
-```
-
-
-## References
+Contact: [Valentin Klotzbücher](about.qmd)

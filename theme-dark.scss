@@ -1,0 +1,263 @@
+/*-- scss:defaults --*/
+/*-----------------------------------
+  Dark Theme - Deep Space Purple
+------------------------------------*/
+
+/* Typography */
+$font-family-sans-serif: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+$headings-font-weight: 600;
+$font-size-base: 1.05rem;
+$line-height-base: 1.7;
+
+/* Color Palette - Rich dark with glowing purple accents */
+$body-bg: #0f0a1a;              // Deep space purple-black
+$body-color: #e8e4f0;           // Soft lavender white
+$primary: #9D6EE8;              // Vibrant purple that glows
+$primary-hover: #B48EF0;
+$primary-subtle: rgba(157, 110, 232, 0.12);
+
+/* Surface colors */
+$surface: #1a1225;              // Card backgrounds
+$surface-hover: #241830;
+$border-color: rgba(157, 110, 232, 0.15);
+
+/* Accent colors */
+$secondary: #7B8BA3;
+
+/*-- scss:rules --*/
+
+/* Import Inter font */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  --bs-body-bg: #{$body-bg};
+  --bs-body-color: #{$body-color};
+  --bs-primary: #{$primary};
+  --bs-link-color: #{$primary};
+}
+
+/* Body */
+body {
+  background-color: $body-bg;
+  color: $body-color;
+  font-family: $font-family-sans-serif;
+  line-height: $line-height-base;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Headings */
+h1, h2, h3, h4, h5, h6 {
+  color: #ffffff;
+  font-weight: $headings-font-weight;
+  letter-spacing: -0.02em;
+}
+
+h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+}
+
+/* Links - subtle glow effect */
+a {
+  color: $primary;
+  text-decoration: none;
+  transition: color 0.2s ease, text-shadow 0.2s ease;
+
+  &:hover {
+    color: $primary-hover;
+    text-shadow: 0 0 12px rgba(157, 110, 232, 0.4);
+  }
+}
+
+/* Content links get underline animation */
+.content a:not(.btn):not(.nav-link),
+#quarto-content a:not(.btn):not(.nav-link):not(.citation) {
+  background-image: linear-gradient($primary-hover, $primary-hover);
+  background-size: 0% 2px;
+  background-repeat: no-repeat;
+  background-position: left bottom;
+  transition: background-size 0.3s ease, color 0.2s ease;
+
+  &:hover {
+    background-size: 100% 2px;
+  }
+}
+
+/* Primary Buttons - Glowing pill style */
+.btn-primary {
+  background: linear-gradient(135deg, $primary, darken($primary, 10%));
+  border: none;
+  border-radius: 50px;
+  padding: 0.6rem 1.4rem;
+  font-weight: 500;
+  font-size: 0.9rem;
+  letter-spacing: 0.01em;
+  box-shadow: 0 2px 12px rgba(157, 110, 232, 0.35);
+  transition: all 0.25s ease;
+
+  &:hover {
+    background: linear-gradient(135deg, $primary-hover, $primary);
+    box-shadow: 0 4px 20px rgba(157, 110, 232, 0.5);
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+/* Navbar - Glass effect with purple tint */
+.navbar {
+  background: linear-gradient(180deg, rgba(30, 20, 45, 0.95), rgba(20, 12, 30, 0.9)) !important;
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid $border-color;
+  padding: 0.8rem 0;
+}
+
+.navbar-brand, .navbar-title {
+  font-weight: 600;
+  font-size: 1.15rem;
+  letter-spacing: -0.01em;
+  color: #ffffff !important;
+}
+
+.navbar .nav-link,
+.navbar .navbar-nav .nav-link {
+  color: rgba(255, 255, 255, 0.8) !important;
+  font-weight: 500;
+  transition: color 0.2s ease;
+
+  &:hover {
+    color: $primary !important;
+  }
+}
+
+/* Navbar icons */
+.navbar .bi {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 1.1rem;
+  transition: color 0.2s ease;
+
+  &:hover {
+    color: $primary;
+  }
+}
+
+/* About section - Floating glass card */
+#hero-heading {
+  background: $surface;
+  border-radius: 20px;
+  padding: 1.5rem 2rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  border: 1px solid $border-color;
+  margin: 2rem 0;
+}
+
+/* Larger profile image */
+.quarto-about-solana .about-image img {
+  max-width: 280px !important;
+  width: 280px !important;
+}
+
+/* Profile image refinement */
+.about-image img,
+.quarto-about-solana .about-image img {
+  border-radius: 16px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  border: 1px solid $border-color;
+}
+
+/* Footer - Subtle and elegant */
+.page-footer {
+  border-top: 1px solid $border-color !important;
+  background: transparent;
+  padding: 1.5rem 0;
+  font-size: 0.85rem;
+  color: $secondary;
+}
+
+/* References section */
+#refs {
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid $border-color;
+}
+
+#refs p {
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: rgba(232, 228, 240, 0.7);
+}
+
+/* Main content */
+#quarto-content {
+  padding-top: 1rem;
+}
+
+.quarto-about-solana {
+  max-width: 1100px !important;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.quarto-about-solana .about-entity {
+  flex-wrap: nowrap !important;
+  gap: 3rem;
+}
+
+.quarto-about-solana .about-contents {
+  flex: 1;
+  max-width: none;
+}
+
+/* Horizontal rule - glowing line */
+hr {
+  border: none;
+  height: 1px;
+  background: linear-gradient(to right, transparent, $border-color, rgba(157, 110, 232, 0.3), $border-color, transparent);
+  margin: 2.5rem 0;
+}
+
+/* Selection color */
+::selection {
+  background-color: rgba(157, 110, 232, 0.3);
+}
+
+/* Code blocks - dark surface */
+pre, code {
+  background-color: $surface !important;
+  border: 1px solid $border-color;
+}
+
+pre {
+  border-radius: 8px;
+}
+
+/* Tables */
+.table {
+  color: $body-color;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: $body-bg;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(157, 110, 232, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(157, 110, 232, 0.5);
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}

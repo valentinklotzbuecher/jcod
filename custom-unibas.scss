@@ -1,119 +1,105 @@
 /*-- scss:defaults --*/
 
-// University of Basel Brand Colors
-$unibas-mint: #A5D7D2;
-$unibas-mint-light: #D2EBE9;
-$unibas-red: #D20537;
-$unibas-anthracite: #2D373C;
-$unibas-anthracite-light: #46505A;
+// Color palette
+$charcoal: #1a1a2e;
+$charcoal-light: #2d2d44;
+$warm-white: #f5f5f0;
+$amber: #e8aa42;
+$amber-light: #f0c674;
 
 // RevealJS theme variables
-$body-bg: $unibas-anthracite;
-$body-color: #FFFFFF;
-$link-color: $unibas-mint;
-$link-color-hover: $unibas-mint-light;
-$selection-bg: $unibas-mint;
-$selection-color: $unibas-anthracite;
+$body-bg: $charcoal;
+$body-color: $warm-white;
+$link-color: $amber;
+$link-color-hover: $amber-light;
+$selection-bg: $amber;
+$selection-color: $charcoal;
 
 // Headings
-$presentation-heading-color: $unibas-mint;
-$presentation-heading-font-weight: 600;
+$presentation-heading-color: $warm-white;
+$presentation-heading-font-weight: 500;
 
 // Code
-$code-bg: $unibas-anthracite-light;
-$code-color: #FFFFFF;
+$code-bg: $charcoal-light;
+$code-color: $warm-white;
 
 /*-- scss:rules --*/
 
-// Title slide styling (same as content slides)
 .reveal .slides section.title-slide,
 .reveal .slides section#title-slide {
-  background-color: $unibas-anthracite;
-
   h1, h2, .title {
-    color: $unibas-mint;
+    color: $warm-white;
   }
-
-  .subtitle, .author, .date, p {
-    color: #FFFFFF;
+  .subtitle {
+    color: $amber;
+  }
+  .author, .date, p {
+    color: rgba($warm-white, 0.8);
   }
 }
 
-// Ensure good contrast for text
 .reveal .slides {
   h1, h2, h3 {
-    color: $unibas-mint;
+    color: $warm-white;
+    letter-spacing: -0.02em;
   }
-
+  h2 {
+    border-bottom: 2px solid $amber;
+    padding-bottom: 0.3em;
+    display: inline-block;
+  }
   p, li, td, th {
-    color: #FFFFFF;
+    color: $warm-white;
   }
 }
 
-// Links with red accent
 .reveal a {
-  color: $unibas-mint;
-
+  color: $amber;
+  text-decoration: underline;
+  text-underline-offset: 3px;
   &:hover {
-    color: $unibas-mint-light;
+    color: $amber-light;
   }
 }
 
-// Progress bar
-.reveal .progress {
-  background: rgba($unibas-mint, 0.2);
-
-  span {
-    background: $unibas-mint;
-  }
+.reveal .progress span {
+  background: $amber;
 }
 
-// Slide number
 .reveal .slide-number {
-  color: $unibas-mint;
+  color: rgba($warm-white, 0.5);
   background-color: transparent;
+  font-size: 0.7em;
 }
 
-// Controls (navigation arrows)
 .reveal .controls {
-  color: $unibas-mint;
+  color: $amber;
 }
 
-// Code blocks
 .reveal pre {
-  background-color: $unibas-anthracite-light;
-  border: 1px solid rgba($unibas-mint, 0.3);
+  background-color: $charcoal-light;
+  border-radius: 6px;
+  border: none;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 }
 
 .reveal code {
-  color: $unibas-mint-light;
+  color: $amber-light;
 }
 
-// Math equations - ensure white color
-.reveal .math {
-  color: #FFFFFF;
-}
-
-// Block quotes
 .reveal blockquote {
-  border-left: 4px solid $unibas-mint;
-  background-color: rgba($unibas-mint, 0.1);
+  border-left: 3px solid $amber;
+  background-color: rgba($amber, 0.08);
+  font-style: italic;
+  padding: 1em 1.5em;
 }
 
-// Tables
-.reveal table {
-  th {
-    background-color: $unibas-anthracite-light;
-    color: $unibas-mint;
-  }
-
-  td {
-    border-color: $unibas-anthracite-light;
-  }
+.reveal table th {
+  background-color: $charcoal-light;
+  color: $amber;
+  font-weight: 500;
 }
 
-// Speaker notes styling
-.reveal .speaker-notes {
-  background-color: $unibas-anthracite-light;
-  color: #FFFFFF;
+.reveal table td {
+  border-color: $charcoal-light;
 }

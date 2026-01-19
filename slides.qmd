@@ -1,0 +1,642 @@
+---
+title: "Synthetic Control and Synthetic Difference-in-Differences"
+subtitle: "A modern, design-first view of panel counterfactuals"
+author: "Valentin Klotzbücher"
+date: last-modified
+
+# one source → two decks
+format:
+  revealjs:
+    theme: [default, theme-dark.scss]
+    slide-number: true
+    incremental: true
+    toc: false
+    center: false
+    width: 1280
+    height: 720
+    format-links: [beamer]
+  beamer:
+    aspectratio: 169
+    include-in-header: beamer-unibas.tex
+    fonttheme: professionalfonts
+    classoption:
+      - "t"  # Top-align content
+
+bibliography: references.bib
+csl: the-quarterly-journal-of-economics.csl
+
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: prep
+#| include: false
+#| cache: true
+
+# ── Libraries ──
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(fixest)
+library(tidysynth)
+library(gsynth)
+library(lubridate)
+set.seed(420)
+
+# ── Simulation: Monthly data ──
+hospitals <- c("Basel", "Zurich", "Bern", "Geneva", "Lausanne",
+               "St_Gallen", "Luzern", "Aarau", "Winterthur",
+               "Fribourg", "Chur", "Bellinzona")
+
+# Monthly sequence: Jan 2012 to Dec 2023
+months <- seq(as.Date("2012-01-01"), as.Date("2023-12-01"), by = "month")
+T0_date <- as.Date("2018-07-01")  # Treatment starts July 2018
+treated_unit <- "Basel"
+
+# Numeric time index for models (months since start)
+time_idx <- seq_along(months)
+T0 <- which(months == T0_date)
+pre_periods <- 1:(T0 - 1)
+
+# Time trend with latent factors + seasonality
+time_trend <- tibble(
+  month = months,
+  t = time_idx,
+  # Linear trend (gradual decline)
+  lambda = -0.015 * (t - 1),
+  # Latent factor 1: smooth business cycle (~4 year period)
+  f1 = 1.2 * sin(2 * pi * t / 48),
+  # Latent factor 2: policy shock around 2020 (COVID-like)
+  f2 = -1.5 * plogis((t - 97) / 3) + 0.8 * plogis((t - 109) / 4),
+  # Seasonality (winter peaks for hospital data)
+  season = 0.6 * cos(2 * pi * (month(month) - 1) / 12)
+)
+
+# Hospital parameters (heterogeneous factor loadings)
+hosp_par <- tibble(
+  hospital = hospitals,
+  alpha_i  = rnorm(length(hospitals), 0, 1.2),
+  gamma1_i = rnorm(length(hospitals), 1.0, 0.3),   # loading on f1
+  gamma2_i = rnorm(length(hospitals), 1.0, 0.25),  # loading on f2
+  season_i = rnorm(length(hospitals), 1.0, 0.2)    # seasonal sensitivity
+) %>%
+  # Basel has different loadings (violates parallel trends)
+  mutate(
+    gamma1_i = dplyr::if_else(hospital == treated_unit, gamma1_i + 0.4, gamma1_i),
+    gamma2_i = dplyr::if_else(hospital == treated_unit, gamma2_i - 0.3, gamma2_i)
+  )
+
+# Panel data
+df <- expand_grid(hospital = hospitals, t = time_idx) %>%
+  left_join(time_trend, by = "t") %>%
+  left_join(hosp_par, by = "hospital") %>%
+  mutate(
+    treated = (hospital == treated_unit),
+    post    = (t >= T0),
+    # Potential outcome without treatment
+    mu0 = 50 + alpha_i + lambda + gamma1_i * f1 + gamma2_i * f2 + season_i * season,
+    # Treatment effect: gradual phase-in over 6 months, then stable at -2.5
+    months_post = pmax(0, t - T0 + 1),
+    tau = dplyr::if_else(treated & post, -2.5 * pmin(months_post / 6, 1), 0),
+    # Observed outcome
+    y = mu0 + tau + rnorm(n(), 0, 0.8)
+  ) %>%
+  select(hospital, month, t, treated, post, y)
+
+# ── TWFE DiD ──
+df2 <- df %>%
+  mutate(treated_i = as.integer(treated),
+         post_i = as.integer(post),
+         tp = treated_i * post_i)
+m_did <- feols(y ~ tp | hospital + t, data = df2, cluster = "hospital")
+att_did <- unname(coef(m_did)["tp"])
+
+# ── tidysynth SCM (uses numeric time index) ──
+scm_ts <- df %>%
+  synthetic_control(
+    outcome = y, unit = hospital, time = t,
+    i_unit = treated_unit, i_time = T0
+  ) %>%
+  # Pre-period mean
+  generate_predictor(time_window = pre_periods, y_mean_pre = mean(y)) %>%
+  # Several pre-treatment periods as predictors
+  generate_predictor(time_window = 12, y_t12 = y) %>%   # Dec 2012
+  generate_predictor(time_window = 24, y_t24 = y) %>%   # Dec 2013
+  generate_predictor(time_window = 48, y_t48 = y) %>%   # Dec 2015
+  generate_predictor(time_window = 60, y_t60 = y) %>%   # Dec 2016
+  generate_predictor(time_window = 72, y_t72 = y) %>%   # Dec 2017
+  generate_predictor(time_window = 78, y_t78 = y) %>%   # Jun 2018
+  generate_weights(optimization_window = pre_periods) %>%
+  generate_control()
+
+# Robust ATT extraction for tidysynth
+scm_series <- grab_synthetic_control(scm_ts)
+time_col <- names(scm_series)[1]
+real_col <- grep("^real|^treated", names(scm_series), value = TRUE)[1]
+synth_col <- grep("^synth", names(scm_series), value = TRUE)[1]
+stopifnot(!is.na(time_col), !is.na(real_col), !is.na(synth_col))
+
+att_scm_ts <- scm_series %>%
+  filter(.data[[time_col]] >= T0) %>%
+  summarise(att = mean(.data[[real_col]] - .data[[synth_col]])) %>%
+  pull(att)
+
+# ── gsynth IFE ──
+df_gs <- df %>%
+  mutate(D = as.integer(treated & post)) %>%
+  arrange(hospital, t)
+
+gs_ife <- gsynth(y ~ D, data = df_gs, index = c("hospital", "t"),
+                 force = "two-way", CV = TRUE, r = 0:5, se = FALSE)
+att_ife_avg <- gs_ife$att.avg
+
+# ── gsynth MC ──
+gs_mc <- gsynth(y ~ D, data = df_gs, index = c("hospital", "t"),
+                force = "two-way", estimator = "mc", CV = TRUE,
+                r = 0:5, se = FALSE)
+att_mc_avg <- gs_mc$att.avg
+
+# ── Gap dataframes (eff is time × units) ──
+basel_col_ife <- match(treated_unit, as.character(gs_ife$id))
+basel_col_mc  <- match(treated_unit, as.character(gs_mc$id))
+
+# gsynth time is the actual time index from data
+gap_df_ife <- tibble(
+  t = as.integer(gs_ife$time),
+  gap = as.numeric(gs_ife$eff[, basel_col_ife])
+) %>%
+  left_join(time_trend %>% select(t, month), by = "t")
+
+gap_df_mc <- tibble(
+  t = as.integer(gs_mc$time),
+  gap = as.numeric(gs_mc$eff[, basel_col_mc])
+) %>%
+  left_join(time_trend %>% select(t, month), by = "t")
+
+# ── Comparison table ──
+cmp_tbl <- tibble(
+  Method = c("TWFE DiD", "SCM (tidysynth)", "gsynth IFE", "gsynth MC"),
+  ATT = c(att_did, att_scm_ts, att_ife_avg, att_mc_avg)
+)
+
+# ── Pre-built plots ──
+# Raw panel (use dates for x-axis)
+p_raw <- ggplot(df, aes(month, y, group = hospital,
+                        colour = dplyr::if_else(treated, "Basel", "Donors"))) +
+  geom_line(linewidth = 0.5, alpha = 0.8) +
+  geom_vline(xintercept = T0_date, linetype = 2, colour = "red") +
+  scale_colour_manual(values = c("Basel" = "steelblue", "Donors" = "grey60")) +
+  scale_x_date(date_breaks = "2 years", date_labels = "%Y") +
+  labs(title = "Simulated monthly panel: Basel (treated) vs donors",
+       subtitle = paste0("Vertical line: treatment (", format(T0_date, "%b %Y"), ")"),
+       x = NULL, y = "Outcome", colour = NULL) +
+  theme_minimal()
+
+# SCM trends (tidysynth uses numeric t, so we rebuild with dates)
+scm_plot_df <- scm_series %>%
+  mutate(month = months[.data[[time_col]]]) %>%
+  rename(real = !!real_col, synth = !!synth_col) %>%
+  pivot_longer(cols = c(real, synth), names_to = "series", values_to = "y")
+
+p_scm_trends <- ggplot(scm_plot_df, aes(month, y, colour = series)) +
+  geom_line(linewidth = 0.8) +
+  geom_vline(xintercept = T0_date, linetype = 2, colour = "red") +
+  scale_colour_manual(values = c("real" = "steelblue", "synth" = "darkorange"),
+                      labels = c("real" = "Basel", "synth" = "Synthetic")) +
+  scale_x_date(date_breaks = "2 years", date_labels = "%Y") +
+  labs(title = "SCM: Basel vs Synthetic Control",
+       subtitle = paste0("Vertical line: treatment (", format(T0_date, "%b %Y"), ")"),
+       x = NULL, y = "Outcome", colour = NULL) +
+  theme_minimal()
+
+# gsynth IFE gap
+p_gap_ife <- ggplot(gap_df_ife, aes(month, gap)) +
+  geom_hline(yintercept = 0, colour = "grey40") +
+  geom_line(linewidth = 0.8, colour = "steelblue") +
+  geom_vline(xintercept = T0_date, linetype = 2, colour = "red") +
+  scale_x_date(date_breaks = "2 years", date_labels = "%Y") +
+  labs(title = "gsynth IFE: Basel - counterfactual",
+       subtitle = paste0("Treatment: ", format(T0_date, "%b %Y")),
+       x = NULL, y = "Gap") +
+  theme_minimal()
+
+# gsynth MC gap
+p_gap_mc <- ggplot(gap_df_mc, aes(month, gap)) +
+  geom_hline(yintercept = 0, colour = "grey40") +
+  geom_line(linewidth = 0.8, colour = "darkorange") +
+  geom_vline(xintercept = T0_date, linetype = 2, colour = "red") +
+  scale_x_date(date_breaks = "2 years", date_labels = "%Y") +
+  labs(title = "gsynth MC: Basel - counterfactual",
+       subtitle = paste0("Treatment: ", format(T0_date, "%b %Y")),
+       x = NULL, y = "Gap") +
+  theme_minimal()
+
+# Format treatment date for slides
+T0_label <- format(T0_date, "%B %Y")
+```
+
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!-- SECTION A — Motivation & Literature                                     -->
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+## Motivation
+
+**Hospital-level interventions** pose unique causal inference challenges:
+
+- Policy implemented at a single site (e.g., Basel)
+- Limited control units, heterogeneous baseline trends
+- Need credible **counterfactual trajectory**: what would have happened without the intervention?
+
+::: notes
+Classic example: one hospital adopts a new protocol. We observe the outcome afterward, but need a principled comparison group.
+:::
+
+---
+
+## Why DiD is uncomfortable
+
+Standard **Difference-in-Differences** assumes:
+
+- Parallel trends: treated and control would evolve identically absent treatment
+- With a single treated unit, this is untestable and often implausible
+- Heterogeneous responses to common shocks (e.g., pandemic) break the assumption
+
+**Key insight:** We need methods that *construct* a comparison unit rather than assume one exists.
+
+::: notes
+DiD works well with many treated/control units and credible parallel trends. With one treated unit, we're often forcing a bad fit.
+:::
+
+---
+
+## Key papers
+
+Foundational and applied references:
+
+- @Abadie2021SyntheticControls — comprehensive review of SCM
+- @Kreif2016ExaminationSCM — health policy applications
+- @Bonander2021SCMTutorial — practical tutorial
+- @Cunningham2021SyntheticControlChapter — textbook treatment
+- @Kuosmanen2021DesignFlawSCM — design considerations and pitfalls
+
+::: notes
+These cover theory, health applications, and practical guidance. The Cunningham chapter is excellent for intuition.
+:::
+
+---
+
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!-- SECTION B — SCM Core                                                    -->
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+## SCM intuition
+
+**Core idea:** Build a *synthetic control* as a weighted combination of donor units.
+
+- Weights chosen to match the treated unit's pre-treatment trajectory
+- The synthetic unit serves as the counterfactual
+- Treatment effect = observed outcome − synthetic outcome
+
+$$
+\widehat{Y}_{1t}^{(0)} = \sum_{j=2}^{J+1} w_j \cdot Y_{jt} \quad \text{where } \sum_j w_j = 1, \; w_j \geq 0
+$$
+
+::: notes
+We're constructing a "frankenunit" from donors that looks like the treated unit pre-treatment.
+:::
+
+---
+
+## SCM objective + weights
+
+Weights minimize pre-treatment prediction error:
+
+$$
+\min_{W} \sum_{t < T_0} \left( Y_{1t} - \sum_{j=2}^{J+1} w_j Y_{jt} \right)^2
+$$
+
+Subject to:
+
+- $w_j \geq 0$ (no negative weights)
+- $\sum_j w_j = 1$ (convex combination)
+
+**Result:** Sparse weights; typically few donors receive positive weight.
+
+::: notes
+The optimization is a constrained regression. Sparsity helps interpretability—we can say "synthetic Basel is 60% Zurich + 40% Bern."
+:::
+
+---
+
+## Diagnostics workflow
+
+Before trusting SCM estimates:
+
+1. **Pre-fit balance:** Does synthetic match treated pre-treatment?
+2. **Weights inspection:** Are weights sensible? Too concentrated?
+3. **Placebo tests:** Run SCM on each donor as if treated
+4. **Pre-treatment RMSPE:** Large gaps pre-treatment → unreliable post-treatment
+
+::: notes
+Diagnostics are essential. A poor pre-fit means the counterfactual is unreliable.
+:::
+
+---
+
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!-- SECTION C — Modern SCM Family                                           -->
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+## Why classical SCM can fail
+
+Limitations of the original method:
+
+- **Overfitting:** Too many predictors relative to pre-periods
+- **Interpolation bias:** Treated unit outside convex hull of donors
+- **No extrapolation:** Convex weights can't capture factor loadings outside donor range
+- **Single factor structure:** May miss complex latent heterogeneity
+
+::: notes
+These issues motivate the modern extensions: gsynth, augsynth, sdid, etc.
+:::
+
+---
+
+## Generalized SCM / IFE / MC
+
+Modern extensions relax classical SCM assumptions:
+
+| Method | Key idea |
+|--------|----------|
+| **IFE** (Interactive Fixed Effects) | Estimate latent factors + loadings jointly |
+| **MC** (Matrix Completion) | Low-rank imputation of missing counterfactuals |
+| **Augmented SCM** | Bias correction via outcome modeling |
+
+All share the intuition: **impute the missing $Y_{1t}^{(0)}$** using structure in the panel.
+
+::: notes
+gsynth implements IFE and MC. These are more flexible than classical SCM but require more data.
+:::
+
+---
+
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!-- SECTION D — Simulation Illustration                                     -->
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+## Scope of today
+
+What we cover:
+
+- Intuition behind SCM and modern extensions
+- Diagnostics and practical workflow
+- Simulation illustration with R
+
+What we leave to the papers:
+
+- Formal inference (permutation tests, conformal inference)
+- Covariate adjustment details
+- Staggered adoption designs
+
+**Design choices often matter more than estimator choice.**
+
+::: notes
+This is a methods overview, not a deep dive into asymptotics.
+:::
+
+---
+
+## Simulation design
+
+**Monthly panel with latent factors:**
+
+- 12 Swiss hospitals, Jan 2012 – Dec 2023 (144 months)
+- Basel treated at $T_0$ = July 2018
+- True ATT = −2.5 (gradual phase-in over 6 months)
+- Two latent factors + seasonality; Basel has different loadings
+
+This setup *violates* parallel trends—donors respond differently to common shocks.
+
+::: notes
+We deliberately create a scenario where DiD would struggle but SCM methods should recover the effect.
+:::
+
+---
+
+## DGP: Latent factors
+
+```{r}
+#| label: show-dgp-code
+#| echo: true
+#| eval: false
+#| code-line-numbers: "3-8|10-11"
+
+# Potential outcome without treatment
+mu0 = 50 + alpha_i + lambda +
+      gamma1_i * f1 +       # business cycle (heterogeneous loading)
+      gamma2_i * f2 +       # policy shock (heterogeneous loading)
+      season_i * season     # winter peaks
+
+# Treatment effect: gradual phase-in
+months_post = pmax(0, t - T0 + 1)
+tau = if_else(treated & post,
+              -2.5 * pmin(months_post / 6, 1), 0)
+```
+
+Basel has different $\gamma_1, \gamma_2$ → parallel trends fail.
+
+---
+
+## Raw panel
+
+```{r}
+#| label: show-raw-panel
+p_raw
+```
+
+::: notes
+Notice the heterogeneous trends—this is why parallel trends won't hold.
+:::
+
+---
+
+## TWFE DiD estimate
+
+```{r}
+#| label: show-did-estimate
+cat("TWFE DiD ATT estimate:", round(att_did, 3), "\n")
+cat("True ATT: -2.5")
+```
+
+Standard two-way fixed effects with treatment indicator.
+
+**Interpretation:** DiD may be biased due to heterogeneous factor loadings.
+
+::: notes
+DiD gives a number, but we can't trust it without parallel trends.
+:::
+
+---
+
+## tidysynth: Fitting SCM
+
+```{r}
+#| label: show-tidysynth-code
+#| echo: true
+#| eval: false
+#| code-line-numbers: "1-5|7-12|13-14"
+
+scm_ts <- df %>%
+  synthetic_control(
+    outcome = y, unit = hospital, time = t,
+    i_unit = "Basel", i_time = T0
+  ) %>%
+  # Pre-period mean + selected lags as predictors
+  generate_predictor(time_window = pre_periods,
+                     y_mean_pre = mean(y)) %>%
+  generate_predictor(time_window = 48, y_t48 = y) %>%
+  generate_predictor(time_window = 72, y_t72 = y) %>%
+  generate_predictor(time_window = 78, y_t78 = y) %>%
+  # Optimize weights over pre-period
+  generate_weights(optimization_window = pre_periods) %>%
+  generate_control()
+```
+
+---
+
+## SCM: Basel vs Synthetic Control
+
+```{r}
+#| label: show-scm-trends
+p_scm_trends
+```
+
+```{r}
+#| label: show-scm-att
+cat("SCM (tidysynth) ATT:", round(att_scm_ts, 3))
+```
+
+::: notes
+The synthetic control tracks Basel well pre-treatment, then diverges post-July 2018.
+:::
+
+---
+
+## gsynth: IFE and Matrix Completion
+
+```{r}
+#| label: show-gsynth-code
+#| echo: true
+#| eval: false
+#| code-line-numbers: "1-4|6-9"
+
+# Interactive Fixed Effects
+gs_ife <- gsynth(y ~ D, data = df,
+                 index = c("hospital", "t"),
+                 force = "two-way", CV = TRUE, r = 0:5)
+
+# Matrix Completion
+gs_mc <- gsynth(y ~ D, data = df,
+                index = c("hospital", "t"),
+                force = "two-way", estimator = "mc", CV = TRUE)
+```
+
+Cross-validation selects the number of latent factors.
+
+---
+
+## gsynth IFE gap plot
+
+```{r}
+#| label: show-gap-ife
+p_gap_ife
+```
+
+```{r}
+#| label: show-att-ife
+cat("gsynth IFE ATT:", round(att_ife_avg, 3))
+```
+
+::: notes
+IFE estimates latent factors and loadings jointly. Gap should be near zero pre-treatment.
+:::
+
+---
+
+## gsynth MC gap plot
+
+```{r}
+#| label: show-gap-mc
+p_gap_mc
+```
+
+```{r}
+#| label: show-att-mc
+cat("gsynth MC ATT:", round(att_mc_avg, 3))
+```
+
+::: notes
+Matrix completion uses low-rank structure. Often performs well with limited pre-periods.
+:::
+
+---
+
+## Comparison table
+
+```{r}
+#| label: show-comparison
+knitr::kable(cmp_tbl, digits = 3, col.names = c("Method", "ATT Estimate"))
+```
+
+**True ATT = −2.5**
+
+All methods recover the treatment effect reasonably well in this simulation.
+
+::: notes
+In practice, methods will diverge more when assumptions are violated differently.
+:::
+
+---
+
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!-- SECTION E — Wrap                                                        -->
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+## Practical checklist + limitations
+
+**Before using SCM:**
+
+- ☑ Sufficient pre-treatment periods (≥ 5–10)
+- ☑ Good donor pool (similar, unaffected units)
+- ☑ Treatment timing known and sharp
+- ☑ No anticipation effects
+
+**Limitations:**
+
+- Sparse donors → poor synthetic match
+- Extrapolation impossible with convex weights
+- Inference remains an active research area
+
+::: notes
+These are necessary conditions. Violations lead to unreliable estimates.
+:::
+
+---
+
+## Takeaways
+
+1. **SCM constructs** a counterfactual rather than assuming parallel trends
+2. **Diagnostics are essential:** pre-fit, weights, placebos
+3. **Modern extensions** (IFE, MC) handle complex factor structures
+4. **Design matters more than estimator:** clean setting → all methods work; violated assumptions → all struggle
+
+::: notes
+The method is only as good as the setting. Focus on design.
+:::
+
+---
+
+## References
