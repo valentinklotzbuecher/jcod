@@ -606,20 +606,20 @@ If synthetic tracks well here (no treatment yet), we trust it more post-treatmen
 
 ---
 
-## When to use SCM (and when not)
+## When to use SCM 
 
 **Good fit:**
 
 - Single treated unit (or few), panel outcome
 - Sufficient pre-treatment periods (≥ 5–10)
 - Good donor pool (similar, unaffected units)
-- Sharp, known treatment timing
+- Sharp, known treatment timing, constant measurement
 
 **Not the right tool:**
 
-- Patient-level RCT replacement (most CTU work)
+- Patient-level RCT 
 - Many treated units with staggered timing → staggered DiD
-- Fuzzy timing or large anticipation effects
+- Fuzzy timing, anticipation effects
 
 ---
 

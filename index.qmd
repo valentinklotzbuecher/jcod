@@ -18,6 +18,12 @@ format:
 [NotebookLM](https://notebooklm.google.com/notebook/8954ba79-fcda-4a65-a662-5d0542909037?pli=1){.btn .btn-outline-secondary style="margin-left: .5rem;"}
 [GitHub repo](https://github.com/valentinklotzbuecher/jcod){.btn .btn-outline-secondary style="margin-left: .5rem;"}
 
+---
+
+*Made with heavy support from [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code) (Opus 4.5) and feedback from GPT-5.2 Pro.*
+
+Learn more: [One Useful Thing](https://www.oneusefulthing.org/) (Ethan Mollick) | [Claude Code in Action](https://www.anthropic.com/claude-code-in-action) (Anthropic)
+
 :::
 
 ::: {.column width="35%"}
