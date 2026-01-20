@@ -389,7 +389,7 @@ T0_label <- format(T0_date, "%B %Y")
 
 ## Why SCM 
 
-- Goal: recover the untreated path for the treated unit, \(Y_{1t}(0)\)
+- Goal: recover the untreated path for the treated unit, $Y_{1t}(0)$
 - DiD needs parallel trends; with one treated unit this is untestable and often implausible
 - Common shocks can hit units differently and break DiD
 - SCM builds a comparison unit by weighting donors to match pre-period outcomes
@@ -407,9 +407,6 @@ T0_label <- format(T0_date, "%B %Y")
 $$
 \widehat{Y}_{1t}^{(0)} = r + \sum_{j=2}^{J+1} w_j \cdot Y_{jt} \quad \text{where } \sum_j w_j = 1, \; w_j \geq 0
 $$
-
-
-
 
 ---
 
@@ -434,6 +431,10 @@ The optimization is a constrained regression. —we can say "synthetic Basel is 
 
 ---
 
+![](images/Screenshot%202026-01-19%20at%2021.57.51.png){fig-align="center" width="85%"}
+
+---
+
 ## SCM as experimental design
 
 @AbadieZhao2025SCD perspective:
@@ -453,35 +454,33 @@ The optimization is a constrained regression. —we can say "synthetic Basel is 
 
 ## Simulated example
 
-**Data-generating process:**
+Panel $Y_{it}$: 20 Swiss hospitals × 144 months (2012–2023)
 
-- 20 Swiss hospitals, monthly 2012–2023
-- Common shocks: trend + business cycle + COVID-like dip + seasonality
-- Hospital-specific loadings on each shock
-- **Basel's loadings differ** → parallel trends violated by construction
+**Common time components** (same for all units):
 
-**Treatment:** Basel at $T_0$ = July 2018, effect phases in over 6 months to −2.5
+- Linear trend $\lambda_t$
+- Smooth business cycle $f_{1t}$ (~4-year period)
+- COVID-like shock $f_{2t}$ (turns on ~2020)
+- Seasonality $\text{season}_t$ (winter peaks)
+
+**Unit heterogeneity:** each hospital $i$ gets baseline $\alpha_i$ + factor loadings $\gamma_{1i}, \gamma_{2i}$ + seasonal sensitivity
+
+---
+
+## Simulation DGP
+
+Untreated potential outcomes:
+
+$$
+Y_{it}(0) = 50 + \alpha_i + \lambda_t + \gamma_{1i} f_{1t} + \gamma_{2i} f_{2t} + s_i \cdot \text{season}_t + \varepsilon_{it}
+$$
+
+**Key trap for DiD:** Basel's loadings are perturbed ($\gamma_1$ ↑, $\gamma_2$ ↓). Even without treatment, Basel wouldn't track donors with a stable additive gap → TWFE/DiD structurally biased.
+
+**Treatment:** At $T_0$ = July 2018, Basel gets effect ramping to −2.5 over 6 months; donors get zero.
 
 ::: notes
-DGP step by step:
-
-1. **Common time components** (same for all units):
-   - Linear trend λ_t
-   - Smooth cycle f₁ (~4-year period)
-   - COVID-like shock f₂ (turns on ~2020, partial rebound)
-   - Seasonality (winter peaks)
-
-2. **Hospital heterogeneity**: Each hospital has baseline α_i and loadings γ₁ᵢ, γ₂ᵢ, sᵢ that scale response to shocks
-
-3. **Basel violates parallel trends**: γ₁(Basel) += 0.4, γ₂(Basel) -= 0.3 — same shocks, different response
-
-4. **Potential outcome**: μᵢₜ(0) = 50 + αᵢ + λₜ + γ₁ᵢf₁ₜ + γ₂ᵢf₂ₜ + sᵢ·seasonₜ + noise
-
-5. **Treatment**: τ = −2.5 × min(months_post/6, 1) for Basel after T₀
-
-6. **Observed**: Yᵢₜ = μᵢₜ(0) + τᵢₜ + εᵢₜ
-
-Result: We know truth (ATT ≈ −2.5), we know DiD fails structurally.
+We know truth (ATT ≈ −2.5), we know DiD fails structurally.
 :::
 
 ---
@@ -497,6 +496,30 @@ Notice the heterogeneous trends—this is why parallel trends won't hold.
 
 ---
 
+## Running SCM in R
+
+```r
+library(scpi)
+
+# Prepare data structure
+dat <- scdata(
+  df = panel_data,
+  id.var = "unit", time.var = "time", outcome.var = "y",
+  unit.tr = "treated_unit",
+  unit.co = donor_units,
+  period.pre = 1:(T0-1),
+  period.post = T0:T_max
+)
+
+# Estimate with simplex (convex) weights
+result <- scpi(data = dat, w.constr = list(name = "simplex"))
+
+# Plot with prediction intervals
+scplot(result, e.out = TRUE)
+```
+
+---
+
 ```{r}
 #| label: show-scm-trends
 p_scpi_trends
@@ -504,29 +527,6 @@ p_scpi_trends
 
 ::: notes
 The synthetic control tracks Basel well pre-treatment, then diverges post-July 2018.
-:::
-
----
-
-```{r}
-#| label: show-scpi-pi
-p_scpi_pi
-```
-
-Bands = **prediction intervals for Y₁ₜ(0)** (counterfactual), not CI for ATT.
-
-Two components: (i) weight estimation uncertainty, (ii) out-of-sample shock uncertainty (`e.method="gaussian"`).
-
-::: notes
-scpi prediction intervals combine:
-
-1. **In-sample uncertainty** (weight estimation): Even pre-treatment, weights estimated from finite data. scpi quantifies via simulation-based procedure on residual covariance.
-
-2. **Out-of-sample uncertainty** (future shocks): Even with known weights, Y₁ₜ(0) has unpredictable shocks. Options: gaussian (sub-Gaussian bounds), ls (location-scale), qreg (quantile regression). We use gaussian.
-
-Key caveat: Out-of-sample part is assumption-heavy — treat as sensitivity analysis, not hard inference.
-
-This is NOT placebo-based permutation inference (fixed potential outcomes, reassign treatment). scpi focuses on prediction intervals with random potential outcomes.
 :::
 
 ---
@@ -550,6 +550,39 @@ DiD is biased because parallel trends fail — Basel's latent factor loadings di
 
 ---
 
+## Uncertainty: placebo vs prediction intervals
+
+**Classic approach (placebo/permutation):**
+
+- Treat potential outcomes as fixed, reassign treatment to donors
+- Build null distribution of "effects" under no treatment
+- Design-based inference
+
+**scpi approach (prediction intervals):**
+
+- Prediction intervals for the counterfactual path $Y_{1t}(0)$
+- Two components:
+  - Weight estimation uncertainty (in-sample)
+  - Out-of-sample shock uncertainty (`e.method="gaussian"`)
+- Treat as sensitivity analysis, not hard inference
+
+---
+
+```{r}
+#| label: show-scpi-pi
+p_scpi_pi
+```
+
+Bands = **prediction intervals for Y₁ₜ(0)** (counterfactual), not CI for ATT.
+
+::: notes
+Out-of-sample options: gaussian (sub-Gaussian bounds), ls (location-scale), qreg (quantile regression).
+
+Key caveat: Out-of-sample part is assumption-heavy — you're bounding future random shocks.
+:::
+
+---
+
 ```{r}
 #| label: show-weights-plot
 #| fig-height: 5
@@ -559,11 +592,17 @@ p_weights
 
 ---
 
+## Diagnostic: blank-period validation
+
+Hold out final 12 months of pre-treatment as "blank window" — fit SCM on earlier data, predict into blank period.
+
 ```{r}
 #| label: show-blank-gap
 #| fig-height: 3.5
 p_blank_gap
 ```
+
+If synthetic tracks well here (no treatment yet), we trust it more post-treatment.
 
 ---
 
@@ -571,10 +610,10 @@ p_blank_gap
 
 **Good fit:**
 
-- ☑ Single treated unit (or few), panel outcome
-- ☑ Sufficient pre-treatment periods (≥ 5–10)
-- ☑ Good donor pool (similar, unaffected units)
-- ☑ Sharp, known treatment timing
+- Single treated unit (or few), panel outcome
+- Sufficient pre-treatment periods (≥ 5–10)
+- Good donor pool (similar, unaffected units)
+- Sharp, known treatment timing
 
 **Not the right tool:**
 
@@ -584,25 +623,14 @@ p_blank_gap
 
 ---
 
-## Takeaways
 
-1. **SCM constructs** a counterfactual rather than assuming parallel trends
-2. **Diagnostics are essential:** pre-fit, weights, placebos
-3. **Modern extensions** (IFE, MC, SDID) handle complex factor structures
-4. **scpi is the canonical package** — use it for inference and prediction intervals
-5. **Design matters more than estimator:** clean setting → all methods work; violated assumptions → all struggle
+## Extensions
 
-::: notes
-The method is only as good as the setting. Focus on design.
-:::
+- **Synthetic Difference-in-Differences (SDID):** Combines SCM-style unit weights with DiD-style time weights — reweights both donors and pre-periods
 
----
+- **Augmented SCM:** Adds ridge regression bias correction on top of SCM weights — reduces interpolation bias when treated unit lies outside donor convex hull
 
-## Extensions menu
-
-- SDID (unit + time weights): Consider when pre-trends vary and time reweighting helps
-- AugSCM (SCM + outcome-model bias correction): Consider when convex hull is weak but modeling is plausible
-- IFE/MC (factor/low-rank imputation): Consider when panels are long with strong latent factors
+- **Interactive Fixed Effects (IFE) / Matrix Completion (MC):** Models outcome as low-rank factor structure and imputes missing counterfactual via matrix completion
 
 ---
 
@@ -614,49 +642,24 @@ The method is only as good as the setting. Focus on design.
 
 ---
 
-## Appendix: extensions
+## Takeaways
+
+1. Powerful idea: build a counterfactual trajectory for a single treated unit from a donor pool
+
+2. Easy to misuse (researcher degrees of freedom):
+   - Donor pool definition, predictors, pre-period window
+   - Inference choices (placebo thresholds, RMSPE cutoffs)
+
+3. Design crucial
+   - Commit donor pool + windows + outcome before looking post-$T_0$
+
+4. Trials angle: With 1–few clusters, randomization can be imbalanced; SCM-style designs can reduce baseline mismatch 
+
+::: notes
+"SCM is not fragile because it's fancy; it's fragile because small-N designs have lots of human choices. Pre-registration is choosing to be honest about those choices."
+:::
 
 ---
 
-## Why classical SCM can fail
-
-Limitations of the original method:
-
-- **Overfitting:** Too many predictors relative to pre-periods
-- **Interpolation bias:** Treated unit outside convex hull of donors
-- **No extrapolation:** Convex weights can't capture factor loadings outside donor range
-- **Single factor structure:** May miss complex latent heterogeneity
-
----
-
-## Imputation family: IFE / MC
-
-**Interactive Fixed Effects (IFE):**
-$$Y_{it} = \alpha_i + \gamma_t + \sum_{k=1}^{K} \lambda_{ik} f_{kt} + \varepsilon_{it}$$
-
-Latent factors $f_{kt}$ with unit-specific loadings $\lambda_{ik}$.
-
-**Matrix Completion (MC):**
-Low-rank imputation — treat missing $Y_{1t}^{(0)}$ as matrix completion problem.
-
-**Package:** `fect` (successor to `gsynth`) — not run here, but excellent for factor-augmented estimation.
-
----
-
-## Hybrid family: SDID / AugSCM
-
-**Synthetic Difference-in-Differences (SDID):**
-
-- SCM-style unit weights + DiD-style time weights
-- Reweights both donors and pre-periods
-- Package: `synthdid`
-
-**Augmented SCM:**
-
-- SCM + ridge regression bias correction
-- Reduces interpolation bias
-- Package: `augsynth`
-
----
 
 ## References
