@@ -663,3 +663,17 @@ If synthetic tracks well here (no treatment yet), we trust it more post-treatmen
 
 
 ## References
+
+---
+
+## Thank you for your attention {.center}
+
+::: {.columns}
+::: {.column width="100%" style="text-align: center;"}
+
+[![](https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=https%3A%2F%2Fvalentink.quarto.pub%2Fjcod-scm%2F){width=280}](https://valentink.quarto.pub/jcod-scm/)
+
+Slides & resources: [valentink.quarto.pub/jcod](https://valentink.quarto.pub/jcod)
+
+:::
+:::
