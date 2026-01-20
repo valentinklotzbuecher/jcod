@@ -20,9 +20,9 @@ format:
 
 ---
 
-*Made with heavy support from [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code) (Opus 4.5) and feedback from GPT-5.2 Pro.*
+*Made with heavy support from [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code) (Opus 4.5) and GPT-5.2 Pro.*
 
-Learn more: [One Useful Thing](https://www.oneusefulthing.org/) (Ethan Mollick) | [Claude Code in Action](https://www.anthropic.com/claude-code-in-action) (Anthropic)
+Reccomended intro material: [One Useful Thing](https://www.oneusefulthing.org/) (Ethan Mollick) | [Claude Code in Action](https://anthropic.skilljar.com/claude-code-in-action) (Anthropic)
 
 :::
 
