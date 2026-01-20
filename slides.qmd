@@ -626,18 +626,18 @@ If synthetic tracks well here (no treatment yet), we trust it more post-treatmen
 
 ## Extensions
 
-- **Synthetic Difference-in-Differences (SDID):** Combines SCM-style unit weights with DiD-style time weights — reweights both donors and pre-periods
+- **Synthetic Difference-in-Differences (SDID):** Combines SCM-style unit weights with DiD-style time weights — reweights both donors and pre-periods [@ArkhangelskyEtAl2021SDID]
 
-- **Augmented SCM:** Adds ridge regression bias correction on top of SCM weights — reduces interpolation bias when treated unit lies outside donor convex hull
+- **Augmented SCM:** Adds ridge regression bias correction on top of SCM weights — reduces interpolation bias when treated unit lies outside donor convex hull [@BenMichaelEtAl2021AugSCM]
 
-- **Interactive Fixed Effects (IFE) / Matrix Completion (MC):** Models outcome as low-rank factor structure and imputes missing counterfactual via matrix completion
+- **Interactive Fixed Effects (IFE) / Matrix Completion (MC):** Models outcome as low-rank factor structure and imputes missing counterfactual via matrix completion [@Xu2017gsynth; @AtheyEtAl2021MatrixCompletion]
 
 ---
 
 ## Software
 
-- `scpi`: canonical SCM + inference/pred intervals (R; Stata/Python ports available)
-- `synthdid`, `augsynth`: hybrid / DR-ish extensions
+- `scpi`: canonical SCM + inference/prediction intervals [@CattaneoEtAl2025scpi]
+- `synthdid`, `augsynth`: SDID and augmented SCM
 - `fect`: IFE/MC workflows
 
 ---
