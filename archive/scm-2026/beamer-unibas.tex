@@ -1,0 +1,65 @@
+% Clean minimal beamer theme - Light
+% Matches the HTML theme-light.scss
+
+% Colors (from theme-light.scss)
+\definecolor{lightbg}{HTML}{FAFAFA}        % $body-bg - light background
+\definecolor{darktext}{HTML}{1a1a2e}       % $body-color - dark text
+\definecolor{deeppurple}{HTML}{5A317E}     % $primary - deep rich purple
+\definecolor{purplehover}{HTML}{7A4EA0}    % $primary-hover
+\definecolor{secondary}{HTML}{94A3B8}      % $secondary - muted gray
+
+% Set colors
+\setbeamercolor{background canvas}{bg=lightbg}
+\setbeamercolor{normal text}{fg=darktext}
+\setbeamercolor{frametitle}{fg=darktext}
+\setbeamercolor{title}{fg=darktext}
+\setbeamercolor{subtitle}{fg=deeppurple}
+\setbeamercolor{author}{fg=darktext}
+\setbeamercolor{date}{fg=secondary}
+\setbeamercolor{item}{fg=deeppurple}
+\setbeamercolor{block title}{fg=deeppurple}
+\setbeamercolor{structure}{fg=deeppurple}
+\setbeamercolor{alerted text}{fg=purplehover}
+
+% Code block colors
+\setbeamercolor{block body}{bg=white}
+
+% Remove navigation symbols
+\setbeamertemplate{navigation symbols}{}
+
+% Simple frame title with purple accent line
+\setbeamertemplate{frametitle}{
+  \vspace{0.5em}
+  \insertframetitle
+  \par
+  \vspace{-0.3em}
+  \textcolor{deeppurple}{\rule{2cm}{1.5pt}}
+}
+
+% Clean footline with page numbers
+\setbeamertemplate{footline}{
+  \hfill
+  \textcolor{secondary}{\footnotesize\insertframenumber/\inserttotalframenumber}
+  \hspace{1em}
+  \vspace{0.5em}
+}
+
+% Itemize styling - purple bullets
+\setbeamertemplate{itemize item}{\textcolor{deeppurple}{\textbullet}}
+\setbeamertemplate{itemize subitem}{\textcolor{deeppurple}{\textendash}}
+\setbeamertemplate{itemize subsubitem}{\textcolor{deeppurple}{\guillemotright}}
+
+% Enumerate styling
+\setbeamertemplate{enumerate item}{\textcolor{deeppurple}{\insertenumlabel.}}
+
+% Table of contents styling
+\setbeamercolor{section in toc}{fg=darktext}
+\setbeamercolor{subsection in toc}{fg=darktext!70}
+
+% Hyperlink colors
+\hypersetup{
+  colorlinks=true,
+  linkcolor=deeppurple,
+  urlcolor=purplehover,
+  citecolor=deeppurple
+}

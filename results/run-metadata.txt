@@ -1,0 +1,34 @@
+List of 11
+ $ seed                : int 20261020
+ $ B                   : int 499
+ $ n_trial             : int 5000
+ $ n_reference         : int 2000
+ $ quantile_type       : int 8
+ $ nominal_level       : num 0.95
+ $ inference_target    : chr "Distribution of model-based conditional risk differences over the fixed reference cohort; uncertainty in fitted"| __truncated__
+ $ simultaneous_scope  : chr "Each scenario separately, quantile grid 0.10:0.01:0.90"
+ $ classification_scope: chr "Descriptive covariate profiles of estimated effect tails. Bootstrap membership frequencies are sensitivity summ"| __truncated__
+ $ bootstrap           : chr "Pairs resampling of trial observations; refit and re-sort every draw"
+ $ package_benchmark   : chr "This implementation is not a reproduction of SortedEffects inference."
+R version 4.5.0 (2025-04-11)
+Platform: x86_64-pc-linux-gnu
+Running under: Debian GNU/Linux 13 (trixie)
+
+Matrix products: default
+BLAS:   /usr/lib/x86_64-linux-gnu/blas/libblas.so.3.12.1 
+LAPACK: /usr/lib/x86_64-linux-gnu/lapack/liblapack.so.3.12.1;  LAPACK version 3.12.0
+
+locale:
+ [1] LC_CTYPE=C.UTF-8       LC_NUMERIC=C           LC_TIME=C.UTF-8       
+ [4] LC_COLLATE=C.UTF-8     LC_MONETARY=C.UTF-8    LC_MESSAGES=C.UTF-8   
+ [7] LC_PAPER=C.UTF-8       LC_NAME=C              LC_ADDRESS=C          
+[10] LC_TELEPHONE=C         LC_MEASUREMENT=C.UTF-8 LC_IDENTIFICATION=C   
+
+time zone: Etc/UTC
+tzcode source: system (glibc)
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+loaded via a namespace (and not attached):
+[1] compiler_4.5.0

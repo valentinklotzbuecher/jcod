@@ -1,45 +1,17 @@
-# CLAUDE.md
+# Project guidance
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Read `AGENTS.md` and `README.md` for current commands and statistical scope.
 
-## Project Overview
+The active session is **Who benefits most? Sorted partial effects**, a one-hour
+clinical-statistics journal club with 35–40 minutes of presentation and discussion.
+`slides.qmd` renders to RevealJS HTML and Beamer PDF; `index.qmd` is the landing page.
+Speaker notes are in `::: notes` blocks. The current theme is `theme.scss`.
 
-This is a Quarto website project containing academic presentations on Synthetic Control and Synthetic Difference-in-Differences methods. The site is published to Quarto Pub at https://valentink.quarto.pub/jcod.
+`R/demo.R` generates an explicitly simulated randomized-trial example. Preserve
+its fixed random seeds, effect sign convention and uncertainty declarations.
+`scripts/validate-demo.R` checks its numerical claims; the optional
+`scripts/benchmark-sortedeffects.R` exercises the pinned original software.
 
-## Common Commands
-
-```bash
-# Preview the site locally with live reload
-quarto preview
-
-# Render the entire site
-quarto render
-
-# Render a specific file
-quarto render index.qmd
-
-# Render to specific format (revealjs slides or beamer PDF)
-quarto render index.qmd --to revealjs
-quarto render index.qmd --to beamer
-
-# Publish to Quarto Pub
-quarto publish quarto-pub
-```
-
-## Project Structure
-
-- `_quarto.yml` - Main Quarto configuration (site settings, theme, navbar)
-- `index.qmd` - Main presentation slides (outputs to both RevealJS and Beamer)
-- `about.qmd` - About page
-- `references.bib` - BibTeX bibliography
-- `nature.csl` - Citation style (Nature format)
-- `styles.css` - Custom CSS styles
-- `_publish.yml` - Quarto Pub deployment configuration
-
-## Presentation Format
-
-The main presentation (`index.qmd`) renders to two formats:
-- **RevealJS** (HTML slides): 1280x720, incremental bullets
-- **Beamer** (PDF slides): 16:9 aspect ratio
-
-Speaker notes use the `::: notes` fence syntax.
+All previous Synthetic Control Methods materials are in `archive/scm-2026/`,
+excluded from the active render. Preserve those historical files. The active
+website has not been published as part of this change.

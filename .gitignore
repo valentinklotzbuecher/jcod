@@ -7,3 +7,15 @@
 *.aux
 *.out
 *.toc
+*.nav
+*.snm
+*.vrb
+*.fls
+*.fdb_latexmk
+/slides.tex
+/slides.pdf
+/slides.html
+/.Rhistory
+/.RData
+/results/*.rds
+/results/**/*.rds

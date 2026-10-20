@@ -1,0 +1,4 @@
+- source: project
+  quarto-pub:
+    - id: 01fbb716-5833-4b2c-9385-9e74ef49e648
+      url: https://valentink.quarto.pub/jcod-scm

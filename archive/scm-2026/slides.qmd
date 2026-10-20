@@ -1,0 +1,679 @@
+---
+title: "Synthetic Control Methods"
+subtitle: "Department of Clinical Research - Journal Club / Open Discussion"
+author: "Valentin Klotzbücher"
+date: last-modified
+
+# one source → two decks
+format:
+  revealjs:
+    theme: [default, theme-light.scss]
+    slide-number: true
+    incremental: false
+    toc: false
+    center: false
+    width: 1280
+    height: 720
+    format-links: [beamer]
+  beamer:
+    aspectratio: 169
+    include-in-header: beamer-unibas.tex
+    fonttheme: professionalfonts
+    classoption:
+      - "t"  # Top-align content
+
+bibliography: references.bib
+csl: the-quarterly-journal-of-economics.csl
+
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+## Terminology
+
+| Context | Meaning |
+|---|---|
+| Clinical "synthetic control arm" | patient-level external controls, PS/transportability |
+| Econometric SCM | unit-level panel, weighted donor trajectory over time |
+
+This talk focuses on the second meaning.
+
+---
+
+## When you only treat one unit
+
+Examples where SCM-style thinking is natural:
+
+- Synthetic Jena (mask mandate) [@MitzeEtAl2020FaceMasksSCM]
+- Synthetic Basque country (terrorism) [@AbadieGardeazabal2003BasqueConflict]
+- Synthetic Karl Marx (citations) [@MagnessMakovi2023MainstreamingMarx]
+
+Single treated unit + panel outcome → need a counterfactual path \(Y_{1t}(0)\).
+
+---
+
+## SCM in the wild
+
+::: {.r-stack}
+
+![](images/Screenshot%202026-01-19%20at%2016.40.36.png){.fragment .fade-in-then-semi-out width="70%" style="transform: rotate(-1deg); box-shadow: 4px 4px 15px rgba(0,0,0,0.3);"}
+
+![](images/Screenshot%202026-01-19%20at%2019.55.25.png){.fragment .fade-in-then-semi-out width="70%" style="transform: rotate(1deg); box-shadow: 4px 4px 15px rgba(0,0,0,0.3);"}
+
+![](images/Screenshot%202026-01-19%20at%2016.40.11.png){.fragment width="70%" style="transform: rotate(-0.5deg); box-shadow: 4px 4px 15px rgba(0,0,0,0.3);"}
+:::
+
+---
+
+
+```{r}
+#| label: prep
+#| include: false
+#| cache: true
+
+# ── Libraries ──
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(scpi)
+library(lubridate)
+set.seed(420)
+
+# ── Theme colors (matching theme-light.scss) ──
+col_primary <- "#5A317E"      # deep purple
+col_primary_light <- "#7A4EA0"
+col_accent <- "#E07B53"       # warm orange for contrast
+col_text <- "#1a1a2e"
+col_bg <- "#FAFAFA"
+col_grid <- "#E5E5E5"
+
+# ── Slide theme ──
+theme_slide_plot <- function(base_size = 18) {
+
+  theme_minimal(base_size = base_size) +
+    theme(
+      text = element_text(colour = col_text),
+      axis.text = element_text(colour = col_text),
+      axis.title = element_text(colour = col_text),
+      panel.grid.major = element_line(colour = col_grid, linewidth = 0.3),
+      panel.grid.minor = element_blank(),
+      panel.background = element_rect(fill = col_bg, colour = NA),
+      plot.background = element_rect(fill = col_bg, colour = NA),
+      legend.position = "bottom",
+      legend.title = element_blank(),
+      legend.background = element_rect(fill = col_bg, colour = NA),
+      plot.title = element_blank(),
+      plot.subtitle = element_blank(),
+      axis.title.x = element_blank(),
+      plot.margin = margin(4, 8, 4, 4)
+    )
+}
+
+theme_set(theme_slide_plot())
+
+# ── Simulation: Monthly data ──
+hospitals <- c(
+  # Treated
+  "Basel (USB)",
+  # University hospitals
+  "Zurich (USZ)", "Bern (Insel)", "Lausanne (CHUV)", "Geneva (HUG)",
+
+  # Cantonal/Regional
+
+  "St. Gallen (KSSG)", "Luzern (LUKS)", "Aarau (KSA)", "Winterthur (KSW)",
+
+  "Chur (KSGR)", "Solothurn (soH)", "Fribourg (HFR)", "Schaffhausen",
+  "Neuchatel (HNE)", "Thurgau (KSM)", "Baselland (KSBL)", "Baden (KSB)",
+  "Biel", "Sion (HVS)", "Bellinzona (EOC)"
+)
+
+# Monthly sequence: Jan 2012 to Dec 2023
+months <- seq(as.Date("2012-01-01"), as.Date("2023-12-01"), by = "month")
+T0_date <- as.Date("2018-07-01")  # Treatment starts July 2018
+treated_unit <- "Basel (USB)"
+
+# Numeric time index for models (months since start)
+time_idx <- seq_along(months)
+T0 <- which(months == T0_date)
+pre_periods <- 1:(T0 - 1)
+
+# Time trend with latent factors + seasonality
+time_trend <- tibble(
+  month = months,
+  t = time_idx,
+  # Linear trend (gradual decline)
+  lambda = -0.015 * (t - 1),
+  # Latent factor 1: smooth business cycle (~4 year period)
+  f1 = 1.2 * sin(2 * pi * t / 48),
+  # Latent factor 2: policy shock around 2020 (COVID-like)
+  f2 = -1.5 * plogis((t - 97) / 3) + 0.8 * plogis((t - 109) / 4),
+  # Seasonality (winter peaks for hospital data)
+  season = 0.6 * cos(2 * pi * (month(month) - 1) / 12)
+)
+
+# Hospital parameters (heterogeneous factor loadings)
+hosp_par <- tibble(
+  hospital = hospitals,
+  alpha_i  = rnorm(length(hospitals), 0, 1.2),
+  gamma1_i = rnorm(length(hospitals), 1.0, 0.3),   # loading on f1
+  gamma2_i = rnorm(length(hospitals), 1.0, 0.25),  # loading on f2
+  season_i = rnorm(length(hospitals), 1.0, 0.2)    # seasonal sensitivity
+) %>%
+  # Basel has different loadings (violates parallel trends)
+  mutate(
+    gamma1_i = dplyr::if_else(hospital == treated_unit, gamma1_i + 0.4, gamma1_i),
+    gamma2_i = dplyr::if_else(hospital == treated_unit, gamma2_i - 0.3, gamma2_i)
+  )
+
+# Panel data
+df <- expand_grid(hospital = hospitals, t = time_idx) %>%
+  left_join(time_trend, by = "t") %>%
+  left_join(hosp_par, by = "hospital") %>%
+  mutate(
+    treated = (hospital == treated_unit),
+    post    = (t >= T0),
+    # Potential outcome without treatment
+    mu0 = 50 + alpha_i + lambda + gamma1_i * f1 + gamma2_i * f2 + season_i * season,
+    # Treatment effect: gradual phase-in over 6 months, then stable at -2.5
+    months_post = pmax(0, t - T0 + 1),
+    tau = dplyr::if_else(treated & post, -2.5 * pmin(months_post / 6, 1), 0),
+    # Observed outcome
+    y = mu0 + tau + rnorm(n(), 0, 0.8)
+  ) %>%
+  select(hospital, month, t, treated, post, y)
+
+# ── scpi SCM (canonical simplex weights) ──
+period_pre  <- 1:(T0 - 1)
+period_post <- T0:max(df$t)
+
+dat_sc <- scdata(
+  df = df,
+  id.var = "hospital",
+  time.var = "t",
+  outcome.var = "y",
+  features = "y",
+  unit.tr = treated_unit,
+  unit.co = setdiff(hospitals, treated_unit),
+  period.pre = period_pre,
+  period.post = period_post,
+  constant = TRUE
+)
+
+res_scpi <- scpi(
+  data = dat_sc,
+  w.constr = list(name = "simplex"),
+  u.missp = TRUE,         # allow for misspecification
+  u.sigma = "HC1",        # heteroskedasticity-robust
+  e.method = "gaussian",  # sub-Gaussian out-of-sample bounds
+  sims = 200
+)
+
+plot_range <- 1:max(df$t)
+
+pi_obj <- scplot(
+  result = res_scpi,
+  plot.range = plot_range,
+  e.out = TRUE,
+  label.xy = list(x.lab = NULL, y.lab = "Outcome")
+)
+
+# Choose nice x ticks (every 2 years)
+breaks_t <- seq(1, max(df$t), by = 24)
+labels_year <- format(months[breaks_t], "%Y")
+
+p_scpi_pi <- pi_obj$plot_out +
+  ggtitle(NULL) +
+  scale_x_continuous(breaks = breaks_t, labels = labels_year) +
+  scale_colour_manual(values = c(col_primary, col_accent), na.value = col_primary) +
+  scale_fill_manual(values = c(alpha(col_primary, 0.2), alpha(col_accent, 0.2))) +
+  theme_slide_plot()
+
+donors <- setdiff(hospitals, treated_unit)
+
+# --- Extract series for plotting from scpi ---
+Y_pre_actual <- res_scpi$data$Y.pre
+Y_post_actual <- res_scpi$data$Y.post
+Y_pre_fit <- res_scpi$est.results$Y.pre.fit
+Y_post_fit <- res_scpi$est.results$Y.post.fit
+
+df_trend <- tibble(
+  t = c(period_pre, period_post),
+  y_tr = c(as.numeric(Y_pre_actual), as.numeric(Y_post_actual)),
+  y_syn = c(as.numeric(Y_pre_fit), as.numeric(Y_post_fit))
+) %>%
+  left_join(time_trend %>% select(t, month), by = "t") %>%
+  mutate(gap = y_tr - y_syn)
+
+# Pre-treatment fit diagnostic
+rmspe_pre <- df_trend %>%
+  filter(t < T0) %>%
+  summarise(rmspe = sqrt(mean(gap^2))) %>%
+  pull(rmspe)
+
+# weights for donor table
+w <- NULL
+if (!is.null(res_scpi$w)) w <- res_scpi$w
+if (is.null(w) && !is.null(res_scpi$w.est)) w <- res_scpi$w.est
+if (is.null(w) && !is.null(res_scpi$est.results$w)) w <- res_scpi$est.results$w
+stopifnot(!is.null(w))
+
+# Clean up weight names - scpi names them as "TreatedUnit.DonorUnit"
+if (!is.null(names(w))) {
+  # Remove "w." or "w.co." prefix if present
+  names(w) <- sub("^w\\.(co\\.)?", "", names(w))
+  # Remove treated unit prefix (e.g., "Basel (USB).")
+  names(w) <- sub(paste0("^", gsub("([()])", "\\\\\\1", treated_unit), "\\."), "", names(w))
+}
+
+# Build weights tibble directly (handles name mismatches gracefully)
+weights_tbl <- tibble(
+  donor = names(w),
+  weight = as.numeric(w)
+) %>%
+  filter(!is.na(weight), weight > 0)
+
+p_scpi_trends <- ggplot(df_trend, aes(month)) +
+  geom_line(aes(y = y_tr, colour = "Basel (USB)"), linewidth = 1.0) +
+  geom_line(aes(y = y_syn, colour = "Synthetic"), linewidth = 1.0, linetype = 2) +
+  geom_vline(xintercept = T0_date, linetype = 2, colour = col_accent) +
+  scale_colour_manual(values = c("Basel (USB)" = col_primary, "Synthetic" = col_accent)) +
+  scale_x_date(date_breaks = "2 years", date_labels = "%Y") +
+  labs(y = "Outcome") +
+  theme_slide_plot()
+
+p_scpi_gap <- ggplot(df_trend, aes(month, gap)) +
+  geom_hline(yintercept = 0, linewidth = 0.4, colour = col_text) +
+  geom_line(linewidth = 1.0, colour = col_primary) +
+  geom_vline(xintercept = T0_date, linetype = 2, colour = col_accent) +
+  scale_x_date(date_breaks = "2 years", date_labels = "%Y") +
+  labs(y = "Basel (USB) \u2212 synthetic") +
+  theme_slide_plot()
+
+# ── Blank-period validation (holdout pre-period) ──
+TE <- T0 - 12  # last 12 months pre-treatment as blank period
+period_fit <- 1:TE
+period_blank <- (TE + 1):(T0 - 1)
+
+dat_fit <- scdata(
+  df = df,
+  id.var = "hospital",
+  time.var = "t",
+  outcome.var = "y",
+  features = "y",
+  unit.tr = treated_unit,
+  unit.co = setdiff(hospitals, treated_unit),
+  period.pre = period_fit,
+  period.post = period_blank,
+  constant = TRUE
+)
+
+res_fit <- scpi(
+  data = dat_fit,
+  w.constr = list(name = "simplex"),
+  sims = 200,
+  e.method = "gaussian"
+)
+
+blank_df <- tibble(
+  t = period_blank,
+  y_tr = as.numeric(res_fit$data$Y.post),
+  y_syn_blank = as.numeric(res_fit$est.results$Y.post.fit)
+) %>%
+  left_join(time_trend %>% select(t, month), by = "t") %>%
+  mutate(gap_blank = y_tr - y_syn_blank)
+
+p_blank_gap <- ggplot(blank_df, aes(month, gap_blank)) +
+  geom_hline(yintercept = 0, linewidth = 0.4, colour = col_text) +
+  geom_line(linewidth = 1.0, colour = col_primary) +
+  scale_x_date(date_breaks = "3 months", date_labels = "%b %Y") +
+  labs(y = "Gap in blank window") +
+  theme_slide_plot() +
+  theme(axis.text.x = element_text(angle = 0, vjust = 0.5))
+
+att_scpi <- df_trend %>%
+  filter(t >= T0) %>%
+  summarise(att = mean(gap)) %>%
+  pull(att)
+
+# ── Naive DiD estimate (should be biased due to violated parallel trends) ──
+# Simple difference-in-differences: (treated_post - treated_pre) - (control_post - control_pre)
+did_means <- df %>%
+  group_by(treated, post) %>%
+  summarise(y_mean = mean(y), .groups = "drop")
+
+att_did <- (did_means$y_mean[did_means$treated & did_means$post] -
+            did_means$y_mean[did_means$treated & !did_means$post]) -
+           (did_means$y_mean[!did_means$treated & did_means$post] -
+            did_means$y_mean[!did_means$treated & !did_means$post])
+
+# True ATT for comparison
+att_true <- -2.5
+
+# weights plot (weights_tbl already created above)
+p_weights <- weights_tbl %>%
+  arrange(desc(weight)) %>%
+  ggplot(aes(x = reorder(donor, weight), y = weight)) +
+  geom_col(fill = col_primary, alpha = 0.85) +
+  coord_flip() +
+  labs(y = "Weight") +
+  theme_slide_plot()
+
+p_scm_trends <- p_scpi_trends
+
+# ── Pre-built plots ──
+# Raw panel (use dates for x-axis)
+p_raw <- ggplot(df, aes(month, y, group = hospital)) +
+  geom_line(data = df %>% filter(!treated),
+            colour = "#94A3B8", alpha = 0.6, linewidth = 0.4) +
+  geom_line(data = df %>% filter(treated),
+            colour = col_primary, linewidth = 1.0) +
+  geom_vline(xintercept = T0_date, linetype = 2, colour = col_accent) +
+  scale_x_date(date_breaks = "2 years", date_labels = "%Y") +
+  labs(y = "Outcome") +
+  theme_slide_plot()
+
+# Format treatment date for slides
+T0_label <- format(T0_date, "%B %Y")
+```
+
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!-- SECTION A — Motivation & Literature                                     -->
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!-- SECTION B — SCM Core                                                    -->
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+
+## Why SCM 
+
+- Goal: recover the untreated path for the treated unit, $Y_{1t}(0)$
+- DiD needs parallel trends; with one treated unit this is untestable and often implausible
+- Common shocks can hit units differently and break DiD
+- SCM builds a comparison unit by weighting donors to match pre-period outcomes
+
+---
+
+## SCM intuition
+
+**Core idea:** Build a *synthetic control* as a weighted combination of donor units.
+
+- Weights chosen to match the treated unit's pre-treatment trajectory
+- The synthetic unit serves as the counterfactual
+- Treatment effect = observed outcome − synthetic outcome
+
+$$
+\widehat{Y}_{1t}^{(0)} = r + \sum_{j=2}^{J+1} w_j \cdot Y_{jt} \quad \text{where } \sum_j w_j = 1, \; w_j \geq 0
+$$
+
+---
+
+## SCM objective + weights
+
+Weights minimize pre-treatment prediction error:
+
+$$
+\min_{W, r} \sum_{t < T_0} \left( Y_{1t} - r - \sum_{j=2}^{J+1} w_j Y_{jt} \right)^2
+$$
+
+Subject to:
+
+- $w_j \geq 0$ (no negative weights)
+- $\sum_j w_j = 1$ (convex combination)
+
+- Typically few donors receive positive weight (sparsity helps interpretability)
+
+::: notes
+The optimization is a constrained regression. —we can say "synthetic Basel is 60% Zurich + 40% Bern."
+:::
+
+---
+
+![](images/Screenshot%202026-01-19%20at%2021.57.51.png){fig-align="center" width="85%"}
+
+---
+
+## SCM as experimental design
+
+@AbadieZhao2025SCD perspective:
+
+- **Pre-register donor pool** before seeing outcomes
+- **Train → Validate → Lock → Test:** fit on early pre-period, validate on held-out "blank" window, then lock weights before looking at post-$T_0$
+- **Design for SCM** — choose treated units where good donors exist
+
+
+
+---
+
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!-- SECTION D — Simulation Illustration                                     -->
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+
+## Simulated example
+
+Panel $Y_{it}$: 20 Swiss hospitals × 144 months (2012–2023)
+
+**Common time components** (same for all units):
+
+- Linear trend $\lambda_t$
+- Smooth business cycle $f_{1t}$ (~4-year period)
+- COVID-like shock $f_{2t}$ (turns on ~2020)
+- Seasonality $\text{season}_t$ (winter peaks)
+
+**Unit heterogeneity:** each hospital $i$ gets baseline $\alpha_i$ + factor loadings $\gamma_{1i}, \gamma_{2i}$ + seasonal sensitivity
+
+---
+
+## Simulation DGP
+
+Untreated potential outcomes:
+
+$$
+Y_{it}(0) = 50 + \alpha_i + \lambda_t + \gamma_{1i} f_{1t} + \gamma_{2i} f_{2t} + s_i \cdot \text{season}_t + \varepsilon_{it}
+$$
+
+**Key trap for DiD:** Basel's loadings are perturbed ($\gamma_1$ ↑, $\gamma_2$ ↓). Even without treatment, Basel wouldn't track donors with a stable additive gap → TWFE/DiD structurally biased.
+
+**Treatment:** At $T_0$ = July 2018, Basel gets effect ramping to −2.5 over 6 months; donors get zero.
+
+::: notes
+We know truth (ATT ≈ −2.5), we know DiD fails structurally.
+:::
+
+---
+
+```{r}
+#| label: show-raw-panel
+p_raw
+```
+
+::: notes
+Notice the heterogeneous trends—this is why parallel trends won't hold.
+:::
+
+---
+
+## Running SCM in R
+
+```r
+library(scpi)
+
+# Prepare data structure
+dat <- scdata(
+  df = panel_data,
+  id.var = "unit", time.var = "time", outcome.var = "y",
+  unit.tr = "treated_unit",
+  unit.co = donor_units,
+  period.pre = 1:(T0-1),
+  period.post = T0:T_max
+)
+
+# Estimate with simplex (convex) weights
+result <- scpi(data = dat, w.constr = list(name = "simplex"))
+
+# Plot with prediction intervals
+scplot(result, e.out = TRUE)
+```
+
+---
+
+```{r}
+#| label: show-scm-trends
+p_scpi_trends
+```
+
+::: notes
+The synthetic control tracks Basel well pre-treatment, then diverges post-July 2018.
+:::
+
+---
+
+```{r}
+#| label: show-scm-gap
+p_scpi_gap
+```
+
+---
+
+## Estimates: SCM vs DiD
+
+| Method | ATT estimate | Bias |
+|--------|-------------:|-----:|
+| True effect | `r round(att_true, 2)` | — |
+| SCM (scpi) | `r round(att_scpi, 2)` | `r round(att_scpi - att_true, 2)` |
+| Naive DiD | `r round(att_did, 2)` | `r round(att_did - att_true, 2)` |
+
+DiD is biased because parallel trends fail — Basel's latent factor loadings differ from donors.
+
+---
+
+## Uncertainty: placebo vs prediction intervals
+
+**Classic approach (placebo/permutation):**
+
+- Treat potential outcomes as fixed, reassign treatment to donors
+- Build null distribution of "effects" under no treatment
+- Design-based inference
+
+**scpi approach (prediction intervals):**
+
+- Prediction intervals for the counterfactual path $Y_{1t}(0)$
+- Two components:
+  - Weight estimation uncertainty (in-sample)
+  - Out-of-sample shock uncertainty (`e.method="gaussian"`)
+- Treat as sensitivity analysis, not hard inference
+
+---
+
+```{r}
+#| label: show-scpi-pi
+p_scpi_pi
+```
+
+Bands = **prediction intervals for Y₁ₜ(0)** (counterfactual), not CI for ATT.
+
+::: notes
+Out-of-sample options: gaussian (sub-Gaussian bounds), ls (location-scale), qreg (quantile regression).
+
+Key caveat: Out-of-sample part is assumption-heavy — you're bounding future random shocks.
+:::
+
+---
+
+```{r}
+#| label: show-weights-plot
+#| fig-height: 5
+#| fig-width: 10
+p_weights
+```
+
+---
+
+## Diagnostic: blank-period validation
+
+Hold out final 12 months of pre-treatment as "blank window" — fit SCM on earlier data, predict into blank period.
+
+```{r}
+#| label: show-blank-gap
+#| fig-height: 3.5
+p_blank_gap
+```
+
+If synthetic tracks well here (no treatment yet), we trust it more post-treatment.
+
+---
+
+## When to use SCM 
+
+**Good fit:**
+
+- Single treated unit (or few), panel outcome
+- Sufficient pre-treatment periods (≥ 5–10)
+- Good donor pool (similar, unaffected units)
+- Sharp, known treatment timing, constant measurement
+
+**Not the right tool:**
+
+- Patient-level RCT 
+- Many treated units with staggered timing → staggered DiD
+- Fuzzy timing, anticipation effects
+
+---
+
+
+## Extensions
+
+- **Synthetic Difference-in-Differences (SDID):** Combines SCM-style unit weights with DiD-style time weights — reweights both donors and pre-periods [@ArkhangelskyEtAl2021SDID]
+
+- **Augmented SCM:** Adds ridge regression bias correction on top of SCM weights — reduces interpolation bias when treated unit lies outside donor convex hull [@BenMichaelEtAl2021AugSCM]
+
+- **Interactive Fixed Effects (IFE) / Matrix Completion (MC):** Models outcome as low-rank factor structure and imputes missing counterfactual via matrix completion [@Xu2017gsynth; @AtheyEtAl2021MatrixCompletion]
+
+---
+
+## Software
+
+- `scpi`: canonical SCM + inference/prediction intervals [@CattaneoEtAl2025scpi]
+- `synthdid`, `augsynth`: SDID and augmented SCM
+- `fect`: IFE/MC workflows
+
+---
+
+## Takeaways
+
+1. Powerful idea: build a counterfactual trajectory for a single treated unit from a donor pool
+
+2. Easy to misuse (researcher degrees of freedom):
+   - Donor pool definition, predictors, pre-period window
+   - Inference choices (placebo thresholds, RMSPE cutoffs)
+
+3. Design crucial
+   - Commit donor pool + windows + outcome before looking post-$T_0$
+
+4. Trials angle: With 1–few clusters, randomization can be imbalanced; SCM-style designs can reduce baseline mismatch 
+
+::: notes
+"SCM is not fragile because it's fancy; it's fragile because small-N designs have lots of human choices. Pre-registration is choosing to be honest about those choices."
+:::
+
+---
+
+## Thank you for your attention {.center}
+
+::: {.columns}
+::: {.column width="100%" style="text-align: center;"}
+
+[![](https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=https%3A%2F%2Fvalentink.quarto.pub%2Fjcod-scm%2F){width=280}](https://valentink.quarto.pub/jcod-scm/)
+
+Slides & resources: [valentink.quarto.pub/jcod-scm](https://valentink.quarto.pub/jcod-scm)
+
+:::
+:::
+
+
+## References
+
+---

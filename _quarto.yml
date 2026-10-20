@@ -1,20 +1,38 @@
 project:
   type: website
+  render:
+    - index.qmd
+    - slides.qmd
+  resources:
+    - assets/
+    - presentation.html
+    - presentation.pdf
+    - results/figures/
+    - results/*.csv
+    - R/demo.R
+    - scripts/*.R
+    - docs/*.md
 
 website:
-  title: "SCM Resources"
+  title: "JCOD · Sorted effects"
   navbar:
     left:
       - href: index.qmd
-        text: Home
+        text: Session
       - href: slides.qmd
         text: Slides
+  page-footer: "Clinical Research · Journal Club / Open Discussion"
 
 format:
   html:
-    theme: [default, theme-dark.scss]
-    toc: true
-    toc-depth: 2
+    theme: [cosmo, theme.scss]
+    toc: false
 
 bibliography: references.bib
 csl: the-quarterly-journal-of-economics.csl
+
+execute:
+  echo: false
+  warning: false
+  message: false
+  cache: false

@@ -1,0 +1,15 @@
+List of 6
+ $ est        : num [1, 1:2] 0.139 0.071
+  ..- attr(*, "dimnames")=List of 2
+  .. ..$ : NULL
+  .. ..$ : chr [1:2] "p_irat" "hse_inc"
+ $ bse        : Named num [1:2] 0.0197 0.0238
+  ..- attr(*, "names")= chr [1:2] "p_irat" "hse_inc"
+ $ joint_p    : num [1:2] 0 0.0101
+ $ pointwise_p: num [1, 1:2] 7.67e-13 1.43e-03
+  ..- attr(*, "dimnames")=List of 2
+  .. ..$ : NULL
+  .. ..$ : chr [1:2] "p_irat" "hse_inc"
+ $ vars       : chr [1:2] "p_irat" "hse_inc"
+ $ type       : chr "diff"
+ - attr(*, "class")= chr "ca"

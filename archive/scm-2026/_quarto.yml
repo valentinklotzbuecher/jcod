@@ -1,0 +1,20 @@
+project:
+  type: website
+
+website:
+  title: "SCM Resources"
+  navbar:
+    left:
+      - href: index.qmd
+        text: Home
+      - href: slides.qmd
+        text: Slides
+
+format:
+  html:
+    theme: [default, theme-dark.scss]
+    toc: true
+    toc-depth: 2
+
+bibliography: references.bib
+csl: the-quarterly-journal-of-economics.csl

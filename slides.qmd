@@ -1,679 +1,634 @@
 ---
-title: "Synthetic Control Methods"
-subtitle: "Department of Clinical Research - Journal Club / Open Discussion"
-author: "Valentin Klotzbücher"
-date: last-modified
-
-# one source → two decks
+title: "Who benefits most?"
+subtitle: "Sorted partial effects · Journal Club / Open Discussion"
+author: "Valentin Klotzbücher · Department of Clinical Research"
 format:
   revealjs:
-    theme: [default, theme-light.scss]
-    slide-number: true
+    theme: [default, theme.scss]
+    slide-number: h.v
     incremental: false
     toc: false
     center: false
     width: 1280
     height: 720
-    format-links: [beamer]
+    margin: 0.08
+    transition: slide
+    transition-speed: default
+    background-transition: fade
+    navigation-mode: vertical
+    overview: true
+    controls-layout: bottom-right
+    controls-tutorial: true
+    touch: true
+    embed-resources: true
+    title-slide-attributes:
+      data-background-color: "#261b37"
+      data-background-transition: fade
+    auto-animate-duration: 0.65
+    auto-animate-easing: ease-in-out
+    controls: true
+    progress: true
+    history: true
+    html-math-method: mathml
+    format-links: false
+    footer: "JCOD · Sorted partial effects"
+    include-after-body: assets/deck.html
   beamer:
+    slide-level: 2
+    section-titles: false
     aspectratio: 169
+    pdf-engine: xelatex
+    mainfont: DejaVu Sans
+    sansfont: DejaVu Sans
     include-in-header: beamer-unibas.tex
     fonttheme: professionalfonts
-    classoption:
-      - "t"  # Top-align content
-
-bibliography: references.bib
-csl: the-quarterly-journal-of-economics.csl
-
+    classoption: [t, 10pt, handout]
+    keep-tex: false
+filters:
+  - filters/slides.lua
 execute:
   echo: false
   warning: false
   message: false
+  cache: false
 ---
-
-## Terminology
-
-| Context | Meaning |
-|---|---|
-| Clinical "synthetic control arm" | patient-level external controls, PS/transportability |
-| Econometric SCM | unit-level panel, weighted donor trajectory over time |
-
-This talk focuses on the second meaning.
-
----
-
-## When you only treat one unit
-
-Examples where SCM-style thinking is natural:
-
-- Synthetic Jena (mask mandate) [@MitzeEtAl2020FaceMasksSCM]
-- Synthetic Basque country (terrorism) [@AbadieGardeazabal2003BasqueConflict]
-- Synthetic Karl Marx (citations) [@MagnessMakovi2023MainstreamingMarx]
-
-Single treated unit + panel outcome → need a counterfactual path \(Y_{1t}(0)\).
-
----
-
-## SCM in the wild
-
-::: {.r-stack}
-
-![](images/Screenshot%202026-01-19%20at%2016.40.36.png){.fragment .fade-in-then-semi-out width="70%" style="transform: rotate(-1deg); box-shadow: 4px 4px 15px rgba(0,0,0,0.3);"}
-
-![](images/Screenshot%202026-01-19%20at%2019.55.25.png){.fragment .fade-in-then-semi-out width="70%" style="transform: rotate(1deg); box-shadow: 4px 4px 15px rgba(0,0,0,0.3);"}
-
-![](images/Screenshot%202026-01-19%20at%2016.40.11.png){.fragment width="70%" style="transform: rotate(-0.5deg); box-shadow: 4px 4px 15px rgba(0,0,0,0.3);"}
-:::
-
----
-
 
 ```{r}
-#| label: prep
+#| label: session_data
 #| include: false
-#| cache: true
-
-# ── Libraries ──
-library(dplyr)
-library(tidyr)
-library(ggplot2)
-library(scpi)
-library(lubridate)
-set.seed(420)
-
-# ── Theme colors (matching theme-light.scss) ──
-col_primary <- "#5A317E"      # deep purple
-col_primary_light <- "#7A4EA0"
-col_accent <- "#E07B53"       # warm orange for contrast
-col_text <- "#1a1a2e"
-col_bg <- "#FAFAFA"
-col_grid <- "#E5E5E5"
-
-# ── Slide theme ──
-theme_slide_plot <- function(base_size = 18) {
-
-  theme_minimal(base_size = base_size) +
-    theme(
-      text = element_text(colour = col_text),
-      axis.text = element_text(colour = col_text),
-      axis.title = element_text(colour = col_text),
-      panel.grid.major = element_line(colour = col_grid, linewidth = 0.3),
-      panel.grid.minor = element_blank(),
-      panel.background = element_rect(fill = col_bg, colour = NA),
-      plot.background = element_rect(fill = col_bg, colour = NA),
-      legend.position = "bottom",
-      legend.title = element_blank(),
-      legend.background = element_rect(fill = col_bg, colour = NA),
-      plot.title = element_blank(),
-      plot.subtitle = element_blank(),
-      axis.title.x = element_blank(),
-      plot.margin = margin(4, 8, 4, 4)
-    )
+required <- c("results/scenario-summary.csv", "results/patient-profiles.csv",
+              "results/figures/mortgage-example.png")
+if (!all(file.exists(required))) {
+  stop("Generate the results first: Rscript R/demo.R; Rscript scripts/benchmark-sortedeffects.R")
 }
-
-theme_set(theme_slide_plot())
-
-# ── Simulation: Monthly data ──
-hospitals <- c(
-  # Treated
-  "Basel (USB)",
-  # University hospitals
-  "Zurich (USZ)", "Bern (Insel)", "Lausanne (CHUV)", "Geneva (HUG)",
-
-  # Cantonal/Regional
-
-  "St. Gallen (KSSG)", "Luzern (LUKS)", "Aarau (KSA)", "Winterthur (KSW)",
-
-  "Chur (KSGR)", "Solothurn (soH)", "Fribourg (HFR)", "Schaffhausen",
-  "Neuchatel (HNE)", "Thurgau (KSM)", "Baselland (KSBL)", "Baden (KSB)",
-  "Biel", "Sion (HVS)", "Bellinzona (EOC)"
-)
-
-# Monthly sequence: Jan 2012 to Dec 2023
-months <- seq(as.Date("2012-01-01"), as.Date("2023-12-01"), by = "month")
-T0_date <- as.Date("2018-07-01")  # Treatment starts July 2018
-treated_unit <- "Basel (USB)"
-
-# Numeric time index for models (months since start)
-time_idx <- seq_along(months)
-T0 <- which(months == T0_date)
-pre_periods <- 1:(T0 - 1)
-
-# Time trend with latent factors + seasonality
-time_trend <- tibble(
-  month = months,
-  t = time_idx,
-  # Linear trend (gradual decline)
-  lambda = -0.015 * (t - 1),
-  # Latent factor 1: smooth business cycle (~4 year period)
-  f1 = 1.2 * sin(2 * pi * t / 48),
-  # Latent factor 2: policy shock around 2020 (COVID-like)
-  f2 = -1.5 * plogis((t - 97) / 3) + 0.8 * plogis((t - 109) / 4),
-  # Seasonality (winter peaks for hospital data)
-  season = 0.6 * cos(2 * pi * (month(month) - 1) / 12)
-)
-
-# Hospital parameters (heterogeneous factor loadings)
-hosp_par <- tibble(
-  hospital = hospitals,
-  alpha_i  = rnorm(length(hospitals), 0, 1.2),
-  gamma1_i = rnorm(length(hospitals), 1.0, 0.3),   # loading on f1
-  gamma2_i = rnorm(length(hospitals), 1.0, 0.25),  # loading on f2
-  season_i = rnorm(length(hospitals), 1.0, 0.2)    # seasonal sensitivity
-) %>%
-  # Basel has different loadings (violates parallel trends)
-  mutate(
-    gamma1_i = dplyr::if_else(hospital == treated_unit, gamma1_i + 0.4, gamma1_i),
-    gamma2_i = dplyr::if_else(hospital == treated_unit, gamma2_i - 0.3, gamma2_i)
-  )
-
-# Panel data
-df <- expand_grid(hospital = hospitals, t = time_idx) %>%
-  left_join(time_trend, by = "t") %>%
-  left_join(hosp_par, by = "hospital") %>%
-  mutate(
-    treated = (hospital == treated_unit),
-    post    = (t >= T0),
-    # Potential outcome without treatment
-    mu0 = 50 + alpha_i + lambda + gamma1_i * f1 + gamma2_i * f2 + season_i * season,
-    # Treatment effect: gradual phase-in over 6 months, then stable at -2.5
-    months_post = pmax(0, t - T0 + 1),
-    tau = dplyr::if_else(treated & post, -2.5 * pmin(months_post / 6, 1), 0),
-    # Observed outcome
-    y = mu0 + tau + rnorm(n(), 0, 0.8)
-  ) %>%
-  select(hospital, month, t, treated, post, y)
-
-# ── scpi SCM (canonical simplex weights) ──
-period_pre  <- 1:(T0 - 1)
-period_post <- T0:max(df$t)
-
-dat_sc <- scdata(
-  df = df,
-  id.var = "hospital",
-  time.var = "t",
-  outcome.var = "y",
-  features = "y",
-  unit.tr = treated_unit,
-  unit.co = setdiff(hospitals, treated_unit),
-  period.pre = period_pre,
-  period.post = period_post,
-  constant = TRUE
-)
-
-res_scpi <- scpi(
-  data = dat_sc,
-  w.constr = list(name = "simplex"),
-  u.missp = TRUE,         # allow for misspecification
-  u.sigma = "HC1",        # heteroskedasticity-robust
-  e.method = "gaussian",  # sub-Gaussian out-of-sample bounds
-  sims = 200
-)
-
-plot_range <- 1:max(df$t)
-
-pi_obj <- scplot(
-  result = res_scpi,
-  plot.range = plot_range,
-  e.out = TRUE,
-  label.xy = list(x.lab = NULL, y.lab = "Outcome")
-)
-
-# Choose nice x ticks (every 2 years)
-breaks_t <- seq(1, max(df$t), by = 24)
-labels_year <- format(months[breaks_t], "%Y")
-
-p_scpi_pi <- pi_obj$plot_out +
-  ggtitle(NULL) +
-  scale_x_continuous(breaks = breaks_t, labels = labels_year) +
-  scale_colour_manual(values = c(col_primary, col_accent), na.value = col_primary) +
-  scale_fill_manual(values = c(alpha(col_primary, 0.2), alpha(col_accent, 0.2))) +
-  theme_slide_plot()
-
-donors <- setdiff(hospitals, treated_unit)
-
-# --- Extract series for plotting from scpi ---
-Y_pre_actual <- res_scpi$data$Y.pre
-Y_post_actual <- res_scpi$data$Y.post
-Y_pre_fit <- res_scpi$est.results$Y.pre.fit
-Y_post_fit <- res_scpi$est.results$Y.post.fit
-
-df_trend <- tibble(
-  t = c(period_pre, period_post),
-  y_tr = c(as.numeric(Y_pre_actual), as.numeric(Y_post_actual)),
-  y_syn = c(as.numeric(Y_pre_fit), as.numeric(Y_post_fit))
-) %>%
-  left_join(time_trend %>% select(t, month), by = "t") %>%
-  mutate(gap = y_tr - y_syn)
-
-# Pre-treatment fit diagnostic
-rmspe_pre <- df_trend %>%
-  filter(t < T0) %>%
-  summarise(rmspe = sqrt(mean(gap^2))) %>%
-  pull(rmspe)
-
-# weights for donor table
-w <- NULL
-if (!is.null(res_scpi$w)) w <- res_scpi$w
-if (is.null(w) && !is.null(res_scpi$w.est)) w <- res_scpi$w.est
-if (is.null(w) && !is.null(res_scpi$est.results$w)) w <- res_scpi$est.results$w
-stopifnot(!is.null(w))
-
-# Clean up weight names - scpi names them as "TreatedUnit.DonorUnit"
-if (!is.null(names(w))) {
-  # Remove "w." or "w.co." prefix if present
-  names(w) <- sub("^w\\.(co\\.)?", "", names(w))
-  # Remove treated unit prefix (e.g., "Basel (USB).")
-  names(w) <- sub(paste0("^", gsub("([()])", "\\\\\\1", treated_unit), "\\."), "", names(w))
-}
-
-# Build weights tibble directly (handles name mismatches gracefully)
-weights_tbl <- tibble(
-  donor = names(w),
-  weight = as.numeric(w)
-) %>%
-  filter(!is.na(weight), weight > 0)
-
-p_scpi_trends <- ggplot(df_trend, aes(month)) +
-  geom_line(aes(y = y_tr, colour = "Basel (USB)"), linewidth = 1.0) +
-  geom_line(aes(y = y_syn, colour = "Synthetic"), linewidth = 1.0, linetype = 2) +
-  geom_vline(xintercept = T0_date, linetype = 2, colour = col_accent) +
-  scale_colour_manual(values = c("Basel (USB)" = col_primary, "Synthetic" = col_accent)) +
-  scale_x_date(date_breaks = "2 years", date_labels = "%Y") +
-  labs(y = "Outcome") +
-  theme_slide_plot()
-
-p_scpi_gap <- ggplot(df_trend, aes(month, gap)) +
-  geom_hline(yintercept = 0, linewidth = 0.4, colour = col_text) +
-  geom_line(linewidth = 1.0, colour = col_primary) +
-  geom_vline(xintercept = T0_date, linetype = 2, colour = col_accent) +
-  scale_x_date(date_breaks = "2 years", date_labels = "%Y") +
-  labs(y = "Basel (USB) \u2212 synthetic") +
-  theme_slide_plot()
-
-# ── Blank-period validation (holdout pre-period) ──
-TE <- T0 - 12  # last 12 months pre-treatment as blank period
-period_fit <- 1:TE
-period_blank <- (TE + 1):(T0 - 1)
-
-dat_fit <- scdata(
-  df = df,
-  id.var = "hospital",
-  time.var = "t",
-  outcome.var = "y",
-  features = "y",
-  unit.tr = treated_unit,
-  unit.co = setdiff(hospitals, treated_unit),
-  period.pre = period_fit,
-  period.post = period_blank,
-  constant = TRUE
-)
-
-res_fit <- scpi(
-  data = dat_fit,
-  w.constr = list(name = "simplex"),
-  sims = 200,
-  e.method = "gaussian"
-)
-
-blank_df <- tibble(
-  t = period_blank,
-  y_tr = as.numeric(res_fit$data$Y.post),
-  y_syn_blank = as.numeric(res_fit$est.results$Y.post.fit)
-) %>%
-  left_join(time_trend %>% select(t, month), by = "t") %>%
-  mutate(gap_blank = y_tr - y_syn_blank)
-
-p_blank_gap <- ggplot(blank_df, aes(month, gap_blank)) +
-  geom_hline(yintercept = 0, linewidth = 0.4, colour = col_text) +
-  geom_line(linewidth = 1.0, colour = col_primary) +
-  scale_x_date(date_breaks = "3 months", date_labels = "%b %Y") +
-  labs(y = "Gap in blank window") +
-  theme_slide_plot() +
-  theme(axis.text.x = element_text(angle = 0, vjust = 0.5))
-
-att_scpi <- df_trend %>%
-  filter(t >= T0) %>%
-  summarise(att = mean(gap)) %>%
-  pull(att)
-
-# ── Naive DiD estimate (should be biased due to violated parallel trends) ──
-# Simple difference-in-differences: (treated_post - treated_pre) - (control_post - control_pre)
-did_means <- df %>%
-  group_by(treated, post) %>%
-  summarise(y_mean = mean(y), .groups = "drop")
-
-att_did <- (did_means$y_mean[did_means$treated & did_means$post] -
-            did_means$y_mean[did_means$treated & !did_means$post]) -
-           (did_means$y_mean[!did_means$treated & did_means$post] -
-            did_means$y_mean[!did_means$treated & !did_means$post])
-
-# True ATT for comparison
-att_true <- -2.5
-
-# weights plot (weights_tbl already created above)
-p_weights <- weights_tbl %>%
-  arrange(desc(weight)) %>%
-  ggplot(aes(x = reorder(donor, weight), y = weight)) +
-  geom_col(fill = col_primary, alpha = 0.85) +
-  coord_flip() +
-  labs(y = "Weight") +
-  theme_slide_plot()
-
-p_scm_trends <- p_scpi_trends
-
-# ── Pre-built plots ──
-# Raw panel (use dates for x-axis)
-p_raw <- ggplot(df, aes(month, y, group = hospital)) +
-  geom_line(data = df %>% filter(!treated),
-            colour = "#94A3B8", alpha = 0.6, linewidth = 0.4) +
-  geom_line(data = df %>% filter(treated),
-            colour = col_primary, linewidth = 1.0) +
-  geom_vline(xintercept = T0_date, linetype = 2, colour = col_accent) +
-  scale_x_date(date_breaks = "2 years", date_labels = "%Y") +
-  labs(y = "Outcome") +
-  theme_slide_plot()
-
-# Format treatment date for slides
-T0_label <- format(T0_date, "%B %Y")
+scenarios <- read.csv("results/scenario-summary.csv")
+constant <- scenarios[scenarios$scenario == "constant", , drop = FALSE]
+interaction <- scenarios[scenarios$scenario == "interaction", , drop = FALSE]
+pp <- function(x) sprintf("%.1f", 100 * x)
 ```
 
-<!-- ═══════════════════════════════════════════════════════════════════════ -->
-<!-- SECTION A — Motivation & Literature                                     -->
-<!-- ═══════════════════════════════════════════════════════════════════════ -->
+## Our route {#session-map .map-slide data-transition="fade"}
 
-<!-- ═══════════════════════════════════════════════════════════════════════ -->
-<!-- SECTION B — SCM Core                                                    -->
-<!-- ═══════════════════════════════════════════════════════════════════════ -->
+::: {.content-visible when-format="revealjs"}
+::: {.session-map}
+::: {.map-card}
+[01 · Scale](#scale){.map-title}
 
+Same treatment. Different absolute benefit.
+:::
+::: {.map-card}
+[02 · Distribution](#distribution){.map-title}
 
-## Why SCM 
+See what the average conceals.
+:::
+::: {.map-card}
+[03 · Patients](#patients){.map-title}
 
-- Goal: recover the untreated path for the treated unit, $Y_{1t}(0)$
-- DiD needs parallel trends; with one treated unit this is untestable and often implausible
-- Common shocks can hit units differently and break DiD
-- SCM builds a comparison unit by weighting donors to match pre-period outcomes
+Reconnect the curve to patient profiles.
+:::
+::: {.map-card}
+[04 · Uncertainty](#uncertainty){.map-title}
 
----
+Find out how stable the picture is.
+:::
+::: {.map-card}
+[05 · Evidence](#evidence){.map-title}
 
-## SCM intuition
+Read a published example with real data.
+:::
+::: {.map-card}
+[06 · Decisions](#decisions){.map-title}
 
-**Core idea:** Build a *synthetic control* as a weighted combination of donor units.
+Ask what would change clinical practice.
+:::
+:::
 
-- Weights chosen to match the treated unit's pre-treatment trajectory
-- The synthetic unit serves as the counterfactual
-- Treatment effect = observed outcome − synthetic outcome
+::: {.key-hint}
+**→** chapters · **↓** examples · **Space** follow the story · **Esc** see the whole deck
+:::
+:::
 
-$$
-\widehat{Y}_{1t}^{(0)} = r + \sum_{j=2}^{J+1} w_j \cdot Y_{jt} \quad \text{where } \sum_j w_j = 1, \; w_j \geq 0
-$$
-
----
-
-## SCM objective + weights
-
-Weights minimize pre-treatment prediction error:
-
-$$
-\min_{W, r} \sum_{t < T_0} \left( Y_{1t} - r - \sum_{j=2}^{J+1} w_j Y_{jt} \right)^2
-$$
-
-Subject to:
-
-- $w_j \geq 0$ (no negative weights)
-- $\sum_j w_j = 1$ (convex combination)
-
-- Typically few donors receive positive weight (sparsity helps interpretability)
+::: {.content-visible when-format="beamer"}
+1. Choose the effect scale.
+2. Explore the distribution and patient profiles.
+3. Consider uncertainty and published evidence.
+4. Discuss clinical decisions.
+:::
 
 ::: notes
-The optimization is a constrained regression. —we can say "synthetic Basel is 60% Zurich + 40% Bern."
+This is the session map. In HTML, the six cards jump to chapter opening slides. Horizontal navigation moves between chapters; vertical navigation explores the slides within each chapter. Space follows the entire sequence. Esc or O opens Reveal's two-dimensional overview. The prepared content still takes around 35–40 minutes, leaving time for discussion in the one-hour session. Use the map to return to a topic during questions.
 :::
 
----
+# Choose the scale {#scale .chapter-slide data-chapter-label="Scale" data-background-color="#261b37" data-background-transition="fade"}
 
-![](images/Screenshot%202026-01-19%20at%2021.57.51.png){fig-align="center" width="85%"}
+::: {.chapter-number}
+01
+:::
 
----
+::: {.chapter-lead}
+A common odds ratio can hide very different absolute benefits.
+:::
 
-## SCM as experimental design
+::: {.chapter-cue}
+↓ Start with two patients
+:::
 
-@AbadieZhao2025SCD perspective:
+## Same treatment. Same benefit? {#same-treatment data-auto-animate="true"}
 
-- **Pre-register donor pool** before seeing outcomes
-- **Train → Validate → Lock → Test:** fit on early pre-period, validate on held-out "blank" window, then lock weights before looking at post-$T_0$
-- **Design for SCM** — choose treated units where good donors exist
+Both patient profiles have a **treatment odds ratio of 0.60**.
 
+::: columns
+::: {.column width="48%" .patient-card .fragment .fade-up fragment-index="0" data-id="patient-low"}
+### Lower baseline risk
 
+10% → 6.25% event risk
 
----
+Risk without → with treatment
+:::
+::: {.column width="48%" .patient-card .fragment .fade-up fragment-index="1" data-id="patient-high"}
+### Higher baseline risk
 
-<!-- ═══════════════════════════════════════════════════════════════════════ -->
-<!-- SECTION D — Simulation Illustration                                     -->
-<!-- ═══════════════════════════════════════════════════════════════════════ -->
+40% → 28.57% event risk
 
+Risk without → with treatment
+:::
+:::
 
-## Simulated example
+::: {.prompt .fragment .fade-up fragment-index="2"}
+Which description of the treatment effect would you report?
+:::
 
-Panel $Y_{it}$: 20 Swiss hospitals × 144 months (2012–2023)
+::: notes
+0–4 minutes. Open with a vote: homogeneous or heterogeneous treatment effect? Both answers need an effect scale. These numbers are algebraic illustrations, not estimates from the simulated trial. For OR theta and untreated risk p, treated risk is theta*p/(1-p+theta*p). All discussion concerns a hypothetical binary adverse outcome at a fixed follow-up time. A 3.75 percentage-point reduction means about four fewer events per 100 comparable patients on average; it is not a known outcome for a specific patient.
+:::
 
-**Common time components** (same for all units):
+## Different absolute benefits {#absolute-benefits data-auto-animate="true"}
 
-- Linear trend $\lambda_t$
-- Smooth business cycle $f_{1t}$ (~4-year period)
-- COVID-like shock $f_{2t}$ (turns on ~2020)
-- Seasonality $\text{season}_t$ (winter peaks)
+The same odds ratio. **Different absolute risk reductions.**
 
-**Unit heterogeneity:** each hospital $i$ gets baseline $\alpha_i$ + factor loadings $\gamma_{1i}, \gamma_{2i}$ + seasonal sensitivity
+::: columns
+::: {.column width="48%" .patient-card data-id="patient-low"}
+### Lower baseline risk
 
----
+::: {.metric}
+3.75 pp
+:::
 
-## Simulation DGP
+10% → 6.25% event risk
+:::
+::: {.column width="48%" .patient-card data-id="patient-high"}
+### Higher baseline risk
 
-Untreated potential outcomes:
+::: {.metric}
+11.43 pp
+:::
+
+40% → 28.57% event risk
+:::
+:::
+
+::: {.prompt}
+Heterogeneity depends on the effect scale we choose.
+:::
+
+::: notes
+Continue the opening discussion. The cards keep their patient-profile identity as we change the displayed summary. The numbers are analytic illustrations under a known odds ratio of 0.60. The absolute risk reduction is a difference in probabilities, expressed in percentage points. Both scale descriptions are valid; neither establishes a biological mechanism. This is an extra visual step, not a new statistical analysis.
+:::
+
+## Define the benefit before sorting
+
+For a patient profile $x$:
 
 $$
-Y_{it}(0) = 50 + \alpha_i + \lambda_t + \gamma_{1i} f_{1t} + \gamma_{2i} f_{2t} + s_i \cdot \text{season}_t + \varepsilon_{it}
+\Delta(x)=\Pr(Y=1\mid A=0,X=x)-\Pr(Y=1\mid A=1,X=x)
 $$
 
-**Key trap for DiD:** Basel's loadings are perturbed ($\gamma_1$ ↑, $\gamma_2$ ↓). Even without treatment, Basel wouldn't track donors with a stable additive gap → TWFE/DiD structurally biased.
+- A binary **adverse outcome** at a fixed follow-up time.
+- Larger values mean greater **absolute risk reduction**.
+- A conditional average contrast for comparable profiles.
 
-**Treatment:** At $T_0$ = July 2018, Basel gets effect ramping to −2.5 over 6 months; donors get zero.
+::: {.small}
+In our randomized-trial simulation, this identifies a conditional average causal benefit under the data-generating assumptions.
+:::
 
 ::: notes
-We know truth (ATT ≈ −2.5), we know DiD fails structurally.
+5–7 minutes. A is randomized treatment; X includes only baseline variables. Identification also presumes consistency and adequate treatment support; the simulation provides both. In observational data the same regression contrast needs conditional exchangeability and positivity to have a causal interpretation. Even in an RCT, we never observe both potential outcomes for one patient. The distribution of conditional average effects differs from the distribution of individual treatment effects. Explain sign here so the right tail always means greater benefit.
 :::
 
----
+## A constant odds ratio, varying absolute benefit {data-auto-animate="true"}
 
-```{r}
-#| label: show-raw-panel
-p_raw
-```
+![](results/figures/baseline-risk.png){width=95%}
+
+::: {.source}
+Simulation truth. The relationship can turn over at very high baseline risks; it is not globally increasing.
+:::
 
 ::: notes
-Notice the heterogeneous trends—this is why parallel trends won't hold.
+9–12 minutes. This figure shows the exact constant-OR relationship, with the opening profiles highlighted. Ask the audience what the x and y axes mean. The curve is curved because of the inverse-logit transformation. For a beneficial constant OR theta, absolute risk reduction is maximized at untreated risk 1/(1+sqrt(theta)); there is no universal monotonic risk-benefit rule. Within the observed low/moderate risk range the increasing section often dominates. We next compare this pattern with an interaction scenario. Both scenarios exhibit effect heterogeneity on the risk-difference scale.
 :::
 
----
+# Look beyond the average {#distribution .chapter-slide data-chapter-label="Distribution" data-background-color="#261b37" data-background-transition="fade"}
 
-## Running SCM in R
+::: {.chapter-number}
+02
+:::
 
-```r
-library(scpi)
+::: {.chapter-lead}
+The same average benefit. Two very different distributions.
+:::
 
-# Prepare data structure
-dat <- scdata(
-  df = panel_data,
-  id.var = "unit", time.var = "time", outcome.var = "y",
-  unit.tr = "treated_unit",
-  unit.co = donor_units,
-  period.pre = 1:(T0-1),
-  period.post = T0:T_max
-)
+::: {.chapter-cue}
+↓ Build the sorted-effects curve
+:::
 
-# Estimate with simplex (convex) weights
-result <- scpi(data = dat, w.constr = list(name = "simplex"))
+## One trial. Two effect patterns. {data-auto-animate="true"}
 
-# Plot with prediction intervals
-scplot(result, e.out = TRUE)
-```
+::: columns
+::: {.column width="48%"}
+### Scenario A
 
----
+Constant treatment odds ratio of **0.60**.
 
-```{r}
-#| label: show-scm-trends
-p_scpi_trends
-```
+Absolute benefit varies with baseline risk.
+:::
+::: {.column width="48%"}
+### Scenario B
+
+Treatment interacts with baseline severity.
+
+Absolute benefit also reflects the interaction pattern.
+:::
+:::
+
+The **true average absolute benefit is matched by design** in the same reference population.
+
+::: {.source}
+Simulated randomized trial: 5,000 patients. Fixed reference population: 2,000 profiles. Logistic outcome models; no real patient data.
+:::
 
 ::: notes
-The synthetic control tracks Basel well pre-treatment, then diverges post-July 2018.
+7–9 minutes. Both scenarios share the same untreated-risk model and baseline covariates. The treatment-interaction intercept is calibrated so true mean benefit matches scenario A in the fixed reference cohort; this is a teaching device, not estimation from observed outcomes. Trial covariates, treatment assignments and outcome-generating uniforms are shared to reduce irrelevant Monte Carlo variation; realized outcomes differ between scenarios. Their fitted average benefits need not match. The reference cohort is held fixed to make the estimand and bootstrap uncertainty explicit. Interaction coefficients depend on effect scale and do not establish biological mechanisms. Details and seeds are in the code and backup slides.
 :::
 
----
+## From a patient table to a sorted curve
 
-```{r}
-#| label: show-scm-gap
-p_scpi_gap
-```
+| Profile | Risk without treatment | Risk with treatment | Benefit |
+|:--|--:|--:|--:|
+| A | 10% | 6.25% | 3.75 pp |
+| B | 20% | 13.04% | 6.96 pp |
+| C | 40% | 28.57% | 11.43 pp |
 
----
+::: {.sorting-steps}
+::: {.fragment .fade-up fragment-index="0"}
+**01** Predict twice
+:::
+::: {.fragment .fade-up fragment-index="1"}
+**02** Subtract
+:::
+::: {.fragment .fade-up fragment-index="2"}
+**03** Sort the contrasts
+:::
+:::
 
-## Estimates: SCM vs DiD
-
-| Method | ATT estimate | Bias |
-|--------|-------------:|-----:|
-| True effect | `r round(att_true, 2)` | — |
-| SCM (scpi) | `r round(att_scpi, 2)` | `r round(att_scpi - att_true, 2)` |
-| Naive DiD | `r round(att_did, 2)` | `r round(att_did - att_true, 2)` |
-
-DiD is biased because parallel trends fail — Basel's latent factor loadings differ from donors.
-
----
-
-## Uncertainty: placebo vs prediction intervals
-
-**Classic approach (placebo/permutation):**
-
-- Treat potential outcomes as fixed, reassign treatment to donors
-- Build null distribution of "effects" under no treatment
-- Design-based inference
-
-**scpi approach (prediction intervals):**
-
-- Prediction intervals for the counterfactual path $Y_{1t}(0)$
-- Two components:
-  - Weight estimation uncertainty (in-sample)
-  - Out-of-sample shock uncertainty (`e.method="gaussian"`)
-- Treat as sensitivity analysis, not hard inference
-
----
-
-```{r}
-#| label: show-scpi-pi
-p_scpi_pi
-```
-
-Bands = **prediction intervals for Y₁ₜ(0)** (counterfactual), not CI for ATT.
+::: {.small}
+Here the contrast is a finite change in treatment, rather than a derivative. The same idea extends to other partial effects.
+:::
 
 ::: notes
-Out-of-sample options: gaussian (sub-Gaussian bounds), ls (location-scale), qreg (quantile regression).
-
-Key caveat: Out-of-sample part is assumption-heavy — you're bounding future random shocks.
+12–14 minutes. These are the same constant-OR algebraic illustrations as the opening. Each profile is predicted under both treatments. We sort the differences, not the treated outcome predictions, and not their standard errors. Once sorted, the horizontal axis records rank/percentile rather than a named patient characteristic. It is useful to physically trace the three rows left to right before showing the curve. Sorted effects is a summary layer on a chosen effect model; it does not discover a causal design or fit a model automatically.
 :::
 
----
+## Similar averages can hide different distributions
 
-```{r}
-#| label: show-weights-plot
-#| fig-height: 5
-#| fig-width: 10
-p_weights
-```
+![](results/figures/sorted-effects.png){width=95%}
 
----
-
-## Diagnostic: blank-period validation
-
-Hold out final 12 months of pre-treatment as "blank window" — fit SCM on earlier data, predict into blank period.
-
-```{r}
-#| label: show-blank-gap
-#| fig-height: 3.5
-p_blank_gap
-```
-
-If synthetic tracks well here (no treatment yet), we trust it more post-treatment.
-
----
-
-## When to use SCM 
-
-**Good fit:**
-
-- Single treated unit (or few), panel outcome
-- Sufficient pre-treatment periods (≥ 5–10)
-- Good donor pool (similar, unaffected units)
-- Sharp, known treatment timing, constant measurement
-
-**Not the right tool:**
-
-- Patient-level RCT 
-- Many treated units with staggered timing → staggered DiD
-- Fuzzy timing, anticipation effects
-
----
-
-
-## Extensions
-
-- **Synthetic Difference-in-Differences (SDID):** Combines SCM-style unit weights with DiD-style time weights — reweights both donors and pre-periods [@ArkhangelskyEtAl2021SDID]
-
-- **Augmented SCM:** Adds ridge regression bias correction on top of SCM weights — reduces interpolation bias when treated unit lies outside donor convex hull [@BenMichaelEtAl2021AugSCM]
-
-- **Interactive Fixed Effects (IFE) / Matrix Completion (MC):** Models outcome as low-rank factor structure and imputes missing counterfactual via matrix completion [@Xu2017gsynth; @AtheyEtAl2021MatrixCompletion]
-
----
-
-## Software
-
-- `scpi`: canonical SCM + inference/prediction intervals [@CattaneoEtAl2025scpi]
-- `synthdid`, `augsynth`: SDID and augmented SCM
-- `fect`: IFE/MC workflows
-
----
-
-## Takeaways
-
-1. Powerful idea: build a counterfactual trajectory for a single treated unit from a donor pool
-
-2. Easy to misuse (researcher degrees of freedom):
-   - Donor pool definition, predictors, pre-period window
-   - Inference choices (placebo thresholds, RMSPE cutoffs)
-
-3. Design crucial
-   - Commit donor pool + windows + outcome before looking post-$T_0$
-
-4. Trials angle: With 1–few clusters, randomization can be imbalanced; SCM-style designs can reduce baseline mismatch 
+::: {.source}
+True mean benefit: `r pp(constant$mean_true_benefit)` pp in both scenarios. Negative benefit means increased adverse-event risk. Central 10th–90th percentiles shown.
+:::
 
 ::: notes
-"SCM is not fragile because it's fancy; it's fragile because small-N designs have lots of human choices. Pre-registration is choosing to be honest about those choices."
+14–17 minutes. Orient the audience to solid estimated curves and dotted simulation truth. True averages were matched by design at 7.21 pp; fitted averages are about 6.37 pp and 6.03 pp. The interaction scenario deliberately includes profiles with conditional average harm, which appear below zero. This is known in the simulation; a negative fitted contrast alone would need uncertainty assessment in real data. An APE is the mean of all profile-level benefits; it is not generally the median of this curve. The plotted quantiles deliberately omit the most extreme tails. This plot demonstrates distributional differences between the two scenario models, not a formal hypothesis test comparing curves. Point estimates alone do not establish statistically significant heterogeneity. Ask which part of the curve would matter for a clinical decision and why.
 :::
 
----
+## What does a point on the curve mean?
 
-## Thank you for your attention {.center}
+The **80th percentile** is the benefit level at or below which approximately 80% of reference profiles lie.
 
-::: {.columns}
-::: {.column width="100%" style="text-align: center;"}
+It is a **quantile of conditional benefits**.
 
-[![](https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=https%3A%2F%2Fvalentink.quarto.pub%2Fjcod-scm%2F){width=280}](https://valentink.quarto.pub/jcod-scm/)
+It is different from:
 
-Slides & resources: [valentink.quarto.pub/jcod-scm](https://valentink.quarto.pub/jcod-scm)
+- the treatment effect on the 80th percentile of the outcome;
+- a probability that a particular patient will benefit.
 
+::: notes
+17–19 minutes. This is a quantile of the distribution of model-based conditional contrasts, not a quantile treatment effect. For a binary endpoint, the contrast is in probabilities. Quantile language can sound patient-specific, so return to the fact that these are averages among comparable profiles. At a population distribution with ties, percentile wording needs the usual quantile convention. The simulation uses empirical type-8 quantiles. The reference population also matters: changing the mix of patients can change the curve with exactly the same fitted conditional model.
+:::
+
+# Meet the patient profiles {#patients .chapter-slide data-chapter-label="Patients" data-background-color="#261b37" data-background-transition="fade"}
+
+::: {.chapter-number}
+03
+:::
+
+::: {.chapter-lead}
+The curve shows how much. Classification asks who.
+:::
+
+::: {.chapter-cue}
+↓ Explore the tails
+:::
+
+## Who occupies the tails?
+
+![](results/figures/classification.png){width=95%}
+
+::: {.source}
+Descriptive profiles of the lowest and highest 10% of estimated benefits in both scenarios. These summaries have no classification confidence intervals.
+:::
+
+::: notes
+19–22 minutes. The sorted curve answers how much variation there is. Classification analysis asks what the profiles in selected tails look like. Explain that grouping is by estimated benefit, not by the outcome. The characteristics are correlated and may be ingredients of the fitted model: this is not independent evidence that age or severity causally modifies response. The formal SortedEffects method supplies inference for classification parameters; this clinical-demo table is descriptive only. In the original-package reproduction we separately exercise its ca() procedure. Choice of a 10% tail is prespecified for the illustration, not optimized to produce a dramatic contrast.
+:::
+
+## A tail label can be unstable
+
+![](results/figures/membership-stability.png){width=95%}
+
+::: {.source}
+Bootstrap reclassification in the fixed reference population. Membership frequencies measure sensitivity to refitting; they are not patient-level probabilities of benefit.
+:::
+
+::: notes
+22–24 minutes. Every bootstrap fit re-predicts all reference profiles and reassigns the top-benefit tail. Profiles near the estimated cutoff can change sides. Ask what a clinical team would do with a patient near this boundary. These bootstrap frequencies are diagnostics, not calibrated confidence probabilities that a patient is truly in a tail. They also inherit the chosen regression model and its assumptions; stability under refitting does not prove validity under model misspecification. A discrete tail boundary should not masquerade as a biological subtype.
+:::
+
+# How stable is the picture? {#uncertainty .chapter-slide data-chapter-label="Uncertainty" data-background-color="#261b37" data-background-transition="fade"}
+
+::: {.chapter-number}
+04
+:::
+
+::: {.chapter-lead}
+A persuasive ranking still needs an uncertainty statement.
+:::
+
+::: {.chapter-cue}
+↓ Refit, re-sort, reconsider
+:::
+
+## Add uncertainty to the sorted curve
+
+![](results/figures/uncertainty.png){width=95%}
+
+::: {.source}
+Approximate 95% intervals from refitting and re-sorting. Simultaneous coverage concerns the displayed percentile grid, conditional on the reference population and model.
+:::
+
+::: notes
+24–27 minutes. Identify pointwise versus simultaneous intervals using the legend. Pointwise intervals concern one percentile at a time; the simultaneous band concerns the whole selected grid. The demo resamples randomized-trial rows, refits the model, predicts both treatments for the same reference profiles, and sorts again. Its max-standardized-deviation critical value is estimated from the same bootstrap draws. This is a transparent illustration of the inferential ingredients, not a benchmarked reimplementation of the Econometrica inference procedure. There are 499 draws by default; this is a teaching calculation rather than a high-precision production analysis. The band is not an interval for an individual patient's effect. A sloping fitted curve alone is no proof of heterogeneity.
+:::
+
+## What uncertainty have we included?
+
+**Included:** estimation of the outcome model, prediction of contrasts, and re-sorting after each refit.
+
+**Held fixed:** the reference patient profiles and the chosen model specification.
+
+**Requires further work:** model sensitivity, new-population uncertainty, and formal inference for the clinical tail comparisons.
+
+::: {.prompt}
+Would your main concern be sampling uncertainty or the model itself?
+:::
+
+::: notes
+27–29 minutes. If the reference profiles are a sample from a larger target population, holding them fixed does not quantify sampling variation in that population's covariate distribution. Resampling designs must match the target: fixed reference, a joint trial population, external weighted population, clusters, etc. Smoothness and nondegeneracy matter near ties and flat effect distributions; ordinary bootstrap quantile arguments can fail. Do not present a universal recipe for every effect estimator. This is a natural pause for a statistician audience to ask about model checking and resampling design without deriving the theorem.
+:::
+
+# Read the evidence {#evidence .chapter-slide data-chapter-label="Evidence" data-background-color="#261b37" data-background-transition="fade"}
+
+::: {.chapter-number}
+05
+:::
+
+::: {.chapter-lead}
+What does the method reveal in a published application?
+:::
+
+::: {.chapter-cue}
+↓ A real-data example
+:::
+
+## A published example with real data
+
+**Mortgage denials in Boston, 1990** [@chen2020; @munnell1996].
+
+- 2,380 applicants: 2,041 white and 339 Black applicants.
+- Logistic model with financial and demographic controls.
+- Contrast: predicted denial risk for Black versus white applicants at the same modeled covariates.
+
+The tutorial reports an average adjusted denial disparity of **5.1 pp**, with a **90% interval of 2.1–8.1 pp**.
+
+::: {.source}
+Published, bias-corrected result from Chen et al. (2020), Table 1; 500 bootstrap repetitions. This is a separate analysis from our clinical simulation.
+:::
+
+::: notes
+29–31 minutes. We use a fully verified published tutorial rather than an unverified clinical-paper summary. The data are observational. Treat the race contrast as an adjusted disparity; causal interpretations of race indicators require a carefully defined question and assumptions beyond logistic regression. The published result is displayed as published, not represented as our own reproduction. The software exercise uses the same public dataset and specification with a new bootstrap run; finite-repetition inference can differ. The direction here is Black minus white denial risk, so positive means a larger adverse disparity; the clinical example's benefit sign is different. Emphasize the legend on the next slide.
+:::
+
+## From an average disparity to its distribution
+
+![](results/figures/mortgage-example.png){width=95%}
+
+::: {.source}
+New reproduction using the original SortedEffects 1.7.0 package. Positive values mean higher predicted denial risk for Black applicants. See validation notes for repetitions and comparisons.
+:::
+
+::: notes
+31–33 minutes. Point to the mean reference and the shape of the sorted-effects curve. The original tutorial also compares the characteristics of the highest and lowest 10% of disparities using its classification-analysis inference. Ask what the curve adds to the average and what it cannot resolve about discrimination, selection, or omitted variables. The contrast is not a patient-treatment benefit and should not be clinically reinterpreted. Our package benchmark checks exact point-estimate agreement with a direct glm calculation and exercises original bootstrap and classification procedures; it does not independently prove the statistical coverage theorem.
+:::
+
+# From patterns to decisions {#decisions .chapter-slide data-chapter-label="Decisions" data-background-color="#261b37" data-background-transition="fade"}
+
+::: {.chapter-number}
+06
+:::
+
+::: {.chapter-lead}
+What additional evidence would justify changing treatment?
+:::
+
+::: {.chapter-cue}
+↓ Open the discussion
+:::
+
+## What would we do in a clinical study?
+
+1. Specify the **outcome, time horizon, effect scale and population**.
+2. Justify the **causal design** and fit a credible effect model.
+3. Show the **average, sorted distribution and tail descriptions**.
+4. Assess **uncertainty, model sensitivity and external validity**.
+
+::: {.small}
+The sorted-effects method summarizes the effects supplied to it. Its interpretation inherits their assumptions.
+:::
+
+::: notes
+33–35 minutes. For an RCT, identify prespecified effect modifiers and ensure adequate sample size for interactions. For an observational study, address confounding and support before sorting anything. Use only pretreatment covariates when defining baseline benefit. Calibration for outcome prediction is relevant but does not alone establish accurate treatment-effect heterogeneity. Prespecify the reference population, percentile range, and tail sizes. For clinical claims, assess robustness across plausible models and in new data; a single fitted logistic model is an illustration, not a validated decision aid.
+:::
+
+## Would you use this to choose treatment?
+
+::: {.large}
+A patient profile lies in the highest-benefit 10%.
+:::
+
+Before making a rule, consider:
+
+- the **size** of benefit relative to harms and burden;
+- uncertainty in the contrast and the **tail label**;
+- whether the model transports to this setting;
+- how the proposed rule performs in **independent evaluation**.
+
+::: notes
+35–37 minutes, or pause longer. Ask the group to articulate a concrete decision threshold. Ranking patients is not the same as selecting an optimal policy. If all patients have benefit larger than harms, restricting treatment to the top decile can be worse than treating all. If harms vary, sorting benefit alone can give the wrong ranking. A policy evaluation needs an explicit utility function, constraints, and validation. Conditional average benefits are useful inputs to shared decisions, but patient preferences and individual realized outcomes are different quantities.
+:::
+
+## Three things to take away {.takeaways-slide}
+
+::: {.large}
+::: {.fragment .fade-up fragment-index="0"}
+**Choose the scale.**
+:::
+
+::: {.fragment .fade-up fragment-index="1"}
+**Show the distribution.**
+:::
+
+::: {.fragment .fade-up fragment-index="2"}
+**Interrogate the tails.**
 :::
 :::
 
+An appealing ranking still needs a credible model, appropriate inference, and clinical validation.
 
-## References
+::: notes
+37–38 minutes. Briefly revisit opening example: a fixed OR already creates heterogeneity on the absolute scale. The sorted-effects curve gives a distributional summary rather than only a mean. Classification is a useful description, with uncertainty and interpretation that need care. No new technical concepts here. If the session is running long, move directly from this slide to discussion.
+:::
 
----
+## Open discussion
+
+1. Where would this add something to our current subgroup analyses?
+2. Which assumptions or diagnostics would you want to challenge first?
+3. What evidence would justify changing a treatment decision?
+
+::: {.source}
+Keep the earlier plots available for discussion. Technical details and software checks follow in the backup slides.
+:::
+
+::: notes
+38–60 minutes, adjusted for earlier discussion. Useful follow-ups: why sort rather than model a few prespecified interactions? How does this differ from CATE estimation with forests? What if the distribution is nearly flat? What if the tails have weak support? Would a different reference population change our takeaway? Would risk stratification already suffice? Avoid promising that sorting solves confounding, model selection, or individual treatment-effect identification.
+:::
+
+## Reading and resources
+
+**Method:** [@chernozhukov2018].
+
+**Applied tutorial and original software:** [@chen2020].
+
+The session page contains the slides, code, numerical results and source notes.
+
+::: {.prompt}
+Thank you — which clinical example should we try next?
+:::
+
+::: notes
+End of main material. The clinical application leads in the brainstorming notes are recorded in docs/evidence.md with their verification status. They have not been used as evidence for specific health claims in this deck. Original package status and local validation details are in docs/software-validation.md. The following slides are optional backup and do not need to be presented in the prepared 35–40 minutes.
+:::
+
+# A closer look {#backup .chapter-slide .backup-chapter data-chapter-label="Backup" data-background-color="#261b37" data-background-transition="fade"}
+
+::: {.chapter-number}
+\+
+:::
+
+::: {.chapter-lead}
+Optional details on the estimand, simulation and original software.
+:::
+
+::: {.chapter-cue}
+↓ Technical backup
+:::
+
+## Backup · What is being sorted?
+
+$$
+\mathrm{SPE}(u)=Q_{\Delta(X)}(u), \qquad
+\mathrm{APE}=E[\Delta(X)].
+$$
+
+- The distribution of $X$ defines the population being summarized.
+- Sorting discards the profile labels; classification reconnects them.
+- A quantile of effects differs from a difference of outcome quantiles.
+
+::: {.source}
+[@chernozhukov2018]. Demo: empirical reference distribution; type-8 quantiles.
+:::
+
+::: notes
+The original paper provides inference for sorted effects and classification under its regularity conditions. Its framework extends beyond the simple binary treatment contrast in this presentation. The demo intentionally conditions on a finite reference cohort and uses a percentile grid from 0.10 to 0.90. APE is the mean of profile contrasts, not the area under a truncated curve. Formal population inference must account for estimated effect functions and, where applicable, the covariate distribution. Under a constant effect the distribution degenerates and ordinary regular quantile arguments need extra care.
+:::
+
+## Backup · Simulation and fitting
+
+Common untreated-risk model: baseline age, severity and sex.
+
+**A:** treatment enters the logit with coefficient $\log(0.60)$.
+
+**B:** treatment interacts with baseline severity; its intercept is calibrated to match A's true mean benefit.
+
+Both fitted models use the corresponding correct specification.
+
+::: {.source}
+R/demo.R contains the exact coefficients, random seeds, calibration, sample sizes and diagnostics.
+:::
+
+::: notes
+This is deliberately favorable to regression: the fitted specification matches the data-generating model. That makes it possible to demonstrate known truth, sampling variability and sorting separately. It does not show robustness under misspecification or compare methods for learning unknown effect heterogeneity. The reference cohort is independent of the trial and fixed across bootstrap fits. Covariate scales and interaction coefficients are implementation details in the code; inspect them with interested participants rather than adding a technical derivation to the main narrative.
+:::
+
+## Backup · Bootstrap ingredients
+
+For each resample of the randomized trial:
+
+1. Refit the outcome regression.
+2. Predict both treatments for the **same** reference profiles.
+3. Recalculate benefits and re-sort at each percentile.
+4. Recalculate tail membership and descriptive summaries.
+
+The simultaneous band uses the maximum standardized deviation over the displayed percentile grid.
+
+::: notes
+The demo reports pointwise bootstrap intervals and an approximate max-t band. It fixes the original reference distribution, rather than resampling reference profiles. Rows are independent here; a cluster trial would require a different resampling unit. Bootstrap validity depends on the estimand and regularity, including density/nondegeneracy around quantiles, not merely on repeating these computational steps. Membership frequencies and descriptive tail summaries are not formal classification confidence statements. A practical production analysis would use more repetitions and assess Monte Carlo precision. See the original paper for its inferential procedure; do not substitute this teaching bootstrap for it without validation.
+:::
+
+## Backup · Original software as a benchmark
+
+- The original **SortedEffects 1.7.0** release is preserved in a pinned CRAN GitHub mirror.
+- Reproduce its mortgage example using `spe()` and `ca()`.
+- Compare point estimates with direct `glm()` predictions.
+- Record bootstrap results, plotting behavior and limitations separately.
+
+::: {.source}
+scripts/benchmark-sortedeffects.R and docs/software-validation.md. The clinical simulation and its inference target are separate from this benchmark.
+:::
+
+::: notes
+An archived package status is a maintenance signal, not evidence that every statistical procedure is wrong. Equally, an example running is not proof of correct inference. We check numerical agreement for point and classification estimates and run the original bootstrap code; coverage claims still rely on the published assumptions and theory. The native plotting method succeeds on this runtime. Our slide figure is drawn from the returned estimates, and no estimator source was changed. The exact source commit, source checksum, installed dependencies and observed results are in the validation notes.
+:::
+
+## References {.smaller}
+
+::: {#refs}
+:::

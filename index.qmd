@@ -1,34 +1,46 @@
 ---
-title: "Synthetic Control Methods"
-subtitle: "Slides and resources"
-format:
-  html:
-    toc: false
-    page-layout: full
+title: "Who benefits most?"
+pagetitle: "Sorted partial effects · JCOD"
+title-block-style: none
 ---
 
-::: columns
-::: {.column width="65%"}
-
-## Quick links
-
-[Slides (HTML)](slides.html){.btn .btn-primary}
-[Slides (PDF)](slides.pdf){.btn .btn-outline-primary style="margin-left: .5rem;"}
-
-[NotebookLM](https://notebooklm.google.com/notebook/8954ba79-fcda-4a65-a662-5d0542909037?pli=1){.btn .btn-outline-secondary style="margin-left: .5rem;"}
-[GitHub repo](https://github.com/valentinklotzbuecher/jcod){.btn .btn-outline-secondary style="margin-left: .5rem;"}
-
----
-
-*Made with heavy support from [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code) (Opus 4.5) and GPT-5.2 Pro.*
-
-Reccomended intro material: [One Useful Thing](https://www.oneusefulthing.org/) (Ethan Mollick) | [Claude Code in Action](https://anthropic.skilljar.com/claude-code-in-action) (Anthropic)
-
+::: {.hero}
+::: {.eyebrow}
+Journal Club / Open Discussion · Clinical Research
 :::
 
-::: {.column width="35%"}
+# Who benefits most?
 
-[![](https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=https%3A%2F%2Fvalentink.quarto.pub%2Fjcod-scm%2F){width=220}](https://valentink.quarto.pub/jcod-scm/)
+::: {.lead}
+Exploring treatment-effect heterogeneity beyond the average with **sorted partial effects**.
+:::
 
+One hour together: around 35–40 minutes of examples and interpretation, with time for discussion throughout.
+
+::: {.session-links}
+[Open the presentation](slides.html){.btn .btn-primary}
+[Download HTML](presentation.html){.btn .btn-outline-primary download="jcod-sorted-effects.html"}
+[Download the PDF](slides.pdf){.btn .btn-outline-primary}
 :::
 :::
+
+## What we will explore
+
+A simulated randomized trial makes the central idea tangible: a constant treatment odds ratio can produce different absolute benefits across patient profiles. We then compare two models with the same average benefit, sort their conditional effects, and describe the profiles at the tails.
+
+The discussion connects those pictures to uncertainty, model dependence, and the evidence needed before using estimated heterogeneity to guide treatment. A published mortgage-lending example illustrates how the original method is used with real observational data.
+
+The HTML presentation has a chapter map and a two-dimensional overview: use **→** to move between chapters, **↓** to explore their examples, **Space** to follow the full story, and **Esc** to see the whole deck.
+
+## Start reading
+
+- Chernozhukov, Fernández-Val and Luo (2018), [*The Sorted Effects Method*](https://doi.org/10.3982/ECTA14415).
+- Chen, Chernozhukov, Fernández-Val and Luo (2020), [*SortedEffects: Sorted Causal Effects in R*](https://doi.org/10.32614/RJ-2020-006).
+
+## Explore the example
+
+The clinical trial is simulated. Its plots distinguish known simulation truth from estimates; the uncertainty bands concern model estimation for a fixed reference population. Tail summaries are descriptive.
+
+[Simulation code](R/demo.R) · [Scenario summaries](results/scenario-summary.csv) · [Patient profiles](results/patient-profiles.csv) · [Source notes](docs/evidence.md)
+
+The previous Synthetic Control Methods session is preserved in the repository under `archive/scm-2026/`, including its slides, figures, bibliography and literature.
