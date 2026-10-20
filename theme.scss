@@ -113,6 +113,21 @@ $code-block-font-size: 0.7em;
 .reveal .figure-caption { font-size: 0.5em; }
 .reveal .references { font-size: 0.62em; }
 .reveal pre { box-shadow: none; }
+.reveal .code-slide pre.sourceCode {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  background: #f2edf6;
+  border: 1px solid #dfd3e7;
+  border-left: 4px solid #5a317e;
+  border-radius: 12px;
+  padding: 0.75em 0.6em;
+  margin: 0.9em 0;
+  font-size: 0.69em;
+  line-height: 1.55;
+}
+.reveal .code-slide .prompt { font-size: 0.88em; }
+.reveal .code-slide .small { color: #697283; margin-top: 1em; }
 .reveal blockquote { background: #f0eaf4; box-shadow: none; border-left: 4px solid #5a317e; padding: 0.7em; font-style: normal; }
 .reveal a { text-decoration: underline; text-underline-offset: 0.15em; }
 

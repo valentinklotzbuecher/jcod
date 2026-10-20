@@ -1,0 +1,3 @@
+"profile","age","age_z","severity","female","risk_usual","risk_intensified","benefit","odds_ratio"
+"Lower congestion",60,0,-1,0,0.103570410187234,0.116824506098786,-0.0132540959115519,1.14489967215372
+"Higher congestion",60,0,1,0,0.349481990090433,0.18558911074155,0.163892879348884,0.424173412946026

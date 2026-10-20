@@ -1,8 +1,9 @@
-List of 11
+List of 12
  $ seed                : int 20261020
  $ B                   : int 499
  $ n_trial             : int 5000
- $ n_reference         : int 2000
+ $ n_reference         : int 5000
+ $ reference_scope     : chr "Observed trial covariates, held fixed for sorted-effect prediction"
  $ quantile_type       : int 8
  $ nominal_level       : num 0.95
  $ inference_target    : chr "Distribution of model-based conditional risk differences over the fixed reference cohort; uncertainty in fitted"| __truncated__
@@ -31,4 +32,4 @@ attached base packages:
 [1] stats     graphics  grDevices utils     datasets  methods   base     
 
 loaded via a namespace (and not attached):
-[1] compiler_4.5.0
+[1] compiler_4.5.0 tools_4.5.0   

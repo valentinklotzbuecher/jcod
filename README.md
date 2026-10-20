@@ -11,13 +11,14 @@ source /workspace/.tools/activate
 cd /workspace/jcod
 Rscript R/demo.R
 Rscript scripts/validate-demo.R
+Rscript scripts/clinical-inference.R
 # Optional: rerun the original package benchmark (SortedEffects 1.7.0 required)
 Rscript scripts/benchmark-sortedeffects.R
 bash scripts/render.sh
 quarto preview --no-browser --host 127.0.0.1 --port 4200
 ```
 
-On another machine, use your installed R and Quarto; the activation line is cloud-specific. Install ggplot2 from a trusted repository if needed. The clinical demonstration uses base R's `glm()` for estimation. It does not require `scpi`, `marginaleffects` or `SortedEffects`.
+On another machine, use your installed R and Quarto; the activation line is cloud-specific. Regenerating the clinical analysis requires ggplot2 and the pinned original SortedEffects 1.7.0 package, including its dependencies. The installation source is documented in `docs/software-validation.md`. Rendering the committed figures and CSVs does not require rerunning the analysis. `scpi` and `marginaleffects` are not required.
 
 ## Presenting
 
@@ -39,7 +40,9 @@ Use the clickable session map or chapter dock to jump to a topic.
 Transitions and auto-animation respect reduced-motion preferences. The PDF shows
 the completed slides in reading order, with fragment states consolidated.
 
-`R/demo.R` regenerates figures and tables under `results/` with fixed random seeds. Keep those outputs in sync with the code. Rendering reads the generated results rather than rerunning the bootstrap for each output format. Committed benchmark figures allow the deck to render without installing SortedEffects; the optional benchmark command above regenerates them and requires its pinned 1.7.0 release (see `docs/software-validation.md`). The bootstrap is an illustrative fixed-reference, model-based analysis; see the script and speaker notes for its target and limitations. Classification tables are descriptive and have no formal classification confidence intervals.
+The main presentation introduces the literature and follows one fictional heart-failure discharge trial throughout. `R/clinical-walkthrough.R` supplies executable counterparts of the visible model, prediction, quantile and classification code. `R/demo.R` generates simulated data and teaching diagnostics; `scripts/clinical-inference.R` then runs original-package SPE and classification inference, validates its calculations independently, and writes the primary plots. Keep outputs in sync by running both steps after analysis changes. Rendering reads those results rather than repeating the bootstrap for each format.
+
+Primary SPE bands use the package's IQR/max bootstrap on the observed trial profiles. Primary classification uses `ca()` standard errors and p-values adjusted jointly across age, congestion and female proportion. Dumbbell endpoints show means, with no invented endpoint confidence intervals. The package's SPE and CA routines use different resampling-weight conventions; see `docs/clinical-inference.md`. Separate `*-teaching` outputs and membership frequencies remain diagnostics. No frequentist coverage study or individual causal-effect inference is claimed.
 
 ## Session files
 
@@ -48,9 +51,12 @@ the completed slides in reading order, with fragment states consolidated.
 - `assets/deck.js`: chapter navigation and overview support.
 - `index.qmd`: session landing page and reading links.
 - `R/demo.R`: reproducible simulated trial, sorted curves and bootstrap.
+- `R/clinical-walkthrough.R`: executable core R examples for the fictional trial.
+- `scripts/clinical-inference.R`: original-package clinical SPE/CA inference and independent bootstrap checks.
 - `scripts/validate-demo.R`: statistical and output checks.
 - `docs/evidence.md`: verified sources and boundaries of the application claims.
 - `docs/software-validation.md`: original-package reproduction and benchmark results.
+- `docs/clinical-inference.md`: clinical inferential target, resampling and output interpretation.
 - `docs/validation.md`: current scientific, rendering and runtime verification.
 - `references.bib`: bibliography for this session.
 

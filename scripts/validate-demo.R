@@ -11,6 +11,23 @@ p1 <- 0.60 * p0 / (1 - p0 + 0.60 * p0)
 stopifnot(max(abs((p0 - p1) - c(0.0375, 0.1142857142857143))) < 1e-12)
 stopifnot(all(tables$patient_profiles$absolute_benefit > 0))
 
+# Each dumbbell endpoint must equal the clinical tail summary in its own units.
+dumbbells <- tables$classification_dumbbells
+stopifnot(nrow(dumbbells) == 8L,
+          all(dumbbells$n == floor(nrow(demo$reference) / 10)))
+stopifnot(nrow(demo$reference) == nrow(demo$scenarios$interaction$data))
+stopifnot(identical(demo$reference, demo$scenarios$interaction$data[names(demo$reference)]))
+for (group in c("smallest", "largest")) {
+  source_row <- tables$classification[
+    tables$classification$scenario == "interaction" & tables$classification$group == group,
+    , drop = FALSE
+  ]
+  expected <- c(source_row$mean_age, source_row$mean_severity,
+                100 * source_row$proportion_female, 100 * source_row$mean_baseline_risk)
+  plotted <- dumbbells$value[dumbbells$group == group]
+  stopifnot(max(abs(plotted - expected)) < 1e-12)
+}
+
 # The two true distributions share the intended average but differ in shape.
 means <- vapply(demo$scenarios, function(s) mean(s$truth), numeric(1))
 stopifnot(abs(diff(means)) < 1e-9)
@@ -50,8 +67,15 @@ second <- bootstrap_scenario(s$data, stats::formula(s$fit), demo$reference,
                              s$contrast$benefit, demo$probs, B = 12L)
 stopifnot(identical(first$quantiles, second$quantiles))
 
-for (name in c("baseline-risk", "sorted-effects", "uncertainty", "classification",
-               "membership-stability")) {
+expected_figures <- c("baseline-risk", "sorted-effects-teaching", "uncertainty-teaching", "classification-teaching",
+                      "membership-stability", "sorted-effects-comparison",
+                      "uncertainty-comparison", "classification-comparison",
+                      "membership-stability-comparison")
+if (file.exists("results/clinical-spe.csv")) {
+  expected_figures <- c(expected_figures, "sorted-effects", "uncertainty",
+                        "classification", "classification-inference")
+}
+for (name in expected_figures) {
   for (extension in c("png", "pdf")) {
     path <- file.path("results", "figures", paste0(name, ".", extension))
     stopifnot(file.exists(path), file.info(path)$size > 1000)
@@ -60,6 +84,6 @@ for (name in c("baseline-risk", "sorted-effects", "uncertainty", "classification
 
 cat("Validated: exact risk contrast, matched true averages, different true distributions,\n",
     "refit-and-sort bootstrap, finite bands, tail membership, seeded reproducibility,\n",
-    "and all ten figure artifacts.\n", sep = "")
+    "clinical dumbbell endpoints, and ", 2L * length(expected_figures), " figure artifacts.\n", sep = "")
 cat("Scope: numerical validation of a teaching simulation; no coverage study or formal\n",
     "validation of original SortedEffects classification inference is claimed.\n", sep = "")

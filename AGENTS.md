@@ -20,6 +20,7 @@ Generated artifacts: `_site/`, `*_cache/`, `*_files/` (do not edit by hand).
 - `quarto render slides.qmd --to revealjs` - HTML slides; `--to beamer` - PDF slides.
 - `Rscript R/demo.R` - regenerate simulated data summaries and figures (499 bootstrap draws by default).
 - `Rscript scripts/validate-demo.R` - validate statistical claims and output artifacts.
+- `Rscript scripts/clinical-inference.R` - run primary clinical SPE/CA inference and refresh its figures after changing the simulation.
 - `Rscript scripts/benchmark-sortedeffects.R` - rerun original-package integration checks, requiring SortedEffects 1.7.0.
 - `quarto publish quarto-pub` - publishes externally; run only when explicitly requested.
 
@@ -37,7 +38,7 @@ For changes to the simulation, regenerate its outputs and run the numerical vali
 - `quarto render` for a full build.
 - For slides, render both formats to check layout and citations.
 
-Keep simulated truth, model estimates, published study findings and uncertainty scopes distinct. The clinical bootstrap conditions on a fixed reference cohort. Its tail summaries are descriptive; do not claim formal clinical classification inference or individual causal effects.
+Keep simulated truth, model estimates, published study findings and uncertainty scopes distinct. The main presentation uses one fictional clinical trial. Primary inference uses the original SortedEffects 1.7.0 `spe()` and `ca()` routines, with their inspected resampling targets documented in `docs/clinical-inference.md`. Dumbbell endpoints are descriptive means; report the separate native classification SEs and joint p-values without inventing moment confidence intervals. The transparent teaching bootstrap and membership frequencies remain separate diagnostics. Do not claim coverage guarantees or individual causal effects.
 
 ## Commit & Pull Request Guidelines
 Recent commit messages are short, lowercase summaries (e.g., `landing page`). Follow the same style.

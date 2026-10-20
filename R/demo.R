@@ -1,5 +1,9 @@
 # Reproducible sorted-effects teaching example.
 # All outcomes and patient profiles are simulated; no patient data are used.
+# Main teaching story: intensified diuretic strategy versus usual discharge
+# regimen after heart-failure admission; unplanned readmission within 90 days.
+# The existing standardized `severity` variable is a fictional congestion index.
+# Clinical names are narrative labels, not evidence for a real treatment effect.
 # Benefit is Pr(Y=1 | A=0, X) - Pr(Y=1 | A=1, X), so positive is favourable.
 # The reference cohort is FIXED throughout bootstrap inference. The uncertainty
 # therefore concerns the fitted conditional risks on this reference population,
@@ -112,12 +116,14 @@ bootstrap_scenario <- function(data, formula, reference, fitted_effect,
   )
 }
 
-run_demo <- function(B = 499L, n_trial = 5000L, n_reference = 2000L,
+run_demo <- function(B = 499L, n_trial = 5000L,
                      seed = 20261020L, progress = TRUE) {
-  stopifnot(B >= 99L, n_trial >= 500L, n_reference >= 100L)
+  stopifnot(B >= 99L, n_trial >= 500L)
   set.seed(seed)
   trial_covariates <- make_patients(n_trial)
-  reference <- make_patients(n_reference)
+  # Use the observed trial profiles as the fixed SPE reference, matching the
+  # original package's full-sample spe() path used by the clinical workflow.
+  reference <- trial_covariates
   target_average <- mean(true_benefit(reference, "constant", 0))
   interaction_intercept <- stats::uniroot(function(beta) {
     mean(true_benefit(reference, "interaction", beta)) - target_average
@@ -164,7 +170,8 @@ run_demo <- function(B = 499L, n_trial = 5000L, n_reference = 2000L,
     reference = reference, scenarios = scenarios, probs = probs,
     interaction_intercept = interaction_intercept,
     metadata = list(
-      seed = seed, B = B, n_trial = n_trial, n_reference = n_reference,
+      seed = seed, B = B, n_trial = n_trial, n_reference = nrow(reference),
+      reference_scope = "Observed trial covariates, held fixed for sorted-effect prediction",
       quantile_type = 8L, nominal_level = 0.95,
       inference_target = paste(
         "Distribution of model-based conditional risk differences over the",
@@ -180,6 +187,20 @@ run_demo <- function(B = 499L, n_trial = 5000L, n_reference = 2000L,
       package_benchmark = "This implementation is not a reproduction of SortedEffects inference."
     )
   ), class = "sorted_effects_demo")
+}
+
+classification_dumbbell_data <- function(classification) {
+  selected <- classification[classification$scenario == "interaction", , drop = FALSE]
+  do.call(rbind, lapply(seq_len(nrow(selected)), function(i) {
+    row <- selected[i, ]
+    data.frame(
+      scenario = "interaction", group = row$group, n = row$n,
+      characteristic = c("Age", "Baseline congestion", "Female", "Untreated readmission risk"),
+      units = c("years", "standardized units", "%", "%"),
+      value = c(row$mean_age, row$mean_severity, 100 * row$proportion_female,
+                100 * row$mean_baseline_risk)
+    )
+  }))
 }
 
 demo_tables <- function(demo) {
@@ -243,7 +264,8 @@ demo_tables <- function(demo) {
   )
   list(
     scenario_summary = scenario_summary, sorted_effects = sorted_effects,
-    classification = classification, patient_profiles = patient_profiles
+    classification = classification, patient_profiles = patient_profiles,
+    classification_dumbbells = classification_dumbbell_data(classification)
   )
 }
 
@@ -400,11 +422,125 @@ demo_figures <- function(demo, tables = demo_tables(demo)) {
       caption = "Refit-and-reclassify sensitivity summary; frequencies are not probabilities that a patient truly belongs to a group."
     ) + demo_theme()
 
-  list(
-    "baseline-risk" = baseline_plot, "sorted-effects" = sorted_plot,
-    "uncertainty" = uncertainty_plot, "classification" = classification_plot,
-    "membership-stability" = membership_plot
+  # Keep the two-scenario views for optional backup, while the main session
+  # follows one fictional clinical trial (the existing interaction scenario).
+  comparisons <- list(
+    "sorted-effects-comparison" = sorted_plot,
+    "uncertainty-comparison" = uncertainty_plot,
+    "classification-comparison" = classification_plot,
+    "membership-stability-comparison" = membership_plot
   )
+  clinical <- tables$sorted_effects[
+    tables$sorted_effects$scenario == "interaction", , drop = FALSE
+  ]
+  clinical_scenario <- demo$scenarios$interaction
+  clinical_sorted <- ggplot2::ggplot(clinical, ggplot2::aes(percentile, estimate)) +
+    ggplot2::geom_hline(yintercept = 0, colour = "#A7A0B0", linewidth = 0.4) +
+    ggplot2::geom_hline(yintercept = mean(clinical_scenario$contrast$benefit),
+                       colour = "#A34E2A", linetype = "dashed", linewidth = 0.8) +
+    ggplot2::geom_line(colour = "#5A317E", linewidth = 1.5) +
+    ggplot2::geom_line(ggplot2::aes(y = truth), colour = "#5A317E",
+                      linetype = "dotted", linewidth = 0.9) +
+    ggplot2::scale_x_continuous(labels = percent_label,
+                              breaks = c(0.1, 0.25, 0.5, 0.75, 0.9)) +
+    ggplot2::scale_y_continuous(labels = function(x) sprintf("%.0f", 100 * x)) +
+    ggplot2::labs(
+      x = "Percentile of conditional benefit", y = "Readmission risk reduction (pp)",
+      subtitle = "Solid: fitted sorted effects   |   Dotted: known simulation truth",
+      caption = sprintf(
+        "Fictional heart-failure trial. Dashed: average fitted benefit (%.1f pp). Central 10th–90th percentiles shown.",
+        100 * mean(clinical_scenario$contrast$benefit)
+      )
+    ) + demo_theme()
+
+  clinical_uncertainty <- ggplot2::ggplot(clinical, ggplot2::aes(percentile, estimate)) +
+    ggplot2::geom_hline(yintercept = 0, colour = "#A7A0B0", linewidth = 0.4) +
+    ggplot2::geom_ribbon(ggplot2::aes(ymin = simultaneous_lower,
+                                    ymax = simultaneous_upper,
+                                    fill = "95% simultaneous band"), alpha = 0.8) +
+    ggplot2::geom_ribbon(ggplot2::aes(ymin = pointwise_lower,
+                                    ymax = pointwise_upper,
+                                    fill = "95% pointwise intervals"), alpha = 0.8) +
+    ggplot2::geom_line(colour = "#5A317E", linewidth = 1.3) +
+    ggplot2::scale_fill_manual(values = c(
+      "95% simultaneous band" = "#D9CEE5", "95% pointwise intervals" = "#AD90C9"
+    )) +
+    ggplot2::scale_x_continuous(labels = percent_label,
+                              breaks = c(0.1, 0.25, 0.5, 0.75, 0.9)) +
+    ggplot2::scale_y_continuous(labels = function(x) sprintf("%.0f", 100 * x)) +
+    ggplot2::labs(
+      x = "Percentile of conditional benefit", y = "Readmission risk reduction (pp)",
+      subtitle = "The same fictional trial: refit the model and re-sort after every resample",
+      caption = sprintf(
+        "%s pairs-bootstrap draws; fixed reference cohort. Simultaneous coverage targets the displayed percentile grid.",
+        demo$metadata$B
+      )
+    ) + demo_theme()
+
+  # Four separate axes retain each characteristic's clinical unit. The line
+  # connects two descriptive group summaries; it is not a confidence interval.
+  dumbbells <- tables$classification_dumbbells
+  dumbbells$panel <- factor(
+    dumbbells$characteristic,
+    levels = c("Age", "Baseline congestion", "Female", "Untreated readmission risk"),
+    labels = c("Age (years)", "Congestion index (standardized units)",
+               "Female (%)", "Predicted untreated readmission risk (%)")
+  )
+  low <- dumbbells[dumbbells$group == "smallest", , drop = FALSE]
+  high <- dumbbells[dumbbells$group == "largest", , drop = FALSE]
+  connectors <- data.frame(panel = low$panel, smallest = low$value, largest = high$value)
+  dumbbell_bounds <- data.frame(
+    panel = factor(rep(levels(dumbbells$panel), each = 2), levels = levels(dumbbells$panel)),
+    value = c(40, 80, -2.5, 2.5, 0, 100, 0, 100)
+  )
+  dumbbells$group <- factor(dumbbells$group, levels = c("smallest", "largest"),
+    labels = c("Smallest-benefit 10%", "Largest-benefit 10%"))
+  dumbbell_plot <- ggplot2::ggplot(dumbbells, ggplot2::aes(value, 1)) +
+    ggplot2::geom_blank(data = dumbbell_bounds, ggplot2::aes(value, 1), inherit.aes = FALSE) +
+    ggplot2::geom_segment(data = connectors, ggplot2::aes(
+      x = smallest, xend = largest, y = 1, yend = 1
+    ), inherit.aes = FALSE, colour = "#C6BBCF", linewidth = 2.2) +
+    ggplot2::geom_point(ggplot2::aes(colour = group, shape = group), size = 4.5) +
+    ggplot2::geom_text(ggplot2::aes(
+      y = ifelse(group == "Smallest-benefit 10%", 1.16, 0.84),
+      label = sprintf("%.1f", value), colour = group
+    ), size = 5.1, fontface = "bold", show.legend = FALSE) +
+    ggplot2::facet_wrap(~panel, ncol = 2, scales = "free_x") +
+    ggplot2::scale_x_continuous(expand = ggplot2::expansion(mult = 0.05)) +
+    ggplot2::scale_y_continuous(limits = c(0.75, 1.45), breaks = NULL) +
+    ggplot2::scale_colour_manual(values = c("#A34E2A", "#5A317E")) +
+    ggplot2::scale_shape_manual(values = c(16, 17)) +
+    ggplot2::labs(
+      x = NULL, y = NULL,
+      caption = sprintf(
+        "Fictional trial; %s reference profiles per tail. Descriptive means/proportions with separate axes; no classification intervals.",
+        floor(nrow(demo$reference) / 10)
+      )
+    ) + demo_theme() + ggplot2::theme(
+      panel.grid.major.y = ggplot2::element_blank(),
+      strip.text = ggplot2::element_text(face = "bold", size = 14),
+      panel.spacing = grid::unit(1.3, "lines")
+    )
+
+  clinical_membership <- membership_data[
+    membership_data$label == scenario_labels[["interaction"]], , drop = FALSE
+  ]
+  clinical_membership_plot <- ggplot2::ggplot(clinical_membership,
+    ggplot2::aes(rank_within_tail, frequency)) +
+    ggplot2::geom_line(linewidth = 1.1, colour = "#5A317E") +
+    ggplot2::scale_y_continuous(labels = percent_label, limits = c(0, 1)) +
+    ggplot2::labs(
+      x = "Rank within the largest-benefit 10% (highest benefit first)",
+      y = "Top-tail membership frequency",
+      subtitle = "The same fictional trial: which profiles keep their tail label after refitting?",
+      caption = "Refit-and-reclassify sensitivity summary; frequencies are not probabilities that a patient truly belongs to a group."
+    ) + demo_theme()
+
+  c(list(
+    "baseline-risk" = baseline_plot, "sorted-effects" = clinical_sorted,
+    "uncertainty" = clinical_uncertainty, "classification" = dumbbell_plot,
+    "membership-stability" = clinical_membership_plot
+  ), comparisons)
 }
 
 write_demo <- function(demo, output_dir = "results") {
@@ -420,8 +556,13 @@ write_demo <- function(demo, output_dir = "results") {
   capture.output(str(demo$metadata), utils::sessionInfo(),
                  file = file.path(output_dir, "run-metadata.txt"))
   figures <- demo_figures(demo, tables)
+  # The main session's SPE/classification figures are written only by the
+  # original-package workflow. Running this teaching bootstrap alone must not
+  # silently replace those formal outputs with approximate inference.
+  teaching_names <- names(figures) %in% c("sorted-effects", "uncertainty", "classification")
+  names(figures)[teaching_names] <- paste0(names(figures)[teaching_names], "-teaching")
   for (name in names(figures)) {
-    width <- if (name %in% c("uncertainty", "classification")) 12 else 11
+    width <- if (grepl("^(uncertainty|classification)", name)) 12 else 11
     ggplot2::ggsave(file.path(figure_dir, paste0(name, ".png")), figures[[name]],
                     width = width, height = 5.5, units = "in", dpi = 180,
                     bg = "#FAFAFA")
@@ -432,10 +573,172 @@ write_demo <- function(demo, output_dir = "results") {
   invisible(tables)
 }
 
+write_clinical_inference_figures <- function(output_dir = "results") {
+  # Called after scripts/clinical-inference.R has written fresh original-package
+  # output. Keep the package estimates and multiplicity adjustment intact.
+  paths <- file.path(output_dir, c("clinical-spe.csv", "clinical-ape.csv",
+                                   "clinical-inference.csv", "demo.rds"))
+  if (!all(file.exists(paths))) stop("Generate the clinical inference outputs first.")
+  spe <- utils::read.csv(paths[1L])
+  ape <- utils::read.csv(paths[2L])
+  ca <- utils::read.csv(paths[3L])
+  demo <- readRDS(paths[4L])
+  stopifnot(all(c("percentile", "estimate", "lower_uniform", "upper_uniform") %in% names(spe)))
+  stopifnot(all(c("characteristic", "least_mean", "most_mean", "difference",
+                  "standard_error", "joint_p") %in% names(ca)))
+  stopifnot(setequal(ca$characteristic, c("age", "severity", "female")))
+  stopifnot(all(is.finite(spe$estimate)), all(is.finite(ca$joint_p)))
+  stopifnot(nrow(ape) == 1L,
+            abs(ape$estimate - mean(demo$scenarios$interaction$contrast$benefit)) < 1e-8)
+  inference_B <- if ("bootstrap_draws" %in% names(ca)) {
+    unique(ca$bootstrap_draws)
+  } else demo$metadata$B
+  stopifnot(length(inference_B) == 1L, inference_B >= 49L)
+  figure_dir <- file.path(output_dir, "figures")
+  dir.create(figure_dir, recursive = TRUE, showWarnings = FALSE)
+
+  # Preserve the simpler teaching bootstrap as separate backup figures.
+  teaching <- demo_figures(demo)
+  figures <- list(
+    "sorted-effects-teaching" = teaching[["sorted-effects"]],
+    "uncertainty-teaching" = teaching[["uncertainty"]],
+    "classification-teaching" = teaching[["classification"]]
+  )
+  spe_plot <- ggplot2::ggplot(spe, ggplot2::aes(percentile, estimate)) +
+    ggplot2::geom_hline(yintercept = 0, colour = "#A7A0B0", linewidth = 0.4) +
+    ggplot2::geom_hline(yintercept = ape$estimate[1L], colour = "#A34E2A",
+                       linetype = "dashed", linewidth = 0.8) +
+    ggplot2::geom_line(colour = "#5A317E", linewidth = 1.5) +
+    ggplot2::scale_x_continuous(labels = percent_label,
+                              breaks = c(0.1, 0.25, 0.5, 0.75, 0.9)) +
+    ggplot2::scale_y_continuous(labels = function(x) sprintf("%.0f", 100 * x)) +
+    ggplot2::labs(
+      x = "Percentile of conditional benefit", y = "Readmission risk reduction (pp)",
+      subtitle = "One fictional heart-failure trial: what does the average conceal?",
+      caption = sprintf(
+        "SortedEffects 1.7.0 estimates; observed trial profiles held fixed. Dashed: average benefit (%.1f pp).",
+        100 * ape$estimate[1L]
+      )
+    ) + demo_theme()
+  uniform_plot <- spe_plot +
+    ggplot2::geom_ribbon(ggplot2::aes(ymin = lower_uniform, ymax = upper_uniform),
+                         fill = "#D9CEE5", alpha = 0.8) +
+    ggplot2::geom_line(colour = "#5A317E", linewidth = 1.3) +
+    ggplot2::labs(
+      subtitle = "Original-package inference: 95% simultaneous confidence band",
+      caption = paste(
+        "SortedEffects 1.7.0 refit-and-sort bootstrap; percentile grid shown.",
+        "Uncertainty is conditional on the outcome model and fixed trial profiles."
+      )
+    )
+
+  units <- c(age = "years", severity = "SD", female = "percentage points")
+  scale <- ifelse(ca$characteristic == "female", 100, 1)
+  labels <- c(age = "Age (years)", severity = "Baseline congestion (SD)", female = "Female (%)")
+  plot_data <- do.call(rbind, lapply(seq_len(nrow(ca)), function(i) {
+    data.frame(
+      characteristic = ca$characteristic[i], panel = unname(labels[ca$characteristic[i]]),
+      group = c("Smallest-benefit 10%", "Largest-benefit 10%"),
+      value = c(ca$least_mean[i], ca$most_mean[i]) * scale[i]
+    )
+  }))
+  plot_data$panel <- factor(plot_data$panel, levels = unname(labels))
+  plot_data$group <- factor(plot_data$group,
+                            levels = c("Smallest-benefit 10%", "Largest-benefit 10%"))
+  connectors <- data.frame(
+    panel = factor(unname(labels[ca$characteristic]), levels = unname(labels)),
+    smallest = ca$least_mean * scale, largest = ca$most_mean * scale
+  )
+  dumbbell_bounds <- data.frame(
+    panel = factor(rep(unname(labels), each = 2), levels = unname(labels)),
+    value = c(40, 80, -2.5, 2.5, 0, 100)
+  )
+  dumbbell_plot <- ggplot2::ggplot(plot_data, ggplot2::aes(value, 1)) +
+    ggplot2::geom_blank(data = dumbbell_bounds, ggplot2::aes(value, 1), inherit.aes = FALSE) +
+    ggplot2::geom_segment(data = connectors, ggplot2::aes(
+      x = smallest, xend = largest, y = 1, yend = 1
+    ), inherit.aes = FALSE, colour = "#C6BBCF", linewidth = 2.2) +
+    ggplot2::geom_point(ggplot2::aes(colour = group, shape = group), size = 4.7) +
+    ggplot2::geom_text(ggplot2::aes(
+      y = ifelse(group == "Smallest-benefit 10%", 1.16, 0.84),
+      label = sprintf("%.1f", value), colour = group
+    ), size = 5.4, fontface = "bold", show.legend = FALSE) +
+    ggplot2::facet_wrap(~panel, nrow = 1, scales = "free_x") +
+    ggplot2::scale_x_continuous(expand = ggplot2::expansion(mult = 0.05)) +
+    ggplot2::scale_y_continuous(limits = c(0.58, 1.42), breaks = NULL) +
+    ggplot2::scale_colour_manual(values = c("#A34E2A", "#5A317E")) +
+    ggplot2::scale_shape_manual(values = c(16, 17)) +
+    ggplot2::labs(
+      x = "Mean or proportion within the estimated benefit tail", y = NULL,
+      caption = paste(
+        "Original ca() tail means. Separate axes retain each characteristic's units.",
+        "Connecting lines are not confidence intervals; inference for differences follows."
+      )
+    ) + demo_theme() + ggplot2::theme(panel.grid.major.y = ggplot2::element_blank())
+
+  display <- data.frame(
+    characteristic = ca$characteristic, label = unname(labels[ca$characteristic]),
+    least_mean = ca$least_mean * scale, most_mean = ca$most_mean * scale,
+    difference = ca$difference * scale, standard_error = ca$standard_error * scale,
+    difference_unit = unname(units[ca$characteristic]), joint_p = ca$joint_p,
+    joint_p_label = ifelse(ca$joint_p == 0, paste0("0 / ", inference_B),
+                           format.pval(ca$joint_p, digits = 2)),
+    bootstrap_draws = inference_B
+  )
+  utils::write.csv(display, file.path(output_dir, "clinical-classification-display.csv"),
+                   row.names = FALSE)
+  display$y <- 4 - seq_len(nrow(display))
+  display$difference_text <- sprintf("%+.2f", display$difference)
+  display$se_text <- sprintf("%.2f", display$standard_error)
+  display$p_text <- display$joint_p_label
+  inference_plot <- ggplot2::ggplot(display, ggplot2::aes(y = y)) +
+    ggplot2::geom_segment(ggplot2::aes(x = 0, xend = 1, y = y - 0.43, yend = y - 0.43),
+                          colour = "#E4DCEB", linewidth = 0.5) +
+    ggplot2::geom_text(ggplot2::aes(x = 0.02, label = label), hjust = 0,
+                       size = 6.2, colour = "#352348") +
+    ggplot2::geom_text(ggplot2::aes(x = 0.56, label = difference_text),
+                       size = 6.2, fontface = "bold", colour = "#5A317E") +
+    ggplot2::geom_text(ggplot2::aes(x = 0.75, label = se_text), size = 6.2) +
+    ggplot2::geom_text(ggplot2::aes(x = 0.93, label = p_text), size = 6.2) +
+    ggplot2::annotate("text", x = c(0.02, 0.56, 0.75, 0.93), y = 3.75,
+                      label = c("Characteristic", "Largest − smallest", "Bootstrap SE", "Joint p"),
+                      hjust = c(0, 0.5, 0.5, 0.5), size = 5, fontface = "bold", colour = "#5A317E") +
+    ggplot2::scale_x_continuous(limits = c(0, 1), expand = c(0, 0)) +
+    ggplot2::scale_y_continuous(limits = c(0.3, 4), expand = c(0, 0)) +
+    ggplot2::labs(
+      subtitle = "Differences between the estimated benefit tails, using original-package classification inference",
+      caption = paste0(
+        "Joint p values adjust across the three preselected characteristics. Female differences/SE are in percentage points.\n",
+        "B = ", inference_B,
+        "; 0 / B denotes zero bootstrap exceedances, not a population p value of zero."
+      )
+    ) + demo_theme() + ggplot2::theme(
+      axis.title = ggplot2::element_blank(), axis.text = ggplot2::element_blank(),
+      axis.ticks = ggplot2::element_blank(), panel.grid = ggplot2::element_blank(),
+      panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank()
+    )
+  figures[["sorted-effects"]] <- spe_plot
+  figures[["uncertainty"]] <- uniform_plot
+  figures[["classification"]] <- dumbbell_plot
+  figures[["classification-inference"]] <- inference_plot
+  for (name in names(figures)) {
+    width <- if (grepl("^(uncertainty|classification)", name)) 12 else 11
+    height <- if (name == "classification") 4.3 else 5.5
+    ggplot2::ggsave(file.path(figure_dir, paste0(name, ".png")), figures[[name]],
+                    width = width, height = height, units = "in", dpi = 180,
+                    bg = "#FAFAFA")
+    ggplot2::ggsave(file.path(figure_dir, paste0(name, ".pdf")), figures[[name]],
+                    width = width, height = height, units = "in", device = grDevices::cairo_pdf,
+                    bg = "#FAFAFA")
+  }
+  invisible(display)
+}
+
 if (sys.nframe() == 0L) {
   B <- as.integer(Sys.getenv("DEMO_BOOTSTRAPS", "499"))
   demo <- run_demo(B = B)
   tables <- write_demo(demo)
   print(tables$scenario_summary)
-  message("Wrote figures and data to results/. Run Rscript scripts/validate-demo.R next.")
+  message("Wrote teaching figures and data to results/. Run Rscript scripts/clinical-inference.R ",
+          "to refresh the main inferential figures, then Rscript scripts/validate-demo.R.")
 }

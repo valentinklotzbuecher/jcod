@@ -81,18 +81,21 @@ adapter uses explicit argument names; it changes presentation only.
 
 ## Interpretation and limits
 
-The main clinical demo uses a separate, fixed empirical reference cohort;
-bootstrap training samples are refitted and predictions are re-sorted on that
-same cohort. Its bands therefore describe model-estimation uncertainty
-conditional on those covariates. They do not include uncertainty in a newly
-sampled target population, model misspecification, or individual causal effects.
+The main presentation now follows one fictional heart-failure trial and calls
+the original package's `spe()` and `ca()` for its primary inference. All 5,000
+observed trial profiles define the primary SPE reference distribution.
+`scripts/clinical-inference.R` independently verifies clinical point estimates,
+SPE bootstrap bands, and CA standard errors/joint adjusted p-values.
+See `clinical-inference.md` for the inspected differences between the SPE and
+CA resampling paths and for interpretation of the native p-value fields.
 
-The clinical demo deliberately uses a simpler SD-standardized bootstrap band
-on its declared percentile grid, while the original package uses an IQR scale
-and monotonic rearrangement. Quantile conventions also differ. The main demo
-is not advertised as an exact reproduction of the original package's inference.
-Its classification table is descriptive; formal clinical classification
-inference and confidence sets for individual membership are not claimed.
+The simpler SD/max teaching bootstrap remains separate, under `*-teaching`
+outputs, and its membership frequencies are sensitivity diagnostics. It is
+not substituted for the original inference in the main figures. Dumbbell
+endpoints are descriptive means: formal inference is reported for the
+high-minus-low characteristic differences, without inventing moment
+confidence intervals. Confidence probabilities for individual membership,
+individual causal effects, and broad coverage guarantees are not claimed.
 
 199 draws support the reproducibility/integration benchmark. They do not
 establish frequentist coverage or reproduce every empirical result in the
