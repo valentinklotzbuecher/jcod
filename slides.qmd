@@ -137,8 +137,8 @@ The original method and an applied R tutorial
 
 ## The method and the tutorial
 
-- **Chernozhukov, Fernández-Val and Luo (2018):** sorted partial effects, classification analysis and inference [@chernozhukov2018].
-- **Chen et al. (2020):** the R implementation, with worked examples using `spe()` and `ca()` [@chen2020].
+- **Original method:** sorted partial effects, classification analysis and inference [@chernozhukov2018].
+- **R tutorial:** worked examples using `spe()` and `ca()` [@chen2020].
 - The model supplies a partial effect for each covariate profile. Sorting summarizes the distribution of those effects.
 
 ::: notes
@@ -486,7 +486,7 @@ In the categorical implementation, compare[2] minus compare[1] sets the directio
 ![](results/figures/uncertainty.png){width=100%}
 :::
 ::: {.column width="33%"}
-- The line is the estimated SPE curve.
+- The solid line is the SPE curve; the dashed line is the average.
 - Shading is a **95% uniform band** over the displayed percentile grid.
 - Compare the band with zero when assessing the direction of effects.
 :::
@@ -601,9 +601,9 @@ Invite the group to compare the demographic plot, sorted curve and classificatio
 
 ## Reading and resources
 
-- **Tutorial first:** Chen et al. (2020), Sections 1, 2.2 and 2.3 [@chen2020].
-- **Original method:** Chernozhukov et al. (2018), introduction and Section 2 [@chernozhukov2018].
-- **Optional health application:** Pullabhotla and Souza (2022), Section 3, Figure 4 and Table 1 [@pullabhotla2022].
+- **Tutorial first:** @chen2020, Sections 1, 2.2 and 2.3.
+- **Original method:** @chernozhukov2018, introduction and Section 2.
+- **Optional health application:** @pullabhotla2022, Section 3, Figure 4 and Table 1.
 
 ::: {.source}
 The session page links to the papers, executable R example and inference notes.
@@ -616,7 +616,7 @@ The health application studies agricultural fires and hypertension. Its sorted-e
 # Technical backup {#backup .chapter-slide .backup-chapter data-chapter-label="Backup" data-background-color="#261b37" data-background-transition="fade"}
 
 ::: {.chapter-number}
-+
+\+
 :::
 
 ::: {.chapter-lead}
@@ -711,7 +711,7 @@ The original package's pointwise p-value implementation differs from the usual d
 :::
 ::: {.column width="33%"}
 - Outcome: mortgage denial.
-- The model compares predicted denial risks across race indicators at the same other covariates.
+- Contrast: predicted denial risk at `black = 1` minus `black = 0`, with other covariates fixed.
 - The curve summarizes an adjusted observational disparity.
 :::
 :::
@@ -724,7 +724,7 @@ Tutorial data [@chen2020; @munnell1996]. Separate benchmark with uncorrected est
 The tutorial reports a bias-corrected average disparity of 5.1 percentage points with a 90% interval from 2.1 to 8.1, using 500 bootstrap draws. This benchmark uses 199 draws, uncorrected estimates and 95% bands, so its numbers should not be described as an exact reproduction of those published interval settings. The underlying 1996 study supplied the data; the later tutorial applies the sorted-effects method. A causal interpretation of the race contrast needs additional assumptions.
 :::
 
-## References {.smaller}
+## References {.smaller .references-slide}
 
 ::: {#refs}
 :::

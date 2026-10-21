@@ -28,6 +28,10 @@ $code-block-font-size: 0.7em;
 }
 .reveal .slides { text-align: left; }
 .reveal .slides section { box-sizing: border-box; }
+/* Leave room for the fixed chapter navigation above content-slide headings. */
+.reveal .slides section:not(.stack):not(.chapter-slide):not(#title-slide) {
+  padding-top: 32px;
+}
 .reveal h2 { margin-bottom: 0.65em; letter-spacing: -0.04em; line-height: 1.13; }
 .reveal h3 { font-size: 1.05em; color: #5a317e; }
 .reveal p, .reveal li { line-height: 1.4; }
@@ -112,6 +116,9 @@ $code-block-font-size: 0.7em;
 .reveal .figure img, .reveal img { max-height: 470px; object-fit: contain; }
 .reveal .figure-caption { font-size: 0.5em; }
 .reveal .references { font-size: 0.62em; }
+.reveal .slides section.references-slide { font-size: 1em; }
+.reveal .references-slide #refs { font-size: 0.72em; line-height: 1.45; }
+.reveal .references-slide .csl-entry { margin-bottom: 0.9em; }
 .reveal pre { box-shadow: none; }
 .reveal .code-slide pre.sourceCode {
   box-sizing: border-box;

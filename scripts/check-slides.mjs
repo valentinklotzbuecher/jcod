@@ -112,6 +112,17 @@ try {
         right: Math.min(innerWidth, canvas.right), bottom: Math.min(innerHeight, canvas.bottom),
       };
       const tolerance = 4;
+      const navigationElement = document.querySelector(".deck-navigation");
+      const navigationStyle = navigationElement && getComputedStyle(navigationElement);
+      const navigation = navigationElement && navigationStyle.display !== "none" &&
+        navigationStyle.visibility === "visible" && Number(navigationStyle.opacity) !== 0 ?
+        navigationElement.getBoundingClientRect() : null;
+      const overlapsNavigation = (rect) => {
+        if (!navigation) return null;
+        const width = Math.min(rect.right, navigation.right) - Math.max(rect.left, navigation.left);
+        const height = Math.min(rect.bottom, navigation.bottom) - Math.max(rect.top, navigation.top);
+        return width > tolerance && height > tolerance ? {width, height} : null;
+      };
       const outside = (rect) => ({
         left: Math.max(0, bounds.left - rect.left),
         top: Math.max(0, bounds.top - rect.top),
@@ -128,6 +139,8 @@ try {
       };
       const textOverflow = [];
       const seen = new Set();
+      const navigationOverlap = [];
+      const navigationSeen = new Set();
       const walker = document.createTreeWalker(current, NodeFilter.SHOW_TEXT);
       while (walker.nextNode()) {
         const node = walker.currentNode;
@@ -137,12 +150,16 @@ try {
         range.selectNodeContents(node);
         const rects = [...range.getClientRects()].filter((rect) => rect.width > 0 && rect.height > 0);
         const excess = rects.map(outside).find((item) => Math.max(...Object.values(item)) > tolerance);
-        if (!excess) continue;
         const block = element.closest("h1, h2, h3, p, li, pre, td, th, figcaption") || element;
         const text = block.textContent.replace(/\s+/g, " ").trim().slice(0, 180);
-        if (!seen.has(text)) {
+        if (excess && !seen.has(text)) {
           seen.add(text);
           textOverflow.push({text, excessPixels: excess});
+        }
+        const overlap = rects.map(overlapsNavigation).find(Boolean);
+        if (overlap && !navigationSeen.has(text)) {
+          navigationSeen.add(text);
+          navigationOverlap.push({type: "text", text, overlapPixels: overlap});
         }
       }
       const images = [...current.querySelectorAll("img")].filter(visible).map((image) => ({
@@ -151,14 +168,18 @@ try {
         naturalWidth: image.naturalWidth,
         naturalHeight: image.naturalHeight,
         excessPixels: outside(image.getBoundingClientRect()),
+        navigationOverlapPixels: overlapsNavigation(image.getBoundingClientRect()),
       }));
+      for (const image of images.filter((image) => image.navigationOverlapPixels)) {
+        navigationOverlap.push({type: "image", alt: image.alt, overlapPixels: image.navigationOverlapPixels});
+      }
       const imageOverflow = images.filter((image) => Math.max(...Object.values(image.excessPixels)) > tolerance);
-      return {bounds, textOverflow, images, imageOverflow, indices: Reveal.getIndices()};
+      return {bounds, textOverflow, images, imageOverflow, navigationOverlap, indices: Reveal.getIndices()};
     }, slide);
     const basename = `${String(index + 1).padStart(3, "0")}-${activeSlide.replace(/[^a-zA-Z0-9_-]+/g, "-")}.png`;
     await page.screenshot({path: join(output, basename), animations: "disabled"});
     report.slides.push({number: index + 1, ...slide, screenshot: basename, ...findings});
-    console.log(`${String(index + 1).padStart(2)} ${slide.title}: ${findings.textOverflow.length} text overflow, ${findings.images.filter((image) => !image.loaded).length} broken images`);
+    console.log(`${String(index + 1).padStart(2)} ${slide.title}: ${findings.textOverflow.length} text overflow, ${findings.navigationOverlap.length} navigation overlaps, ${findings.images.filter((image) => !image.loaded).length} broken images`);
   }
 } catch (error) {
   report.fatalError = error.stack || String(error);
@@ -170,6 +191,7 @@ try {
     slideCount: report.slides.length,
     textOverflowSlides: report.slides.filter((slide) => slide.textOverflow.length).map((slide) => slide.number),
     imageOverflowSlides: report.slides.filter((slide) => slide.imageOverflow.length).map((slide) => slide.number),
+    navigationOverlapSlides: report.slides.filter((slide) => slide.navigationOverlap.length).map((slide) => slide.number),
     brokenImages: report.slides.flatMap((slide) => slide.images.filter((image) => !image.loaded).map((image) => ({slide: slide.number, alt: image.alt}))),
     externalRequestCount: report.externalRequests.length,
     missingLocalResourceCount: report.missingLocalResources.length,
@@ -178,6 +200,7 @@ try {
   await writeFile(join(output, "layout-report.json"), JSON.stringify(report, null, 2) + "\n");
   console.log(JSON.stringify(report.summary, null, 2));
   if (report.summary.textOverflowSlides.length || report.summary.imageOverflowSlides.length ||
+      report.summary.navigationOverlapSlides.length ||
       report.summary.brokenImages.length || report.summary.externalRequestCount ||
       report.summary.missingLocalResourceCount || report.summary.pageErrorCount) process.exitCode = 1;
 }
