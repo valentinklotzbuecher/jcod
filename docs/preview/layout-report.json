@@ -1,0 +1,983 @@
+{
+  "viewport": {
+    "width": 1600,
+    "height": 900
+  },
+  "source": "presentation.html",
+  "slides": [
+    {
+      "number": 1,
+      "id": "title-slide",
+      "title": "Sorted partial effects",
+      "h": 0,
+      "screenshot": "001-title-slide.png",
+      "bounds": {
+        "left": 64,
+        "top": 36,
+        "right": 1536,
+        "bottom": 864
+      },
+      "textOverflow": [],
+      "images": [],
+      "imageOverflow": [],
+      "navigationOverlap": [],
+      "indices": {
+        "h": 0,
+        "v": 0
+      }
+    },
+    {
+      "number": 2,
+      "id": "session-map",
+      "title": "Session overview",
+      "h": 1,
+      "screenshot": "002-session-map.png",
+      "bounds": {
+        "left": 64,
+        "top": 36,
+        "right": 1536,
+        "bottom": 864
+      },
+      "textOverflow": [],
+      "images": [],
+      "imageOverflow": [],
+      "navigationOverlap": [],
+      "indices": {
+        "h": 1,
+        "v": 0
+      }
+    },
+    {
+      "number": 3,
+      "id": "literature",
+      "title": "Method and literature",
+      "h": 2,
+      "v": 0,
+      "screenshot": "003-literature.png",
+      "bounds": {
+        "left": 64,
+        "top": 36,
+        "right": 1536,
+        "bottom": 864
+      },
+      "textOverflow": [],
+      "images": [],
+      "imageOverflow": [],
+      "navigationOverlap": [],
+      "indices": {
+        "h": 2,
+        "v": 0
+      }
+    },
+    {
+      "number": 4,
+      "id": "the-method-and-the-tutorial",
+      "title": "The method and the tutorial",
+      "h": 2,
+      "v": 1,
+      "screenshot": "004-the-method-and-the-tutorial.png",
+      "bounds": {
+        "left": 64,
+        "top": 36,
+        "right": 1536,
+        "bottom": 864
+      },
+      "textOverflow": [],
+      "images": [],
+      "imageOverflow": [],
+      "navigationOverlap": [],
+      "indices": {
+        "h": 2,
+        "v": 1
+      }
+    },
+    {
+      "number": 5,
+      "id": "what-the-analysis-reports",
+      "title": "What the analysis reports",
+      "h": 2,
+      "v": 2,
+      "screenshot": "005-what-the-analysis-reports.png",
+      "bounds": {
+        "left": 64,
+        "top": 36,
+        "right": 1536,
+        "bottom": 864
+      },
+      "textOverflow": [],
+      "images": [],
+      "imageOverflow": [],
+      "navigationOverlap": [],
+      "indices": {
+        "h": 2,
+        "v": 2
+      }
+    },
+    {
+      "number": 6,
+      "id": "trial",
+      "title": "Simulated treatment comparison",
+      "h": 3,
+      "v": 0,
+      "screenshot": "006-trial.png",
+      "bounds": {
+        "left": 64,
+        "top": 36,
+        "right": 1536,
+        "bottom": 864
+      },
+      "textOverflow": [],
+      "images": [],
+      "imageOverflow": [],
+      "navigationOverlap": [],
+      "indices": {
+        "h": 3,
+        "v": 0
+      }
+    },
+    {
+      "number": 7,
+      "id": "the-example-dataset",
+      "title": "The example dataset",
+      "h": 3,
+      "v": 1,
+      "screenshot": "007-the-example-dataset.png",
+      "bounds": {
+        "left": 64,
+        "top": 36,
+        "right": 1536,
+        "bottom": 864
+      },
+      "textOverflow": [],
+      "images": [],
+      "imageOverflow": [],
+      "navigationOverlap": [],
+      "indices": {
+        "h": 3,
+        "v": 1
+      }
+    },
+    {
+      "number": 8,
+      "id": "benefit-on-the-risk-difference-scale",
+      "title": "Benefit on the risk-difference scale",
+      "h": 3,
+      "v": 2,
+      "screenshot": "008-benefit-on-the-risk-difference-scale.png",
+      "bounds": {
+        "left": 64,
+        "top": 36,
+        "right": 1536,
+        "bottom": 864
+      },
+      "textOverflow": [],
+      "images": [],
+      "imageOverflow": [],
+      "navigationOverlap": [],
+      "indices": {
+        "h": 3,
+        "v": 2
+      }
+    },
+    {
+      "number": 9,
+      "id": "same-treatment",
+      "title": "Two profiles from the fitted model",
+      "h": 3,
+      "v": 3,
+      "screenshot": "009-same-treatment.png",
+      "bounds": {
+        "left": 64,
+        "top": 36,
+        "right": 1536,
+        "bottom": 864
+      },
+      "textOverflow": [],
+      "images": [],
+      "imageOverflow": [],
+      "navigationOverlap": [],
+      "indices": {
+        "h": 3,
+        "v": 3
+      }
+    },
+    {
+      "number": 10,
+      "id": "distribution",
+      "title": "Model and sorted effects",
+      "h": 4,
+      "v": 0,
+      "screenshot": "010-distribution.png",
+      "bounds": {
+        "left": 64,
+        "top": 36,
+        "right": 1536,
+        "bottom": 864
+      },
+      "textOverflow": [],
+      "images": [],
+      "imageOverflow": [],
+      "navigationOverlap": [],
+      "indices": {
+        "h": 4,
+        "v": 0
+      }
+    },
+    {
+      "number": 11,
+      "id": "r-the-outcome-model",
+      "title": "R: the outcome model",
+      "h": 4,
+      "v": 1,
+      "screenshot": "011-r-the-outcome-model.png",
+      "bounds": {
+        "left": 64,
+        "top": 36,
+        "right": 1536,
+        "bottom": 864
+      },
+      "textOverflow": [],
+      "images": [],
+      "imageOverflow": [],
+      "navigationOverlap": [],
+      "indices": {
+        "h": 4,
+        "v": 1,
+        "f": 0
+      }
+    },
+    {
+      "number": 12,
+      "id": "r-predictions-under-both-groups",
+      "title": "R: predictions under both groups",
+      "h": 4,
+      "v": 2,
+      "screenshot": "012-r-predictions-under-both-groups.png",
+      "bounds": {
+        "left": 64,
+        "top": 36,
+        "right": 1536,
+        "bottom": 864
+      },
+      "textOverflow": [],
+      "images": [],
+      "imageOverflow": [],
+      "navigationOverlap": [],
+      "indices": {
+        "h": 4,
+        "v": 2,
+        "f": 0
+      }
+    },
+    {
+      "number": 13,
+      "id": "fitted-benefit-by-age-and-sex",
+      "title": "Fitted benefit by age and sex",
+      "h": 4,
+      "v": 3,
+      "screenshot": "013-fitted-benefit-by-age-and-sex.png",
+      "bounds": {
+        "left": 64,
+        "top": 36,
+        "right": 1536,
+        "bottom": 864
+      },
+      "textOverflow": [],
+      "images": [
+        {
+          "alt": "",
+          "loaded": true,
+          "naturalWidth": 1314,
+          "naturalHeight": 864,
+          "excessPixels": {
+            "left": 0,
+            "top": 0,
+            "right": 0,
+            "bottom": 0
+          },
+          "navigationOverlapPixels": null
+        }
+      ],
+      "imageOverflow": [],
+      "navigationOverlap": [],
+      "indices": {
+        "h": 4,
+        "v": 3
+      }
+    },
+    {
+      "number": 14,
+      "id": "r-the-mean-and-the-sorted-effects",
+      "title": "R: the mean and the sorted effects",
+      "h": 4,
+      "v": 4,
+      "screenshot": "014-r-the-mean-and-the-sorted-effects.png",
+      "bounds": {
+        "left": 64,
+        "top": 36,
+        "right": 1536,
+        "bottom": 864
+      },
+      "textOverflow": [],
+      "images": [],
+      "imageOverflow": [],
+      "navigationOverlap": [],
+      "indices": {
+        "h": 4,
+        "v": 4,
+        "f": 0
+      }
+    },
+    {
+      "number": 15,
+      "id": "sorted-effects-and-the-average",
+      "title": "Sorted effects and the average",
+      "h": 4,
+      "v": 5,
+      "screenshot": "015-sorted-effects-and-the-average.png",
+      "bounds": {
+        "left": 64,
+        "top": 36,
+        "right": 1536,
+        "bottom": 864
+      },
+      "textOverflow": [],
+      "images": [
+        {
+          "alt": "",
+          "loaded": true,
+          "naturalWidth": 1314,
+          "naturalHeight": 864,
+          "excessPixels": {
+            "left": 0,
+            "top": 0,
+            "right": 0,
+            "bottom": 0
+          },
+          "navigationOverlapPixels": null
+        }
+      ],
+      "imageOverflow": [],
+      "navigationOverlap": [],
+      "indices": {
+        "h": 4,
+        "v": 5
+      }
+    },
+    {
+      "number": 16,
+      "id": "interpreting-the-80th-percentile",
+      "title": "Interpreting the 80th percentile",
+      "h": 4,
+      "v": 6,
+      "screenshot": "016-interpreting-the-80th-percentile.png",
+      "bounds": {
+        "left": 64,
+        "top": 36,
+        "right": 1536,
+        "bottom": 864
+      },
+      "textOverflow": [],
+      "images": [],
+      "imageOverflow": [],
+      "navigationOverlap": [],
+      "indices": {
+        "h": 4,
+        "v": 6
+      }
+    },
+    {
+      "number": 17,
+      "id": "patients",
+      "title": "Characteristics of the effect tails",
+      "h": 5,
+      "v": 0,
+      "screenshot": "017-patients.png",
+      "bounds": {
+        "left": 64,
+        "top": 36,
+        "right": 1536,
+        "bottom": 864
+      },
+      "textOverflow": [],
+      "images": [],
+      "imageOverflow": [],
+      "navigationOverlap": [],
+      "indices": {
+        "h": 5,
+        "v": 0
+      }
+    },
+    {
+      "number": 18,
+      "id": "r-selecting-the-benefit-tails",
+      "title": "R: selecting the benefit tails",
+      "h": 5,
+      "v": 1,
+      "screenshot": "018-r-selecting-the-benefit-tails.png",
+      "bounds": {
+        "left": 64,
+        "top": 36,
+        "right": 1536,
+        "bottom": 864
+      },
+      "textOverflow": [],
+      "images": [],
+      "imageOverflow": [],
+      "navigationOverlap": [],
+      "indices": {
+        "h": 5,
+        "v": 1,
+        "f": 0
+      }
+    },
+    {
+      "number": 19,
+      "id": "age-and-sex-in-the-two-tails",
+      "title": "Age and sex in the two tails",
+      "h": 5,
+      "v": 2,
+      "screenshot": "019-age-and-sex-in-the-two-tails.png",
+      "bounds": {
+        "left": 64,
+        "top": 36,
+        "right": 1536,
+        "bottom": 864
+      },
+      "textOverflow": [],
+      "images": [
+        {
+          "alt": "",
+          "loaded": true,
+          "naturalWidth": 1314,
+          "naturalHeight": 684,
+          "excessPixels": {
+            "left": 0,
+            "top": 0,
+            "right": 0,
+            "bottom": 0
+          },
+          "navigationOverlapPixels": null
+        }
+      ],
+      "imageOverflow": [],
+      "navigationOverlap": [],
+      "indices": {
+        "h": 5,
+        "v": 2
+      }
+    },
+    {
+      "number": 20,
+      "id": "tail-comparisons-and-subgroup-analyses",
+      "title": "Tail comparisons and subgroup analyses",
+      "h": 5,
+      "v": 3,
+      "screenshot": "020-tail-comparisons-and-subgroup-analyses.png",
+      "bounds": {
+        "left": 64,
+        "top": 36,
+        "right": 1536,
+        "bottom": 864
+      },
+      "textOverflow": [],
+      "images": [],
+      "imageOverflow": [],
+      "navigationOverlap": [],
+      "indices": {
+        "h": 5,
+        "v": 3
+      }
+    },
+    {
+      "number": 21,
+      "id": "tail-membership-after-refitting",
+      "title": "Tail membership after refitting",
+      "h": 5,
+      "v": 4,
+      "screenshot": "021-tail-membership-after-refitting.png",
+      "bounds": {
+        "left": 64,
+        "top": 36,
+        "right": 1536,
+        "bottom": 864
+      },
+      "textOverflow": [],
+      "images": [
+        {
+          "alt": "",
+          "loaded": true,
+          "naturalWidth": 1314,
+          "naturalHeight": 864,
+          "excessPixels": {
+            "left": 0,
+            "top": 0,
+            "right": 0,
+            "bottom": 0
+          },
+          "navigationOverlapPixels": null
+        }
+      ],
+      "imageOverflow": [],
+      "navigationOverlap": [],
+      "indices": {
+        "h": 5,
+        "v": 4
+      }
+    },
+    {
+      "number": 22,
+      "id": "uncertainty",
+      "title": "Sampling uncertainty",
+      "h": 6,
+      "v": 0,
+      "screenshot": "022-uncertainty.png",
+      "bounds": {
+        "left": 64,
+        "top": 36,
+        "right": 1536,
+        "bottom": 864
+      },
+      "textOverflow": [],
+      "images": [],
+      "imageOverflow": [],
+      "navigationOverlap": [],
+      "indices": {
+        "h": 6,
+        "v": 0
+      }
+    },
+    {
+      "number": 23,
+      "id": "r-confidence-bands-for-the-spe-curve",
+      "title": "R: confidence bands for the SPE curve",
+      "h": 6,
+      "v": 1,
+      "screenshot": "023-r-confidence-bands-for-the-spe-curve.png",
+      "bounds": {
+        "left": 64,
+        "top": 36,
+        "right": 1536,
+        "bottom": 864
+      },
+      "textOverflow": [],
+      "images": [],
+      "imageOverflow": [],
+      "navigationOverlap": [],
+      "indices": {
+        "h": 6,
+        "v": 1,
+        "f": 0
+      }
+    },
+    {
+      "number": 24,
+      "id": "uncertainty-across-the-sorted-curve",
+      "title": "Uncertainty across the sorted curve",
+      "h": 6,
+      "v": 2,
+      "screenshot": "024-uncertainty-across-the-sorted-curve.png",
+      "bounds": {
+        "left": 64,
+        "top": 36,
+        "right": 1536,
+        "bottom": 864
+      },
+      "textOverflow": [],
+      "images": [
+        {
+          "alt": "",
+          "loaded": true,
+          "naturalWidth": 1314,
+          "naturalHeight": 864,
+          "excessPixels": {
+            "left": 0,
+            "top": 0,
+            "right": 0,
+            "bottom": 0
+          },
+          "navigationOverlapPixels": null
+        }
+      ],
+      "imageOverflow": [],
+      "navigationOverlap": [],
+      "indices": {
+        "h": 6,
+        "v": 2
+      }
+    },
+    {
+      "number": 25,
+      "id": "r-uncertainty-in-classification",
+      "title": "R: uncertainty in classification",
+      "h": 6,
+      "v": 3,
+      "screenshot": "025-r-uncertainty-in-classification.png",
+      "bounds": {
+        "left": 64,
+        "top": 36,
+        "right": 1536,
+        "bottom": 864
+      },
+      "textOverflow": [],
+      "images": [],
+      "imageOverflow": [],
+      "navigationOverlap": [],
+      "indices": {
+        "h": 6,
+        "v": 3,
+        "f": 0
+      }
+    },
+    {
+      "number": 26,
+      "id": "estimated-differences-between-the-tails",
+      "title": "Estimated differences between the tails",
+      "h": 6,
+      "v": 4,
+      "screenshot": "026-estimated-differences-between-the-tails.png",
+      "bounds": {
+        "left": 64,
+        "top": 36,
+        "right": 1536,
+        "bottom": 864
+      },
+      "textOverflow": [],
+      "images": [],
+      "imageOverflow": [],
+      "navigationOverlap": [],
+      "indices": {
+        "h": 6,
+        "v": 4
+      }
+    },
+    {
+      "number": 27,
+      "id": "assumptions-behind-the-estimates",
+      "title": "Assumptions behind the estimates",
+      "h": 6,
+      "v": 5,
+      "screenshot": "027-assumptions-behind-the-estimates.png",
+      "bounds": {
+        "left": 64,
+        "top": 36,
+        "right": 1536,
+        "bottom": 864
+      },
+      "textOverflow": [],
+      "images": [],
+      "imageOverflow": [],
+      "navigationOverlap": [],
+      "indices": {
+        "h": 6,
+        "v": 5
+      }
+    },
+    {
+      "number": 28,
+      "id": "decisions",
+      "title": "Interpretation and discussion",
+      "h": 7,
+      "v": 0,
+      "screenshot": "028-decisions.png",
+      "bounds": {
+        "left": 64,
+        "top": 36,
+        "right": 1536,
+        "bottom": 864
+      },
+      "textOverflow": [],
+      "images": [],
+      "imageOverflow": [],
+      "navigationOverlap": [],
+      "indices": {
+        "h": 7,
+        "v": 0
+      }
+    },
+    {
+      "number": 29,
+      "id": "treatment-decisions",
+      "title": "Treatment decisions",
+      "h": 7,
+      "v": 1,
+      "screenshot": "029-treatment-decisions.png",
+      "bounds": {
+        "left": 64,
+        "top": 36,
+        "right": 1536,
+        "bottom": 864
+      },
+      "textOverflow": [],
+      "images": [],
+      "imageOverflow": [],
+      "navigationOverlap": [],
+      "indices": {
+        "h": 7,
+        "v": 1
+      }
+    },
+    {
+      "number": 30,
+      "id": "questions-for-discussion",
+      "title": "Questions for discussion",
+      "h": 7,
+      "v": 2,
+      "screenshot": "030-questions-for-discussion.png",
+      "bounds": {
+        "left": 64,
+        "top": 36,
+        "right": 1536,
+        "bottom": 864
+      },
+      "textOverflow": [],
+      "images": [],
+      "imageOverflow": [],
+      "navigationOverlap": [],
+      "indices": {
+        "h": 7,
+        "v": 2
+      }
+    },
+    {
+      "number": 31,
+      "id": "reading-and-resources",
+      "title": "Reading and resources",
+      "h": 7,
+      "v": 3,
+      "screenshot": "031-reading-and-resources.png",
+      "bounds": {
+        "left": 64,
+        "top": 36,
+        "right": 1536,
+        "bottom": 864
+      },
+      "textOverflow": [],
+      "images": [],
+      "imageOverflow": [],
+      "navigationOverlap": [],
+      "indices": {
+        "h": 7,
+        "v": 3
+      }
+    },
+    {
+      "number": 32,
+      "id": "backup",
+      "title": "Technical backup",
+      "h": 8,
+      "v": 0,
+      "screenshot": "032-backup.png",
+      "bounds": {
+        "left": 64,
+        "top": 36,
+        "right": 1536,
+        "bottom": 864
+      },
+      "textOverflow": [],
+      "images": [],
+      "imageOverflow": [],
+      "navigationOverlap": [],
+      "indices": {
+        "h": 8,
+        "v": 0
+      }
+    },
+    {
+      "number": 33,
+      "id": "definition-of-sorted-partial-effects",
+      "title": "Definition of sorted partial effects",
+      "h": 8,
+      "v": 1,
+      "screenshot": "033-definition-of-sorted-partial-effects.png",
+      "bounds": {
+        "left": 64,
+        "top": 36,
+        "right": 1536,
+        "bottom": 864
+      },
+      "textOverflow": [],
+      "images": [],
+      "imageOverflow": [],
+      "navigationOverlap": [],
+      "indices": {
+        "h": 8,
+        "v": 1
+      }
+    },
+    {
+      "number": 34,
+      "id": "effect-heterogeneity-depends-on-the-scale",
+      "title": "Effect heterogeneity depends on the scale",
+      "h": 8,
+      "v": 2,
+      "screenshot": "034-effect-heterogeneity-depends-on-the-scale.png",
+      "bounds": {
+        "left": 64,
+        "top": 36,
+        "right": 1536,
+        "bottom": 864
+      },
+      "textOverflow": [],
+      "images": [
+        {
+          "alt": "",
+          "loaded": true,
+          "naturalWidth": 1980,
+          "naturalHeight": 990,
+          "excessPixels": {
+            "left": 0,
+            "top": 0,
+            "right": 0,
+            "bottom": 0
+          },
+          "navigationOverlapPixels": null
+        }
+      ],
+      "imageOverflow": [],
+      "navigationOverlap": [],
+      "indices": {
+        "h": 8,
+        "v": 2
+      }
+    },
+    {
+      "number": 35,
+      "id": "simulation-assumptions",
+      "title": "Simulation assumptions",
+      "h": 8,
+      "v": 3,
+      "screenshot": "035-simulation-assumptions.png",
+      "bounds": {
+        "left": 64,
+        "top": 36,
+        "right": 1536,
+        "bottom": 864
+      },
+      "textOverflow": [],
+      "images": [],
+      "imageOverflow": [],
+      "navigationOverlap": [],
+      "indices": {
+        "h": 8,
+        "v": 3
+      }
+    },
+    {
+      "number": 36,
+      "id": "resampling-targets",
+      "title": "Resampling targets",
+      "h": 8,
+      "v": 4,
+      "screenshot": "036-resampling-targets.png",
+      "bounds": {
+        "left": 64,
+        "top": 36,
+        "right": 1536,
+        "bottom": 864
+      },
+      "textOverflow": [],
+      "images": [],
+      "imageOverflow": [],
+      "navigationOverlap": [],
+      "indices": {
+        "h": 8,
+        "v": 4
+      }
+    },
+    {
+      "number": 37,
+      "id": "classification-output",
+      "title": "Classification output",
+      "h": 8,
+      "v": 5,
+      "screenshot": "037-classification-output.png",
+      "bounds": {
+        "left": 64,
+        "top": 36,
+        "right": 1536,
+        "bottom": 864
+      },
+      "textOverflow": [],
+      "images": [],
+      "imageOverflow": [],
+      "navigationOverlap": [],
+      "indices": {
+        "h": 8,
+        "v": 5
+      }
+    },
+    {
+      "number": 38,
+      "id": "the-tutorials-mortgage-example",
+      "title": "The tutorial’s mortgage example",
+      "h": 8,
+      "v": 6,
+      "screenshot": "038-the-tutorials-mortgage-example.png",
+      "bounds": {
+        "left": 64,
+        "top": 36,
+        "right": 1536,
+        "bottom": 864
+      },
+      "textOverflow": [],
+      "images": [
+        {
+          "alt": "",
+          "loaded": true,
+          "naturalWidth": 1800,
+          "naturalHeight": 972,
+          "excessPixels": {
+            "left": 0,
+            "top": 0,
+            "right": 0,
+            "bottom": 0
+          },
+          "navigationOverlapPixels": null
+        }
+      ],
+      "imageOverflow": [],
+      "navigationOverlap": [],
+      "indices": {
+        "h": 8,
+        "v": 6
+      }
+    },
+    {
+      "number": 39,
+      "id": "references",
+      "title": "References",
+      "h": 8,
+      "v": 7,
+      "screenshot": "039-references.png",
+      "bounds": {
+        "left": 64,
+        "top": 36,
+        "right": 1536,
+        "bottom": 864
+      },
+      "textOverflow": [],
+      "images": [],
+      "imageOverflow": [],
+      "navigationOverlap": [],
+      "indices": {
+        "h": 8,
+        "v": 7
+      }
+    }
+  ],
+  "externalRequests": [],
+  "missingLocalResources": [],
+  "pageErrors": [],
+  "consoleErrors": [],
+  "summary": {
+    "slideCount": 39,
+    "textOverflowSlides": [],
+    "imageOverflowSlides": [],
+    "navigationOverlapSlides": [],
+    "brokenImages": [],
+    "externalRequestCount": 0,
+    "missingLocalResourceCount": 0,
+    "pageErrorCount": 0
+  }
+}

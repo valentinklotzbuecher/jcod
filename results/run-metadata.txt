@@ -13,11 +13,11 @@ List of 12
  $ package_benchmark   : chr "This implementation is not a reproduction of SortedEffects inference."
 R version 4.5.0 (2025-04-11)
 Platform: x86_64-pc-linux-gnu
-Running under: Debian GNU/Linux 13 (trixie)
+Running under: Ubuntu 24.04.5 LTS
 
 Matrix products: default
-BLAS:   /usr/lib/x86_64-linux-gnu/blas/libblas.so.3.12.1 
-LAPACK: /usr/lib/x86_64-linux-gnu/lapack/liblapack.so.3.12.1;  LAPACK version 3.12.0
+BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 
+LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so;  LAPACK version 3.12.0
 
 locale:
  [1] LC_CTYPE=C.UTF-8       LC_NUMERIC=C           LC_TIME=C.UTF-8       
@@ -25,11 +25,11 @@ locale:
  [7] LC_PAPER=C.UTF-8       LC_NAME=C              LC_ADDRESS=C          
 [10] LC_TELEPHONE=C         LC_MEASUREMENT=C.UTF-8 LC_IDENTIFICATION=C   
 
-time zone: Etc/UTC
+time zone: UTC
 tzcode source: system (glibc)
 
 attached base packages:
 [1] stats     graphics  grDevices utils     datasets  methods   base     
 
 loaded via a namespace (and not attached):
-[1] compiler_4.5.0 tools_4.5.0   
+[1] compiler_4.5.0

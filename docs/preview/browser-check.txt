@@ -1,0 +1,49 @@
+ 1 Sorted partial effects: 0 text overflow, 0 navigation overlaps, 0 broken images
+ 2 Session overview: 0 text overflow, 0 navigation overlaps, 0 broken images
+ 3 Method and literature: 0 text overflow, 0 navigation overlaps, 0 broken images
+ 4 The method and the tutorial: 0 text overflow, 0 navigation overlaps, 0 broken images
+ 5 What the analysis reports: 0 text overflow, 0 navigation overlaps, 0 broken images
+ 6 Simulated treatment comparison: 0 text overflow, 0 navigation overlaps, 0 broken images
+ 7 The example dataset: 0 text overflow, 0 navigation overlaps, 0 broken images
+ 8 Benefit on the risk-difference scale: 0 text overflow, 0 navigation overlaps, 0 broken images
+ 9 Two profiles from the fitted model: 0 text overflow, 0 navigation overlaps, 0 broken images
+10 Model and sorted effects: 0 text overflow, 0 navigation overlaps, 0 broken images
+11 R: the outcome model: 0 text overflow, 0 navigation overlaps, 0 broken images
+12 R: predictions under both groups: 0 text overflow, 0 navigation overlaps, 0 broken images
+13 Fitted benefit by age and sex: 0 text overflow, 0 navigation overlaps, 0 broken images
+14 R: the mean and the sorted effects: 0 text overflow, 0 navigation overlaps, 0 broken images
+15 Sorted effects and the average: 0 text overflow, 0 navigation overlaps, 0 broken images
+16 Interpreting the 80th percentile: 0 text overflow, 0 navigation overlaps, 0 broken images
+17 Characteristics of the effect tails: 0 text overflow, 0 navigation overlaps, 0 broken images
+18 R: selecting the benefit tails: 0 text overflow, 0 navigation overlaps, 0 broken images
+19 Age and sex in the two tails: 0 text overflow, 0 navigation overlaps, 0 broken images
+20 Tail comparisons and subgroup analyses: 0 text overflow, 0 navigation overlaps, 0 broken images
+21 Tail membership after refitting: 0 text overflow, 0 navigation overlaps, 0 broken images
+22 Sampling uncertainty: 0 text overflow, 0 navigation overlaps, 0 broken images
+23 R: confidence bands for the SPE curve: 0 text overflow, 0 navigation overlaps, 0 broken images
+24 Uncertainty across the sorted curve: 0 text overflow, 0 navigation overlaps, 0 broken images
+25 R: uncertainty in classification: 0 text overflow, 0 navigation overlaps, 0 broken images
+26 Estimated differences between the tails: 0 text overflow, 0 navigation overlaps, 0 broken images
+27 Assumptions behind the estimates: 0 text overflow, 0 navigation overlaps, 0 broken images
+28 Interpretation and discussion: 0 text overflow, 0 navigation overlaps, 0 broken images
+29 Treatment decisions: 0 text overflow, 0 navigation overlaps, 0 broken images
+30 Questions for discussion: 0 text overflow, 0 navigation overlaps, 0 broken images
+31 Reading and resources: 0 text overflow, 0 navigation overlaps, 0 broken images
+32 Technical backup: 0 text overflow, 0 navigation overlaps, 0 broken images
+33 Definition of sorted partial effects: 0 text overflow, 0 navigation overlaps, 0 broken images
+34 Effect heterogeneity depends on the scale: 0 text overflow, 0 navigation overlaps, 0 broken images
+35 Simulation assumptions: 0 text overflow, 0 navigation overlaps, 0 broken images
+36 Resampling targets: 0 text overflow, 0 navigation overlaps, 0 broken images
+37 Classification output: 0 text overflow, 0 navigation overlaps, 0 broken images
+38 The tutorial’s mortgage example: 0 text overflow, 0 navigation overlaps, 0 broken images
+39 References: 0 text overflow, 0 navigation overlaps, 0 broken images
+{
+  "slideCount": 39,
+  "textOverflowSlides": [],
+  "imageOverflowSlides": [],
+  "navigationOverlapSlides": [],
+  "brokenImages": [],
+  "externalRequestCount": 0,
+  "missingLocalResourceCount": 0,
+  "pageErrorCount": 0
+}
