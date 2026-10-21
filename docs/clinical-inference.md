@@ -1,12 +1,45 @@
-# Original-package inference for the fictional clinical trial
+# Original-package inference for the simulated comparison
 
 This analysis uses the unmodified **SortedEffects 1.7.0** package, pinned to
-CRAN mirror commit `18a1196e474ee1b62d6722754e8e377cba4ddc1f`. The fictional
-trial concerns intensified versus usual discharge diuretic management after
-heart-failure admission. Its binary endpoint is unplanned readmission by 90 days.
-Baseline severity is interpreted as a standardized, simulated congestion score.
-All clinical labels and data-generating coefficients are teaching assumptions,
-not evidence about a real intervention or validated risk model.
+CRAN mirror commit `18a1196e474ee1b62d6722754e8e377cba4ddc1f`. It compares
+randomly assigned **treated** and **control** groups for a generic adverse
+binary outcome. Age and a simulated binary sex indicator are the only baseline
+characteristics. All outcome probabilities and model coefficients are
+illustrative simulation assumptions.
+
+## Data-generating model
+
+Age is uniform from 40 to 80 years, `age_z = (age - 60) / 10`, and `female` is
+Bernoulli with probability 0.5. Assignment is balanced across the 5,000
+participants. The control-group log odds are
+
+```r
+-1.4 + 0.35 * age_z + 0.15 * female + 0.10 * age_z * female
+```
+
+In the main example, treatment adds
+
+```r
+interaction_intercept - 0.55 * age_z - 0.12 * female - 0.08 * age_z * female
+```
+
+The intercept is calibrated so the true average risk reduction matches a
+second, optional scenario with a constant treatment odds ratio of 0.60.
+The comparison scenarios therefore differ in their effect distributions while
+sharing their true average. They use the same covariates, allocation and
+outcome uniforms. The seed is 20261020.
+
+The primary fitted model is
+
+```r
+outcome ~ group * age_z * female
+```
+
+This includes all main effects, all two-way interactions and the three-way
+interaction. The optional constant-OR model is
+`outcome ~ group + age_z * female`. Sex is coded as a binary variable solely to
+keep this teaching example simple. No demographic effect pattern is proposed
+for an actual population.
 
 ## Reproduce
 
@@ -17,13 +50,13 @@ Rscript R/demo.R
 Rscript scripts/clinical-inference.R
 ```
 
-The first command prepares the clinical dataset and teaching diagnostics; the
+The first command prepares the simulated dataset and teaching diagnostics; the
 second runs the actual original-package `spe()` and `ca()` inference and updates
 the main figures. The analysis uses all 5,000 trial covariate profiles for the
 empirical distribution of conditional contrasts. `R/clinical-walkthrough.R`
-contains the model, two-strategy prediction, and hypothetical-profile calculations
-used by the displayed R examples. The model includes treatment by congestion
-interaction and main effects of age and sex.
+contains the model, two-group predictions and profile calculations used by
+the displayed R examples. The illustrative profiles compare ages 45 and 75,
+both with `female = 0`, using this same fitted model.
 The executable walkthrough also returns the weighted-quantile curve, its
 average, the two logical tail-membership vectors, and the tail mean summaries.
 The inference script checks each displayed calculation against those returned
@@ -32,17 +65,17 @@ objects and the original package's point estimates.
 ## Contrast direction
 
 The supported categorical API computes the prediction for `compare[2]` minus
-the prediction for `compare[1]`. With strategy levels `usual` and `intensified`,
+the prediction for `compare[1]`. With group levels `control` and `treated`,
 the call uses:
 
 ```r
 var_type = "categorical"
-var = "strategy"
-compare = c("intensified", "usual")
+var = "group"
+compare = c("treated", "control")
 ```
 
-Its positive contrast is therefore **usual-care readmission risk minus
-intensified-strategy readmission risk**. The binary outcome is not inverted, and
+Its positive contrast is therefore **control-group event risk minus
+treated-group event risk**. The binary outcome is not inverted, and
 no package code is patched. The script independently verifies this sign against
 the direct `glm()` probability contrast.
 
@@ -52,14 +85,13 @@ the direct `glm()` probability contrast.
   grid and the average benefit. The main uncertainty plot uses its original
   **95% uniform band**, with IQR bootstrap scaling and monotonic rearrangement.
 - `ca()` describes the highest-benefit and lowest-benefit 10% and performs
-  inference for their mean differences in **age, baseline congestion score and
-  female proportion**. The displayed p-values come from its bootstrap maximum
-  statistic, adjusted jointly across those three comparisons.
+  inference for their mean differences in **age and female proportion**. The displayed p-values come from its bootstrap maximum
+  statistic, adjusted jointly across those two comparisons.
 - The dumbbell endpoints show the two estimated tail means. The package's
   moment-mode `ca()` result returns differences, bootstrap standard errors and
   p-values; it does **not** return moment confidence intervals. No endpoint or
   simultaneous difference confidence intervals are invented from those outputs.
-- Predicted untreated risk is a derived fitted quantity. It is not included as
+- Predicted control-group risk is a derived fitted quantity. It is not included as
   an observed characteristic in the classification inference family.
 
 The run uses 499 bootstrap draws, seed 420, `alpha = 0.05`, and `bc = FALSE`.

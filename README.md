@@ -1,65 +1,59 @@
 # JCOD: sorted partial effects
 
-An application-led session for statisticians: approximately 35–40 minutes of presentation with discussion during a one-hour slot. The active site is about sorted partial effects. All files from the former Synthetic Control Methods session are preserved in `archive/scm-2026/`.
+A journal-club session for statisticians, with 35–40 minutes of presentation and discussion during a one-hour slot. The active session is about sorted partial effects. The previous Synthetic Control Methods session is preserved in `archive/scm-2026/`.
 
 ## Build and preview
 
-Use Quarto 1.8.27 or later, R 4.5, and ggplot2. PDF rendering uses XeLaTeX (with beamer, fontspec and the standard Pandoc LaTeX packages). In the prepared cloud environment, activate the local installation first:
+Use R 4.5, Quarto 1.8.27 or later, ggplot2, and the original SortedEffects 1.7.0 package. PDF rendering uses XeLaTeX and DejaVu Sans. Package provenance and installation commands are in `docs/software-validation.md`.
 
 ```sh
-source /workspace/.tools/activate
-cd /workspace/jcod
 Rscript R/demo.R
-Rscript scripts/validate-demo.R
 Rscript scripts/clinical-inference.R
-# Optional: rerun the original package benchmark (SortedEffects 1.7.0 required)
-Rscript scripts/benchmark-sortedeffects.R
+Rscript scripts/validate-demo.R
 bash scripts/render.sh
 quarto preview --no-browser --host 127.0.0.1 --port 4200
 ```
 
-On another machine, use your installed R and Quarto; the activation line is cloud-specific. Regenerating the clinical analysis requires ggplot2 and the pinned original SortedEffects 1.7.0 package, including its dependencies. The installation source is documented in `docs/software-validation.md`. Rendering the committed figures and CSVs does not require rerunning the analysis. `scpi` and `marginaleffects` are not required.
+The optional published-example benchmark is `Rscript scripts/benchmark-sortedeffects.R`. Rendering committed figures and CSVs does not require rerunning the analysis. In the earlier prepared cloud environment, `source /workspace/.tools/activate` selected the installed tools; that path is environment-specific.
+
+A branch-scoped GitHub Actions workflow in `.github/workflows/preview.yml` installs the runtime, regenerates the example, runs its numerical checks, and renders both slide formats. It uploads build outputs and logs without publishing the website.
 
 ## Presenting
 
-Download [`presentation.html`](presentation.html) and open it in a modern browser.
-The HTML embeds its figures, styles, fonts and scripts and works without external
-assets. [`presentation.pdf`](presentation.pdf) is the matching handout.
-`bash scripts/render.sh` rebuilds the website and refreshes both portable exports.
+Download [`presentation.html`](presentation.html) and open it in a modern browser. It embeds the figures, styles, fonts, and scripts. [`presentation.pdf`](presentation.pdf) is the matching handout. `bash scripts/render.sh` refreshes both portable exports and the site build.
 
-The presentation uses two dimensions: six main chapters run horizontally, and
-their examples run vertically. An optional seventh stack holds technical backup.
-Use the clickable session map or chapter dock to jump to a topic.
+Six main chapters run horizontally, with examples vertically beneath them. A seventh stack contains technical backup. The session map and chapter dock link directly to each topic.
 
-- **Left / right:** switch chapters (or reveal the next fragment).
+- **Left / right:** switch chapters, or reveal the next fragment.
 - **Up / down:** move within a chapter.
-- **Space:** follow the complete sequence, including animated reveals.
-- **Esc / O / Overview:** open the native two-dimensional slide overview.
+- **Space:** follow the complete sequence.
+- **Esc / O / Overview:** open the slide overview.
 - **S:** open Reveal's speaker view when supported by the browser.
 
-Transitions and auto-animation respect reduced-motion preferences. The PDF shows
-the completed slides in reading order, with fragment states consolidated.
+The PDF consolidates fragment states. Transitions respect reduced-motion preferences.
 
-The main presentation introduces the literature and follows one fictional heart-failure discharge trial throughout. `R/clinical-walkthrough.R` supplies executable counterparts of the visible model, prediction, quantile and classification code. `R/demo.R` generates simulated data and teaching diagnostics; `scripts/clinical-inference.R` then runs original-package SPE and classification inference, validates its calculations independently, and writes the primary plots. Keep outputs in sync by running both steps after analysis changes. Rendering reads those results rather than repeating the bootstrap for each format.
+## Example and inference
 
-Primary SPE bands use the package's IQR/max bootstrap on the observed trial profiles. Primary classification uses `ca()` standard errors and p-values adjusted jointly across age, congestion and female proportion. Dumbbell endpoints show means, with no invented endpoint confidence intervals. The package's SPE and CA routines use different resampling-weight conventions; see `docs/clinical-inference.md`. Separate `*-teaching` outputs and membership frequencies remain diagnostics. No frequentist coverage study or individual causal-effect inference is claimed.
+The example is a simulated randomized comparison of treated and control groups. It uses a generic adverse binary outcome, age, and a simulated binary sex indicator. The fitted model is `outcome ~ group * age_z * female`, with `age_z = (age - 60) / 10`. All numerical results are illustrative.
+
+Benefit is control event risk minus treated event risk, in percentage points. The main figures show fitted benefit by age and sex, the sorted-effect curve, characteristics of the two effect tails, and uncertainty. Classification describes the age and female proportion in the highest- and lowest-benefit 10%.
+
+`R/demo.R` generates the simulation and teaching diagnostics. `R/clinical-walkthrough.R` contains the executable model, prediction, quantile and classification examples. `scripts/clinical-inference.R` runs the original `spe()` and `ca()` routines, independently checks their calculations, and writes the primary plots. The historical script filenames remain stable.
+
+Primary SPE bands use the package's IQR/max bootstrap over the observed trial profiles. Primary classification reports native standard errors and p-values adjusted jointly across age and female proportion. The two routines have different resampling-weight conventions, described in `docs/clinical-inference.md`. Dumbbell endpoints are descriptive means. Membership frequencies and separate `*-teaching` outputs are sensitivity diagnostics. These summaries concern conditional average effects rather than individual realized treatment effects.
 
 ## Session files
 
-- `slides.qmd`: HTML RevealJS and Beamer PDF, including speaker notes and technical backup slides.
-- `presentation.html` and `presentation.pdf`: generated, portable exports retained on GitHub.
-- `assets/deck.js`: chapter navigation and overview support.
-- `index.qmd`: session landing page and reading links.
-- `R/demo.R`: reproducible simulated trial, sorted curves and bootstrap.
-- `R/clinical-walkthrough.R`: executable core R examples for the fictional trial.
-- `scripts/clinical-inference.R`: original-package clinical SPE/CA inference and independent bootstrap checks.
-- `scripts/validate-demo.R`: statistical and output checks.
-- `docs/evidence.md`: verified sources and boundaries of the application claims.
-- `docs/software-validation.md`: original-package reproduction and benchmark results.
-- `docs/clinical-inference.md`: clinical inferential target, resampling and output interpretation.
-- `docs/validation.md`: current scientific, rendering and runtime verification.
-- `references.bib`: bibliography for this session.
+- `slides.qmd`: RevealJS and Beamer presentation with speaker notes and backup slides.
+- `presentation.html` and `presentation.pdf`: portable rendered outputs.
+- `index.qmd`: landing page and suggested pre-reading.
+- `R/`: simulation and executable walkthrough.
+- `scripts/`: original-package inference, numerical validation, benchmark, and render commands.
+- `results/`: generated summary tables and figures.
+- `docs/evidence.md`: sources and application interpretation.
+- `docs/software-validation.md`: package provenance and benchmark scope.
+- `docs/clinical-inference.md`: inferential targets and resampling details.
+- `docs/validation.md`: execution and rendering evidence.
+- `references.bib`: session bibliography.
 
-The archived session is excluded from the active site render. Its R caches and original dependencies have been preserved as historical artifacts; the new session does not load them. Build it separately in a scratch directory if needed.
-
-No website publication has been requested. `quarto publish` changes the live site and is a separate action.
+The archive is excluded from the active render. Website publication is a separate action: run `quarto publish quarto-pub` only when requested.

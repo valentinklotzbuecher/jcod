@@ -1,5 +1,5 @@
 #!/usr/bin/env Rscript
-# Original SortedEffects inference for the ONE fictional clinical example.
+# Original SortedEffects inference for the generic simulated comparison.
 # Run after Rscript R/demo.R, from the repository root.
 options(warn = 1)
 stopifnot(requireNamespace("SortedEffects", quietly = TRUE))
@@ -17,8 +17,8 @@ stopifnot(n == 5000L)
 # The demo and original package now use the same empirical trial profiles.
 stopifnot(nrow(demo$reference) == n)
 stopifnot(isTRUE(all.equal(
-  demo$reference[, c("age", "age_z", "severity", "female")],
-  trial[, c("age", "age_z", "severity", "female")], check.attributes = FALSE
+  demo$reference[, c("age", "age_z", "female")],
+  trial[, c("age", "age_z", "female")], check.attributes = FALSE
 )))
 stopifnot(max(abs(benefit - demo$scenarios$interaction$contrast$benefit)) < 1e-10)
 
@@ -27,23 +27,23 @@ stopifnot(B >= 99L)
 seed <- 420L
 alpha <- 0.05
 us <- seq(0.10, 0.90, by = 0.01)
-traits <- c("age", "severity", "female")
-compare <- c("intensified", "usual")
+traits <- c("age", "female")
+compare <- c("treated", "control")
 
 # peestimate() returns prediction(compare[2]) - prediction(compare[1]).
 # This supported categorical contrast therefore makes positive values beneficial:
-# Pr(readmission | usual, X) - Pr(readmission | intensified, X).
-message("Original-package clinical SPE inference (", B, " bootstrap draws).")
+# Pr(event | control, X) - Pr(event | treated, X).
+message("Original-package SPE inference (", B, " bootstrap draws).")
 spe <- SortedEffects::spe(
   fm = fm, data = trial, method = "logit",
-  var_type = "categorical", var = "strategy", compare = compare,
+  var_type = "categorical", var = "group", compare = compare,
   us = us, alpha = alpha, b = B, seed = seed, bc = FALSE
 )
 
-message("Original-package clinical classification inference.")
+message("Original-package classification inference.")
 ca <- SortedEffects::ca(
   fm = fm, data = trial, method = "logit",
-  var_type = "categorical", var = "strategy", compare = compare,
+  var_type = "categorical", var = "group", compare = compare,
   u = 0.10, interest = "moment", cl = "diff", t = traits,
   alpha = alpha, b = B, seed = seed, bc = FALSE
 )
@@ -75,7 +75,7 @@ stopifnot(all(spe$spe[[4]] > 0), all(ca$bse > 0))
 # SPE: resampled training counts, fixed original quantile weights.
 # CA: resampled training counts, resampled quantile weights AND tail means.
 # This distinction is important; CA is not the same fixed-X conditional target.
-message("Independently checking the clinical bootstrap outputs.")
+message("Independently checking the bootstrap outputs.")
 set.seed(seed)
 bootstrap_spe <- matrix(NA_real_, nrow = B, ncol = length(us))
 bootstrap_ca <- matrix(NA_real_, nrow = B, ncol = length(traits))
@@ -87,8 +87,8 @@ for (b in seq_len(B)) {
   boot_data$.counts <- counts
   fit <- glm(fm, data = boot_data, family = binomial(), weights = .counts)
   stopifnot(fit$converged, all(is.finite(coef(fit))))
-  p0 <- predict(fit, transform(trial, strategy = "usual"), type = "response")
-  p1 <- predict(fit, transform(trial, strategy = "intensified"), type = "response")
+  p0 <- predict(fit, transform(trial, group = "control"), type = "response")
+  p1 <- predict(fit, transform(trial, group = "treated"), type = "response")
   effect <- as.numeric(p0 - p1)
   stopifnot(all(is.finite(effect)))
   bootstrap_spe[b, ] <- Hmisc::wtd.quantile(effect, weights, us)
@@ -101,8 +101,8 @@ for (b in seq_len(B)) {
   fit_ca <- glm(fm, data = boot_data, family = binomial(), weights = .ca_weights)
   stopifnot(fit_ca$converged, all(is.finite(coef(fit_ca))))
   effect_ca <- as.numeric(
-    predict(fit_ca, transform(trial, strategy = "usual"), type = "response") -
-      predict(fit_ca, transform(trial, strategy = "intensified"), type = "response")
+    predict(fit_ca, transform(trial, group = "control"), type = "response") -
+      predict(fit_ca, transform(trial, group = "treated"), type = "response")
   )
   cut <- Hmisc::wtd.quantile(effect_ca, boot_data$.ca_weights, c(0.10, 0.90))
   lo <- effect_ca <= cut[1]
@@ -148,7 +148,7 @@ utils::write.csv(data.frame(
   characteristic = traits, least_mean = as.numeric(least_mean),
   most_mean = as.numeric(most_mean), difference = as.numeric(ca$est),
   standard_error = as.numeric(ca$bse), joint_p = as.numeric(ca$joint_p),
-  unit = c("years", "SD", "proportion"),
+  unit = c("years", "proportion"),
   bootstrap_draws = B,
   # Preserve the native field for audit, not as a conventional two-sided p-value.
   package_pointwise_p = as.numeric(ca$pointwise_p),
@@ -162,12 +162,12 @@ metadata <- list(
   source_commit = "18a1196e474ee1b62d6722754e8e377cba4ddc1f",
   bootstrap_draws = B, seed = seed, alpha = alpha, bias_correction = FALSE,
   trial_n = n, reference_n = n,
-  contrast = "Predicted readmission risk: usual minus intensified",
+  contrast = "Predicted event risk: control minus treated",
   comparison_order = compare, tail_fraction = 0.10,
   least_group_n = sum(least), most_group_n = sum(most),
   spe_scope = "SPE training bootstrap, fixed original trial covariates/quantile weights",
   ca_scope = "CA refits with resampled weights and reweights effect thresholds/tail means",
-  ca_family = "Most-minus-least mean differences across age, congestion score and female proportion",
+  ca_family = "Most-minus-least mean differences across age and female proportion",
   ca_moment_ci = "Not returned by package; no native moment confidence intervals are claimed",
   native_pointwise_p = "Native ca() field is 1-Phi(abs(z)); not conventional two-sided p; main display uses joint_p only",
   joint_p_resolution = paste0("Multiples of 1/", B, "; zero means 0/", B,
@@ -190,4 +190,4 @@ if (!exists("write_clinical_inference_figures", mode = "function")) {
   stop("R/demo.R must provide write_clinical_inference_figures(). CSV results were saved.")
 }
 write_clinical_inference_figures()
-message("Clinical SPE/CA inference and independent checks passed. See results/clinical-inference-metadata.txt.")
+message("SPE/CA inference and independent checks passed. See results/clinical-inference-metadata.txt.")

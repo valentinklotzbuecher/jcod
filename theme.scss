@@ -404,3 +404,17 @@ $code-block-font-size: 0.7em;
 .btn-primary { border-radius: 2rem; padding: 0.6rem 1.3rem; }
 .btn-outline-primary { border-radius: 2rem; padding: 0.6rem 1.3rem; }
 .page-footer { color: #697283; }
+
+/* Figure explanations share a consistent, uncluttered two-column layout. */
+.reveal .figure-slide .columns { align-items: center; gap: 1em; }
+.reveal .figure-slide .columns > .column:first-child { flex: 0 0 64%; }
+.reveal .figure-slide .columns > .column:last-child { flex: 1 1 0; }
+.reveal .figure-slide .column img { width: 100%; max-height: 405px; }
+.reveal .figure-slide .column > p { margin: 0; }
+.reveal .figure-slide .column ul { margin: 0 0 0 0.8em; font-size: 0.76em; }
+.reveal .figure-slide .column li { margin-bottom: 0.9em; line-height: 1.38; }
+.reveal .figure-slide .source { margin-top: 0.45em; }
+/* Keep the established colours while simplifying the visual framing. */
+.reveal .patient-card { background: transparent; border: 0; border-radius: 0; box-shadow: none; }
+.reveal .sorting-steps > div { background: transparent; border: 0; border-left: 2px solid #dfd3e7; border-radius: 0; }
+.reveal .sorting-steps strong { font-size: 1em; letter-spacing: 0; color: #5a317e; }
