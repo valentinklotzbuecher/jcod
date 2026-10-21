@@ -1,6 +1,6 @@
 # Sorted-effects software validation
 
-The clinical teaching example in `R/demo.R` uses transparent `glm()` contrasts
+The generic teaching example in `R/demo.R` uses transparent `glm()` contrasts
 and a fixed reference cohort. It can run without the archived `SortedEffects`
 package. An additional benchmark exercises the original package's published
 mortgage example and checks the estimator against direct calculations.
@@ -12,7 +12,7 @@ mortgage example and checks the estimator against direct calculations.
 - Exact CRAN-mirror Git commit:
   `18a1196e474ee1b62d6722754e8e377cba4ddc1f`.
 - Authors' repository: <https://github.com/shuowencs/SortedEffects>.
-- The retained source archive in this cloud machine is
+- The original 20 October build retained a source archive at
   `/workspace/.tools/SortedEffects-1.7.0-18a1196.tar.gz`, generated directly with
   `git archive` from that commit. Its SHA-256 is
   `1b31197721c3d0f609e32720e2afc405ac2225512d28bb5a880234de53447b0a`.
@@ -32,7 +32,7 @@ git -C /tmp/SortedEffects-source checkout 18a1196e474ee1b62d6722754e8e377cba4ddc
 R CMD INSTALL /tmp/SortedEffects-source
 ```
 
-In this prepared cloud machine, activate the tools first:
+The original prepared environment used the following activation commands:
 
 ```sh
 source /workspace/.tools/activate
@@ -73,18 +73,18 @@ the race indicator in that regression.
 
 The archived `plot.spe()` method supplies several positional arguments to
 `plot()`, matching the source location implicated in the reported plotting
-problem. **Its plotting example succeeds on this machine's R 4.5.0.** A reported
+problem. **Its plotting example succeeded in the recorded 20 October R 4.5.0 build.** A reported
 failure on a different runtime is not evidence that it fails here, and no
-successful package repair is claimed. The benchmark records the actual
+package repair is claimed. The benchmark records the actual
 `plot.spe()` error string, or `NA` when it succeeds. Its additional plotting
 adapter uses explicit argument names; it changes presentation only.
 
 ## Interpretation and limits
 
-The main presentation now follows one fictional heart-failure trial and calls
+The main presentation follows a generic simulated treated/control comparison and calls
 the original package's `spe()` and `ca()` for its primary inference. All 5,000
 observed trial profiles define the primary SPE reference distribution.
-`scripts/clinical-inference.R` independently verifies clinical point estimates,
+`scripts/clinical-inference.R` independently verifies point estimates,
 SPE bootstrap bands, and CA standard errors/joint adjusted p-values.
 See `clinical-inference.md` for the inspected differences between the SPE and
 CA resampling paths and for interpretation of the native p-value fields.
@@ -101,3 +101,13 @@ individual causal effects, and broad coverage guarantees are not claimed.
 establish frequentist coverage or reproduce every empirical result in the
 Econometrica paper. No full `R CMD check` is claimed. The main deck's HTML/PDF
 render checks are recorded separately in the project README.
+
+## Fresh build workflow
+
+The branch-scoped `.github/workflows/preview.yml` installs R 4.5.0 and Quarto
+1.8.27, fetches the exact SortedEffects source commit above, and checks its
+reported version. It regenerates the demographic simulation and original-package
+inference, then validates and renders both formats. Its artifacts contain the
+runtime versions, numerical logs, and generated outputs. Consult
+`docs/validation.md` for the latest execution status. The original mortgage
+benchmark remains separate from the demographic example.

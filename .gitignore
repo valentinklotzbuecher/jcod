@@ -19,3 +19,5 @@
 /.RData
 /results/*.rds
 /results/**/*.rds
+
+/build-logs/

@@ -1,6 +1,6 @@
 # Source and interpretation notes
 
-Checked on 20 October 2026. This is the evidence ledger for the sorted-effects
+Sources checked on 20 October 2026; pre-reading links and the health application updated on 21 October 2026. This is the evidence ledger for the sorted-effects
 session; simulated trial results are generated separately and are not clinical
 study findings.
 
@@ -77,7 +77,7 @@ from Munnell et al. (1996), *Mortgage Lending in Boston: Interpreting HMDA Data*
 
 Pedagogical framing: a model estimates larger conditional disparities for some
 profiles than others. This does not identify individual causal effects of race.
-For the clinical simulation we instead define *benefit* as untreated minus
+For the generic simulation we define *benefit* as control minus
 treated event probability, so its positive direction differs from this denial
 contrast. Label the sign on every figure.
 
@@ -98,26 +98,24 @@ The benchmark implementation and any local plotting compatibility fix must be
 documented alongside the benchmark output. Successful plotting alone does not
 validate bootstrap or classification inference.
 
-## Clinical applications: useful leads, not verified teaching claims
+## Health application for optional pre-reading
 
-The following references came from the supplied brainstorming notes. Their
-abstracts/full texts could not be retrieved under the current network policy.
-They are retained as reading leads rather than used as sources for numerical
-findings, causal claims or subgroup conclusions in the slides:
+Pullabhotla and Souza (2022), *Air pollution from agricultural fires increases
+hypertension risk*, **Journal of Environmental Economics and Management** 115,
+102723. DOI [10.1016/j.jeem.2022.102723](https://doi.org/10.1016/j.jeem.2022.102723).
 
-- Pullabhotla and Souza (2022), *Air pollution from agricultural fires increases
-  hypertension risk*, **Journal of Environmental Economics and Management**,
-  DOI [10.1016/j.jeem.2022.102723](https://doi.org/10.1016/j.jeem.2022.102723).
-  The proposed sample size and age/sex/smoking subgroup findings remain unchecked.
-- *Prosocial behavior in emergencies: Evidence from blood donors* (2022),
-  **Social Science & Medicine**,
-  [PMC record](https://pmc.ncbi.nlm.nih.gov/articles/PMC9595396/).
-  The claim of little convincing heterogeneity remains unchecked.
-- *Heterogeneous gender gaps in mental wellbeing* (2023),
-  [PubMed 37535987](https://pubmed.ncbi.nlm.nih.gov/37535987/).
-- *Lessons on the COVID-19 pandemic: who are the most affected* (2023),
-  [Scientific Reports](https://www.nature.com/articles/s41598-023-36493-7).
+The [July 2022 author paper](https://eel107.s3.us-east-2.amazonaws.com/EEL_111.pdf)
+was checked directly. Section 3, Figure 4 and Table 1 show sorted effects and
+classification. Appendix B.2 describes marginal derivatives from a logistic
+model and use of SortedEffects. Age and sex feature in the tail descriptions.
+The exposure design uses fires and wind direction; sorting summarizes the
+fitted heterogeneity. Probability-scale heterogeneity can also reflect baseline
+risk. The published article's metadata was checked separately; the reading
+pointers refer to the linked author version.
 
-Do not present these application summaries as verified findings without reading
-the corresponding papers. A verified original tutorial application plus the
-explicitly simulated clinical trial provide a complete initial presentation.
+## Suggested preparation
+
+Start with Chen et al. (2020), Section 1 and Sections 2.2–2.3. For the original
+method, read the introduction and Section 2 of Chernozhukov et al. (2018),
+available as a [free author version](https://arxiv.org/abs/1512.05635). The health
+application is optional. The main slides continue to use a generic simulation.

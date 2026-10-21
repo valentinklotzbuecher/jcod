@@ -1,46 +1,69 @@
 ---
-title: "Who benefits most?"
-pagetitle: "Sorted partial effects · JCOD"
+title: "Sorted partial effects"
+pagetitle: "Sorted partial effects: JCOD"
 title-block-style: none
 ---
 
 ::: {.hero}
 ::: {.eyebrow}
-Journal Club / Open Discussion · Clinical Research
+Journal Club / Open Discussion
 :::
 
-# Who benefits most?
+# Sorted partial effects
 
 ::: {.lead}
-Exploring treatment-effect heterogeneity beyond the average with **sorted partial effects**.
+How do estimated treatment benefits vary across the population?
 :::
 
-One hour together: around 35–40 minutes of examples and interpretation, with time for discussion throughout.
+A 35–40 minute presentation, with time for discussion during a one-hour session.
 
 ::: {.session-links}
 [Open the presentation](slides.html){.btn .btn-primary}
 [Download HTML](presentation.html){.btn .btn-outline-primary download="jcod-sorted-effects.html"}
-[Download the PDF](slides.pdf){.btn .btn-outline-primary}
+[Download PDF](slides.pdf){.btn .btn-outline-primary}
 :::
 :::
 
-## What we will explore
+## The example
 
-A brief introduction to the method and its literature leads into one fictional randomized trial: intensified diuretic management after a heart-failure admission, with unplanned readmission by 90 days as the endpoint.
+A simulated randomized comparison uses **treated** and **control** groups, a binary adverse outcome, and age and sex as baseline characteristics. Short R examples show how to fit a model, predict event risks under both treatments, and summarize the resulting risk differences.
 
-Short R examples show how to fit the model, predict both strategies, calculate benefits and sort them. Dumbbell plots describe the patient profiles at the benefit tails. The original package's `spe()` and `ca()` procedures then add confidence bands, classification standard errors and joint comparisons.
+The figures show benefit by age and sex, the sorted benefit curve, and the characteristics of the lowest- and highest-benefit groups. Confidence bands and classification comparisons come from the original `SortedEffects` package. All results in this example are simulated.
 
-The HTML presentation has a chapter map and a two-dimensional overview: use **→** to move between chapters, **↓** to explore their examples, **Space** to follow the full story, and **Esc** to see the whole deck.
+Use **Left/Right** to switch chapters, **Up/Down** within a chapter, **Space** to follow the complete sequence, and **Esc** for the overview.
 
-## Start reading
+## Reading before the session
 
-- Chernozhukov, Fernández-Val and Luo (2018), [*The Sorted Effects Method*](https://doi.org/10.3982/ECTA14415).
-- Chen, Chernozhukov, Fernández-Val and Luo (2020), [*SortedEffects: Sorted Causal Effects in R*](https://doi.org/10.32614/RJ-2020-006).
+Start with the tutorial. The original paper provides the methodological background, and the health application is optional.
 
-## Explore the example
+### Tutorial
 
-The clinical trial is entirely simulated; its coefficients and treatment patterns are invented for teaching. Main estimates and inference come from the unmodified SortedEffects 1.7.0 package. Dumbbell endpoints are descriptive means; uncertainty for their differences is reported separately. The source notes explain the inferential assumptions and limitations.
+**Chen, Chernozhukov, Fernández-Val and Luo (2020).** [*SortedEffects: Sorted Causal Effects in R*](https://journal.r-project.org/articles/RJ-2020-006/). *The R Journal*, 12(1), 131–146.
 
-[R walkthrough](R/clinical-walkthrough.R) · [Inference script](scripts/clinical-inference.R) · [Clinical profiles](results/clinical-profiles.csv) · [Classification results](results/clinical-inference.csv) · [Inference notes](docs/clinical-inference.md)
+Read Section 1 and Sections 2.2–2.3 on `spe()` and `ca()`. Focus on the figures, the meaning of the sorted curve, and the comparison of the two tails. [Open PDF](https://journal.r-project.org/archive/2020/RJ-2020-006/RJ-2020-006.pdf).
 
-The previous Synthetic Control Methods session is preserved in the repository under `archive/scm-2026/`, including its slides, figures, bibliography and literature.
+### Original method
+
+**Chernozhukov, Fernández-Val and Luo (2018).** [*The Sorted Effects Method: Discovering Heterogeneous Effects Beyond Their Averages*](https://doi.org/10.3982/ECTA14415). *Econometrica*, 86(6), 1911–1938.
+
+The introduction and Section 2 on sorted effects and classification analysis are sufficient preparation. The asymptotic theory and proofs are optional. [Free author version](https://arxiv.org/abs/1512.05635).
+
+### Optional health application
+
+**Pullabhotla and Souza (2022).** [*Air pollution from agricultural fires increases hypertension risk*](https://doi.org/10.1016/j.jeem.2022.102723). *Journal of Environmental Economics and Management*, 115, 102723.
+
+In the [July 2022 author version](https://eel107.s3.us-east-2.amazonaws.com/EEL_111.pdf), focus on Section 3, Figure 4 and Table 1. Appendix B.2 explains the sorted-effects implementation. The study combines a health outcome with an SPE curve and a comparison of demographic characteristics across the effect tails.
+
+For discussion: what does the curve add to the average effect, and how much of the heterogeneity depends on the outcome scale and baseline risk?
+
+## Code and results
+
+The primary analysis uses `SortedEffects` 1.7.0. The code defines benefit as control event risk minus treated event risk, so positive values indicate fewer events under treatment. Tail means and their sampling uncertainty appear separately.
+
+- [R walkthrough](R/clinical-walkthrough.R)
+- [Inference script](scripts/clinical-inference.R)
+- [Illustrative profiles](results/clinical-profiles.csv)
+- [Classification results](results/clinical-inference.csv)
+- [Inference notes](docs/clinical-inference.md)
+
+The previous Synthetic Control Methods session is preserved under `archive/scm-2026/` in the repository.

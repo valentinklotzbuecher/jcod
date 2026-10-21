@@ -1,9 +1,7 @@
 "scenario","group","n","characteristic","units","value"
-"interaction","smallest",500,"Age","years",63.6954066620767
-"interaction","smallest",500,"Baseline congestion","standardized units",-1.70652777078827
-"interaction","smallest",500,"Female","%",59
-"interaction","smallest",500,"Untreated readmission risk","%",8.83834849973733
-"interaction","largest",500,"Age","years",63.5490521430224
-"interaction","largest",500,"Baseline congestion","standardized units",1.74421495907434
-"interaction","largest",500,"Female","%",55
-"interaction","largest",500,"Untreated readmission risk","%",54.2527130290465
+"interaction","smallest",500,"Age","years",41.906077109836
+"interaction","smallest",500,"Female","%",49.2
+"interaction","smallest",500,"Control-group event risk","%",10.9459036934058
+"interaction","largest",500,"Age","years",77.1984850776196
+"interaction","largest",500,"Female","%",83.6
+"interaction","largest",500,"Control-group event risk","%",37.044191274245

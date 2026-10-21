@@ -28,6 +28,10 @@ $code-block-font-size: 0.7em;
 }
 .reveal .slides { text-align: left; }
 .reveal .slides section { box-sizing: border-box; }
+/* Leave room for the fixed chapter navigation above content-slide headings. */
+.reveal .slides section:not(.stack):not(.chapter-slide):not(#title-slide) {
+  padding-top: 32px;
+}
 .reveal h2 { margin-bottom: 0.65em; letter-spacing: -0.04em; line-height: 1.13; }
 .reveal h3 { font-size: 1.05em; color: #5a317e; }
 .reveal p, .reveal li { line-height: 1.4; }
@@ -112,6 +116,9 @@ $code-block-font-size: 0.7em;
 .reveal .figure img, .reveal img { max-height: 470px; object-fit: contain; }
 .reveal .figure-caption { font-size: 0.5em; }
 .reveal .references { font-size: 0.62em; }
+.reveal .slides section.references-slide { font-size: 1em; }
+.reveal .references-slide #refs { font-size: 0.72em; line-height: 1.45; }
+.reveal .references-slide .csl-entry { margin-bottom: 0.9em; }
 .reveal pre { box-shadow: none; }
 .reveal .code-slide pre.sourceCode {
   box-sizing: border-box;
@@ -404,3 +411,17 @@ $code-block-font-size: 0.7em;
 .btn-primary { border-radius: 2rem; padding: 0.6rem 1.3rem; }
 .btn-outline-primary { border-radius: 2rem; padding: 0.6rem 1.3rem; }
 .page-footer { color: #697283; }
+
+/* Figure explanations share a consistent, uncluttered two-column layout. */
+.reveal .figure-slide .columns { align-items: center; gap: 1em; }
+.reveal .figure-slide .columns > .column:first-child { flex: 0 0 64%; }
+.reveal .figure-slide .columns > .column:last-child { flex: 1 1 0; }
+.reveal .figure-slide .column img { width: 100%; max-height: 405px; }
+.reveal .figure-slide .column > p { margin: 0; }
+.reveal .figure-slide .column ul { margin: 0 0 0 0.8em; font-size: 0.76em; }
+.reveal .figure-slide .column li { margin-bottom: 0.9em; line-height: 1.38; }
+.reveal .figure-slide .source { margin-top: 0.45em; }
+/* Keep the established colours while simplifying the visual framing. */
+.reveal .patient-card { background: transparent; border: 0; border-radius: 0; box-shadow: none; }
+.reveal .sorting-steps > div { background: transparent; border: 0; border-left: 2px solid #dfd3e7; border-radius: 0; }
+.reveal .sorting-steps strong { font-size: 1em; letter-spacing: 0; color: #5a317e; }

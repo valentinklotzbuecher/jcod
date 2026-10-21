@@ -4,7 +4,9 @@ local beamer = FORMAT == "beamer"
 
 function Image(image)
   if beamer then
-    image.attributes.width = "80%"
+    if image.attributes.width ~= "100%" then
+      image.attributes.width = "80%"
+    end
     image.attributes.height = nil
   end
   return image
