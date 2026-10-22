@@ -3,11 +3,11 @@
 Validated on 22 October 2026 in the prepared cloud environment: R 4.5.0,
 ggplot2 3.5.1, Quarto 1.8.27 and XeLaTeX (TeX Live 2025/Debian).
 
-## Scientific outputs
+## Retained simulation and benchmark outputs
 
 - `Rscript R/demo.R`: completed 499 successful refit-and-sort bootstrap draws
   for each scenario, using seed 20261020. Both true average benefits equal
-  7.982 percentage points across the observed profiles. The main scenario uses
+  7.982 percentage points across the observed profiles. The interaction scenario uses
   treatment interactions with age and sex and includes negative risk reductions
   in part of the population. The full fitted model matches its specification.
 - `Rscript scripts/validate-demo.R`: passed analytic risk-contrast checks,
@@ -32,8 +32,8 @@ ggplot2 3.5.1, Quarto 1.8.27 and XeLaTeX (TeX Live 2025/Debian).
   succeeds on this runtime; no package repair is claimed.
 
 See `example-inference.md` and `software-validation.md` for inferential scope.
-Neither a repeated-sampling coverage study nor full package checks were
-performed. The SPE band conditions on the observed profile distribution;
+No repeated-sampling coverage study was performed. These teaching-analysis
+checks were not full package checks. The SPE band conditions on the observed profile distribution;
 CA uses its own reweighted threshold/moment bootstrap. Dumbbell endpoints are
 descriptive means, with formal native SEs and joint p-values reported separately
 for their differences. No moment confidence intervals or individual causal
@@ -105,6 +105,11 @@ effects are claimed.
   inspected as PNGs and one-page PDFs. Dumbbells are descriptive; no moment
   confidence intervals are invented. The validation figure has wide pointwise
   intervals and does not establish harm in the low-ranked group.
+- `Rscript R/colon-walkthrough.R` verifies the two models' saved SPE/APE point
+  estimates and all twelve CA means/differences within 1e-10, with 593 profiles
+  and 60 in each tail. The slide figure script reads the saved CSVs without
+  refitting models or rerunning inference. Native SPE bands and the separately
+  stabilized CA inference remain explicitly distinguished in the deck.
 - The full site renders with the added report. Its portable HTML passed a
   Chromium check through an isolated local HTTP server with all other network
   requests blocked: all four tables and three images load, with no JavaScript
@@ -113,12 +118,19 @@ effects are claimed.
 
 ## Rendering and runtime
 
+The separate SortedEffects repair is recorded in
+[`contributions/sortedeffects`](../contributions/sortedeffects/README.md), including
+its tests and full package-check results. It was developed and tested in isolated
+libraries; the package used for the saved slide results remains unchanged.
+
 - `bash scripts/render.sh`: passed full-site rendering, including the portable
-  RevealJS HTML export and matching 39-page, 16:9 Beamer handout.
+  RevealJS HTML export and matching 43-page, 16:9 Beamer handout. The colon
+  trial is now the main example: 32 slides through discussion (including
+  title and chapter covers), followed by 11 optional backup slides.
 - All PDF pages were visually inspected. Figure sizes and source-note typography
   were adjusted to avoid caption clipping. The foundational and tutorial
   references render correctly.
-- Headless Chromium exercised all 39 HTML slides, verified image loading,
+- Headless Chromium exercised all 43 HTML slides, verified image loading,
   checked slide boundaries and JavaScript errors, and confirmed native MathML
   rendering. Math and fonts do not require external services.
 - Six main chapter stacks and one backup stack form the two-dimensional deck.
@@ -133,8 +145,9 @@ effects are claimed.
   check with every other network request blocked: no missing images,
   JavaScript errors or horizontal page overflow. Figures were visually checked
   for labels, units, separate model bands and descriptive dumbbell endpoints.
-- The local Quarto preview served the landing page, slides, PDF, simulation
-  source, result CSV and evidence notes successfully.
+- The previous local Quarto preview served the landing page, slides, PDF,
+  simulation source, result CSV and evidence notes successfully. The updated
+  colon deck was checked using its portable export on a local HTTP server.
 - All 51 original tracked files at commit `c23405b` were compared byte for byte
   with `archive/scm-2026/`; every comparison passed.
 - Source whitespace checks passed. The byte-preserved archive and generated

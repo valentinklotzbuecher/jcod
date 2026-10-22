@@ -1,6 +1,6 @@
 ---
 title: "Who benefits most?"
-subtitle: "Sorted partial effects · Interpretation, R code and inference"
+subtitle: "Sorted partial effects · A colon cancer trial, R code and inference"
 author: "Valentin Klotzbücher · Department of Clinical Research"
 format:
   revealjs:
@@ -56,20 +56,28 @@ execute:
 ```{r}
 #| label: session_data
 #| include: false
-required <- paste0("results/example-", c("spe", "inference", "ape", "profiles"), ".csv")
-if (!all(file.exists(required))) {
-  stop("Generate results: Rscript R/demo.R; Rscript scripts/example-inference.R")
-}
-spe_data <- read.csv(required[1])
-classification <- read.csv(required[2])
-ape <- read.csv(required[3])
-profiles <- read.csv(required[4])
-age_tail <- classification[classification$characteristic == "age", ]
-low_profile <- profiles[which.min(profiles$age), , drop = FALSE]
-high_profile <- profiles[which.max(profiles$age), , drop = FALSE]
+spe_data <- read.csv("results/colon/interaction-spe.csv")
+ape <- read.csv("results/colon/interaction-ape.csv")
+classification <- read.csv("results/colon/classification-stabilized.csv")
 pp <- function(x) sprintf("%.1f", 100 * x)
-risk <- function(x) sprintf("%.1f%%", 100 * x)
 q80 <- spe_data$estimate[which.min(abs(spe_data$percentile - .80))]
+ca_table <- function(variables) {
+  d <- classification[match(variables, classification$variable), ]
+  labels <- c(age = "Age (years)", female = "Female (%)",
+    old_men = "Men aged 65+ (%)", younger_women = "Women under 55 (%)",
+    nodes = "Positive nodes", nodes_over4 = "More than 4 nodes (%)",
+    poor_diff = "Poor differentiation (%)", extensive = "Serosa or beyond (%)",
+    obstruct = "Bowel obstruction (%)", perfor = "Perforation (%)",
+    adhere = "Tumour adherence (%)", surg_late = "Long surgery interval (%)")
+  knitr::kable(data.frame(
+    Characteristic = unname(labels[d$variable]),
+    Low = sprintf("%.1f", d$low_mean * d$multiplier),
+    High = sprintf("%.1f", d$high_mean * d$multiplier),
+    Difference = sprintf("%+.1f", d$difference * d$multiplier),
+    SE = sprintf("%.1f", d$standard_error * d$multiplier),
+    `Joint p` = sprintf("%.3f", d$joint_p), check.names = FALSE),
+    align = c("l", rep("r", 5)))
+}
 ```
 
 ## Session overview {#session-map .map-slide data-transition="fade"}
@@ -82,9 +90,9 @@ q80 <- spe_data$estimate[which.min(abs(spe_data$percentile - .80))]
 The method and the R package.
 :::
 ::: {.map-card}
-[02 · Example](#example){.map-title}
+[02 · Trial](#example){.map-title}
 
-Treated, control, age and sex.
+Chemotherapy and three-year mortality.
 :::
 ::: {.map-card}
 [03 · Sorted effects](#distribution){.map-title}
@@ -94,20 +102,19 @@ From predicted risks to a distribution.
 ::: {.map-card}
 [04 · Classification](#classification){.map-title}
 
-Compare the low- and high-effect groups.
+Twelve characteristics of the two tails.
 :::
 ::: {.map-card}
 [05 · Inference](#uncertainty){.map-title}
 
-Confidence bands and group comparisons.
+Uncertainty and a held-out check.
 :::
 ::: {.map-card}
 [06 · Discussion](#discussion){.map-title}
 
-What would we use this for?
+What would convince us?
 :::
 :::
-
 ::: {.key-hint}
 **→** chapters · **↓** slides within a chapter · **Space** next step · **Esc** overview
 :::
@@ -115,13 +122,13 @@ What would we use this for?
 
 ::: {.content-visible when-format="beamer"}
 1. Literature and software.
-2. A simulated treated/control example with age and sex.
-3. Sorted effects and comparisons of the tails.
-4. Inference and discussion.
+2. A public colon cancer trial.
+3. Sorted effects and characteristics of the tails.
+4. Inference, validation and discussion.
 :::
 
 ::: notes
-One hour including discussion. Allow about 35–40 minutes for prepared material. The example is generic: randomized treatment, a binary adverse outcome, age and sex. Every main figure uses the same fitted model and observed profiles. Show the R snippets to explain the calculation without teaching every argument. Horizontal navigation moves between chapters; vertical navigation adds detail. Use the map to return to figures during discussion.
+One hour including discussion; allow 35–40 minutes for prepared material. Six main chapters plus optional backup. Colon is the worked example; IST is a brief comparison. This is exploratory secondary analysis, not a clinical recommendation. Chapters take roughly 4, 5, 8, 7, 10 and 4 minutes. Move quickly through covers and skip backup unless asked.
 :::
 
 # Literature {#literature .chapter-slide data-chapter-label="Literature" data-background-color="#261b37" data-background-transition="fade"}
@@ -129,19 +136,17 @@ One hour including discussion. Allow about 35–40 minutes for prepared material
 ::: {.chapter-number}
 01
 :::
-
 ::: {.chapter-lead}
 The average effect is useful. What else can we learn from the same model?
 :::
-
 ::: {.chapter-cue}
 ↓ The method and its R implementation
 :::
 
 ## Two starting points
 
-- **Method:** Chernozhukov, Fernández-Val and Luo (2018), *Econometrica* [@chernozhukov2018].
-- **Applied tutorial:** Chen et al. (2020), *The R Journal* [@chen2020].
+- **Applied tutorial:** *The R Journal* [@chen2020].
+- **Method:** *Econometrica* [@chernozhukov2018].
 
 ::: {.sorting-steps}
 ::: {.fragment .fade-up}
@@ -157,12 +162,12 @@ How much do the fitted effects vary?
 ::: {.fragment .fade-up}
 **Classification**
 
-What characterizes the low and high tails?
+Who is in the low and high tails?
 :::
 :::
 
 ::: notes
-0–3 minutes. The original method summarizes a partial-effect function: a finite contrast for treatment or a derivative for a continuous exposure. The R tutorial is the most accessible preparation reading. Sorting summarizes effects estimated by a model; it does not identify causal effects on its own. The tutorial's mortgage example is in backup as a software benchmark.
+The R tutorial is the best preparation reading. Sorting summarizes a partial-effect function: a finite contrast for treatment or a derivative for a continuous exposure. It does not identify causal effects by itself. The tutorial's mortgage example is in backup.
 :::
 
 ## What the R package provides
@@ -171,113 +176,100 @@ What characterizes the low and high tails?
 ::: {.column width="48%" .profile-card}
 ### `spe()`
 
-An estimated effect distribution and average effect, with **bootstrap confidence bounds**.
+An effect distribution and average effect, with **bootstrap confidence bounds**.
 :::
 ::: {.column width="48%" .profile-card}
 ### `ca()`
 
-Comparisons of tail characteristics, with **bootstrap standard errors and joint p-values**.
+Tail comparisons, with **bootstrap standard errors and joint p-values**.
 :::
 :::
 
-We use **SortedEffects 1.7.0** for the main results.
+Inference is implemented. Numerical checks still matter.
+
+::: {.source}
+SortedEffects 1.7.0. Colon SPE uses the original package; CA inference uses a separately audited numerical stabilization. Details in backup.
+:::
 
 ::: notes
-3–4 minutes. Yes, inference is implemented in the package. The main figures use its actual spe() and ca() outputs. For moment comparisons, ca() returns SEs and joint adjusted p-values, but no ready-made moment confidence intervals. The dumbbell connecting lines will therefore remain descriptive. The source version and numerical checks are documented in the repository.
+Native CA fails numerically on this model. We preserved its output and reconstructed the same calculation with stable starting coefficients. This is disclosed throughout. CA does not return ready-made moment confidence intervals; the dumbbell lines remain descriptive.
 :::
 
-# Example {#example .chapter-slide data-chapter-label="Example" data-background-color="#261b37" data-background-transition="fade"}
+# The trial {#example .chapter-slide data-chapter-label="Trial" data-background-color="#261b37" data-background-transition="fade"}
 
 ::: {.chapter-number}
 02
 :::
-
 ::: {.chapter-lead}
-A binary outcome, two treatment groups, and two baseline characteristics.
+Does chemotherapy reduce mortality by the same amount for every patient profile?
 :::
-
 ::: {.chapter-cue}
-↓ Define the effect before summarizing it
+↓ A public randomized trial and a defined outcome
 :::
 
-## A simple simulated dataset
+## A public colon cancer trial {#trial-data}
 
-- **5,000 observations**, randomized to **treated** or **control**.
-- Binary outcome: **1 = an adverse event**.
-- Baseline variables: **age** (40–80 years) and **sex**.
-- Treatment effects are allowed to vary with age and sex.
-
-::: {.prompt}
-We will work with the reduction in event risk, in percentage points.
-:::
+- Patients with **resected colon cancer**, randomized to three arms.
+- We compare **levamisole + 5-FU** with **observation**: 619 patients.
+- Outcome: **death within three years**; known for 618 patients.
+- Primary analysis: **593 patients** with complete baseline variables.
 
 ::: {.source}
-Simulated data throughout. The age and sex patterns illustrate the method; they are not empirical findings.
+Public `survival::colon` data; one death record per patient. Levamisole-only arm excluded. Trial reports: Moertel et al. (1990, 1995), PMIDs 2300087 and 7847642.
 :::
 
 ::: notes
-4–6 minutes. No disease, treatment or follow-up period is named; real applications need all three specified. Age_z is age centered at 60 and divided by 10. Sex is simulated and coded 0 male, 1 female. This simplified coding is for the example, not a statement about measuring sex or gender in every study. Randomization and treatment support hold by construction. The full treatment-by-age-by-sex model matches the simulation.
+A historical trial, not current treatment advice. The raw object has recurrence and death records for each person; we use death only. One selected patient was censored before three years; 25 others have missing nodes or differentiation. This complete-baseline analysis is not full randomized intention-to-treat. The dictionary and vignette differ in staging descriptions, so say resected colon cancer without claiming a resolved stage restriction.
 :::
 
-## Predict both treatment conditions {#same-treatment data-auto-animate="true"}
-
-Two ages, with sex held fixed (male).
+## Start with the average {#trial-average data-auto-animate="true"}
 
 ::: columns
-::: {.column width="48%" .profile-card .fragment .fade-up fragment-index="0" data-id="profile-low"}
-### Age 50
+::: {.column width="48%" .profile-card .fragment .fade-up fragment-index="0"}
+### Observation
 
-`r risk(low_profile$risk_control)` → `r risk(low_profile$risk_treated)` event risk
-
-Control → treated
+::: {.metric}
+34.7%
 :::
-::: {.column width="48%" .profile-card .fragment .fade-up fragment-index="1" data-id="profile-high"}
-### Age 70
 
-`r risk(high_profile$risk_control)` → `r risk(high_profile$risk_treated)` event risk
+109 deaths / 314 patients
+:::
+::: {.column width="48%" .profile-card .fragment .fade-up fragment-index="1"}
+### Levamisole + 5-FU
 
-Control → treated
+::: {.metric}
+25.7%
+:::
+
+78 deaths / 304 patients
 :::
 :::
 
 ::: {.prompt .fragment .fade-up fragment-index="2"}
-Subtract the treated risk from the control risk.
+**9.1 percentage points** lower mortality. How much might benefit vary?
+:::
+
+::: {.source}
+Crude three-year risks among 618 patients with known outcomes; subsequent models use 593 complete-baseline patients.
 :::
 
 ::: notes
-6–8 minutes. These profiles are evaluated with the same model used later. They are predicted probabilities, not paired observed outcomes. Read the control and treated risks before revealing their differences. Every profile is predicted under both conditions, regardless of actual assignment.
+Reveal the arms before the difference. These are observed risks, not predictions. Assigning the missing outcome either way gives a crude 8.95–9.26 pp sensitivity range, not a CI. The model-standardized 8.1 pp later differs in both sample and estimation.
 :::
 
-## The effect on the absolute scale {#absolute-benefits data-auto-animate="true"}
+## Define benefit before sorting
 
-**Risk reduction = control risk − treated risk.**
+$$
+\Delta(x)=\Pr(Y=1\mid A=0,X=x)-\Pr(Y=1\mid A=1,X=x).
+$$
 
-::: columns
-::: {.column width="48%" .profile-card data-id="profile-low"}
-### Age 50
-
-::: {.metric}
-`r pp(low_profile$benefit)` pp
-:::
-
-`r risk(low_profile$risk_control)` → `r risk(low_profile$risk_treated)`
-:::
-::: {.column width="48%" .profile-card data-id="profile-high"}
-### Age 70
-
-::: {.metric}
-`r pp(high_profile$benefit)` pp
-:::
-
-`r risk(high_profile$risk_control)` → `r risk(high_profile$risk_treated)`
-:::
-:::
-
-- **Positive:** lower event risk under treatment.
-- **Negative:** higher event risk under treatment.
+- $Y=1$: death by three years; $A=0$: observation; $A=1$: chemotherapy.
+- $X$: age, sex and tumour characteristics at baseline.
+- **Positive:** lower mortality under treatment. **Negative:** higher mortality.
+- One conditional **average** contrast per profile, not an individual's causal effect.
 
 ::: notes
-Keep the effect scale and sign consistent. A percentage point is an absolute difference between probabilities. These estimates describe average responses for a covariate profile, not an individual's realized treatment effect. All values are generated from the fitted model.
+Randomization supports the treatment comparison; complete-case selection, missingness and model specification still matter. We standardize over 593 observed profiles. A different reference population can change both average and sorted effects.
 :::
 
 ## Effect scale matters {.figure-slide}
@@ -287,32 +279,18 @@ Keep the effect scale and sign consistent. A percentage point is an absolute dif
 ![](results/figures/baseline-risk.png){.panel-figure width=100%}
 :::
 ::: {.column width="30%" .figure-notes}
-- The treatment odds ratio is **0.60** at every baseline risk.
-- Control risks of **10% and 40%** give risk reductions of **3.8 and 11.4 pp**.
-- Absolute benefits can vary even without a treatment interaction on the log-odds scale.
+- Treatment odds ratio: **0.60** throughout.
+- Control risks of **10% and 40%** give reductions of **3.8 and 11.4 pp**.
+- Absolute benefit can vary without a treatment interaction on log odds.
 :::
 :::
 
 ::: {.source}
-Analytic conversion from odds to risks. The effect scale determines what counts as a constant effect.
+An algebraic illustration, not an estimate from the colon trial.
 :::
 
 ::: notes
-Spend about one minute on this distinction before discussing model interactions. For odds ratio theta and control risk p, treated risk is theta*p/(1-p+theta*p). With theta=0.60, the reductions are exactly 3.75 and 11.43 percentage points at control risks of 10% and 40%. Absolute benefit peaks at 1/(1+sqrt(theta)), so it is not globally increasing with baseline risk. The following age/sex model includes treatment interactions, but varying absolute effects do not require them. This slide is an algebraic scale illustration.
-:::
-
-## What effect are we estimating?
-
-$$
-\Delta(x)=\Pr(Y=1\mid A=0,X=x)-\Pr(Y=1\mid A=1,X=x).
-$$
-
-- $A=0$: control; $A=1$: treated; $X$: age and sex.
-- One **conditional average risk reduction** for each profile.
-- The distribution of profiles defines the population we summarize.
-
-::: notes
-8–10 minutes. Under randomization and consistency, this conditional average contrast has a causal interpretation. Observational applications require a credible identification argument and adequate support. Sorting does not supply those assumptions. We summarize the observed 5,000 profiles; a different reference population could have a different mean and SPE curve even with the same conditional model.
+With odds ratio theta and control risk p, treated risk is theta*p/(1-p+theta*p). Both subsequent models can therefore have varying risk differences. Absolute benefit is not globally increasing with baseline risk. Keep this to one minute.
 :::
 
 # Estimated effects {#distribution .chapter-slide data-chapter-label="Effects" data-background-color="#261b37" data-background-transition="fade"}
@@ -320,69 +298,52 @@ $$
 ::: {.chapter-number}
 03
 :::
-
 ::: {.chapter-lead}
-Fit the model, predict both conditions, then summarize the risk differences.
+Fit the model, predict both conditions, then sort the risk differences.
 :::
-
 ::: {.chapter-cue}
 ↓ R code and the sorted-effects curve
 :::
 
-## Fit the outcome model {.code-slide}
+## Choose a working model {.code-slide}
 
-```{.r code-line-numbers="1|2"}
-fm <- outcome ~ group * age_z * sex
+```{.r code-line-numbers="1-3|4-5"}
+source("R/colon-data.R")
+source("R/colon-analysis.R")
+dat <- prepare_colon_data()$data
+fm <- colon_formulas()$interaction
 fit <- glm(fm, data = dat, family = binomial())
 ```
 
-- `group` has levels `control` and `treated`.
-- `age_z = (age - 60) / 10`; `sex`: 0 = male, 1 = female.
-- The interactions allow treatment effects to vary with age and sex.
+- **Comparison model:** one treatment odds ratio, adjusted for baseline risk.
+- **Interaction model:** adds treatment × age, sex, age × sex, nodes, grade and extent.
+- Both specifications were written down before fitting this pilot.
 
-::: notes
-10–12 minutes. The star expands to main effects and all two- and three-way interactions: the age pattern of the treatment log odds ratio can differ by sex. Risk differences can also vary when an odds ratio is constant. Explain the interactions without reading every coefficient. Real age patterns may need a more flexible model. Executable code is in R/example-walkthrough.R; dat here is its data object.
+::: {.source}
+Full formula in backup; executable calculations in `R/colon-walkthrough.R`.
 :::
 
-## Predict the two risks {.code-slide}
+::: notes
+The models have 13 and 19 parameters. Both use a three-degree-of-freedom age spline and age-by-sex in baseline risk; treatment age modification is linear on centered age. No stepwise selection or best-split search. This was nevertheless our third exploratory dataset pilot, with no adjustment across trials.
+:::
+
+## Predict both treatment conditions {.code-slide}
 
 ```{.r code-line-numbers="1-3|5-6"}
 control <- treated <- dat
-control$group <- "control"
-treated$group <- "treated"
+control$treatment <- "observation"
+treated$treatment <- "chemotherapy"
 
 benefit <- predict(fit, control, type = "response") -
   predict(fit, treated, type = "response")
 ```
 
-- Keep age and sex fixed for each row.
-- Change only the treatment assignment.
-- `benefit` contains one predicted risk difference per row.
+- Keep every patient's baseline characteristics fixed.
+- Change only treatment assignment.
+- Subtract predicted **risks**, not log odds.
 
 ::: notes
-12–14 minutes. Response gives probabilities rather than log odds. We standardize using observed profiles, rather than subtracting observed outcomes from different arms. The package's categorical comparison is ordered to give the same sign and checked against direct predictions.
-:::
-
-## Before sorting: effects by age and sex {.figure-slide}
-
-::: columns
-::: {.column width="70%"}
-![](results/figures/effects-by-age-sex.png){.panel-figure width=100%}
-:::
-::: {.column width="30%" .figure-notes}
-- Each line shows fitted **risk reduction** at a given age and sex.
-- Risk reduction rises with age in both simulated sex groups.
-- Zero means equal predicted risks under treated and control.
-- Next, combine all observed profiles and sort their effects.
-:::
-:::
-
-::: {.source}
-Same model and scale as the following SPE curve. These demographic patterns are simulated.
-:::
-
-::: notes
-14–16 minutes. Start with the familiar covariate scale. Each line is a conditional average contrast. Sorting pools both sexes at their observed frequencies and keeps effect values while removing the age/sex labels from the axes. Compare this with SPE when discussing what sorting adds to an interaction plot. The strong age pattern and smaller sex difference are generated for teaching.
+Two predictions per person, not two observed outcomes. The package comparison ordering is verified against these calculations. Fitted variation depends on the model; sorting cannot repair misspecification.
 :::
 
 ## Calculate percentiles and the mean {.code-slide}
@@ -395,49 +356,72 @@ spe_curve <- Hmisc::wtd.quantile(
 mean(benefit)
 ```
 
-- **SPE curve:** a percentile summary of the fitted effects.
-- **Average effect:** the mean over all 5,000 profiles.
+- **SPE curve:** percentiles of fitted risk reductions.
+- **Average effect:** mean across all 593 profiles.
+- Sorting keeps the effect values; covariate labels disappear from the axes.
 
 ::: {.source}
-Equal profile weights. The weighted-quantile convention matches SortedEffects 1.7.0.
+Equal profile weights; the quantile convention matches SortedEffects 1.7.0.
 :::
 
 ::: notes
-16–17 minutes. Conceptually, order the contrasts and read percentiles. Hmisc matches the package's weighted convention. The average is neither the median nor the mean of the displayed 10th–90th percentile grid. Avoiding extreme tails can help stability.
+APE is not the mean of the displayed percentile grid. We display only the 10th–90th percentiles. The curve increases because it is sorted, not because percentile causes greater benefit.
 :::
 
-## The sorted-effects curve {.figure-slide}
+## The sorted-effects curve {#sorted-curve .figure-slide data-auto-animate="true"}
 
 ::: columns
 ::: {.column width="70%"}
-![](results/figures/sorted-effects.png){.panel-figure width=100%}
+![](results/colon/slides/sorted-effects.png){.panel-figure width=100%}
 :::
 ::: {.column width="30%" .figure-notes}
-- **Horizontal:** percentile of fitted risk reductions.
-- **Vertical:** risk reduction in percentage points.
-- Dashed line: mean of **`r pp(ape$estimate)` pp**.
-- Same model as the age–sex plot, evaluated at the **observed profiles** and sorted.
+- Mean benefit: **`r pp(ape$estimate)` pp**.
+- 10th percentile: **−9.8 pp**.
+- 90th percentile: **27.3 pp**.
+- A wide fitted spread. We still need uncertainty and validation.
 :::
 :::
 
 ::: notes
-17–20 minutes. The curve increases because it is sorted, not because percentile causes a larger treatment effect. Spread describes variation in fitted conditional effects; uncertainty comes next. Package estimates are uncorrected to match direct calculations. Ask what the mean hides.
+The negative lower tail predicts increased mortality under treatment, not an established harmful subgroup. The 10th percentile is a cutoff, not the average of the lowest tenth. Native uncorrected point estimates match direct predictions. Bands follow in the inference chapter.
 :::
 
 ## How to read one point
 
-At the **80th percentile**, estimated risk reduction is **`r pp(q80)` pp**.
+At the **80th percentile**, estimated benefit is **`r pp(q80)` pp**.
 
-- About **80% of profiles** have fitted reductions at or below this value.
-- About **20%** have larger fitted reductions.
-- This is a percentile **of effects**, not an effect on an outcome percentile.
+- About **80% of profiles** have fitted benefits at or below this value.
+- About **20%** have larger fitted benefits.
+- A percentile **of effects**, not an effect on an outcome percentile.
 
 ::: {.prompt}
-It does not mean that an individual has an 80% chance of benefiting.
+It does not mean that a patient has an 80% chance of benefiting.
 :::
 
 ::: notes
-20–21 minutes. Distinguish SPE from a quantile treatment effect. We sort conditional mean contrasts, not realized individual effects. Empirical proportions are approximate because of quantile interpolation.
+This is the central interpretation check. Proportions are approximate because of quantile interpolation. Different covariate combinations can yield similar fitted effects.
+:::
+
+## Similar averages, different distributions {.figure-slide}
+
+::: columns
+::: {.column width="70%"}
+![](results/colon/slides/model-comparison.png){.panel-figure width=100%}
+:::
+::: {.column width="30%" .figure-notes}
+- Mean benefit: **8.0 vs 8.1 pp**.
+- Interactions widen the fitted distribution.
+- Six-term interaction test: **p = .014**.
+- More spread alone does not validate a ranking.
+:::
+:::
+
+::: {.source}
+Native 95% uniform bands, calibrated separately for each model over the 10th–90th percentiles.
+:::
+
+::: notes
+The likelihood-ratio test compares six interactions on log odds, not constant risk differences. Both models have varying absolute effects. The full-sample test and held-out analysis overlap in data and are not independent replications.
 :::
 
 # Classification {#classification .chapter-slide data-chapter-label="Classification" data-background-color="#261b37" data-background-transition="fade"}
@@ -445,164 +429,222 @@ It does not mean that an individual has an 80% chance of benefiting.
 ::: {.chapter-number}
 04
 :::
-
 ::: {.chapter-lead}
-Which profiles have the smallest and largest estimated risk reductions?
+Which patient profiles sit in the two tails?
 :::
-
 ::: {.chapter-cue}
-↓ Compare the bottom and top 10%
+↓ Twelve characteristics, in their original units
 :::
 
 ## Describe the two tails {.code-slide}
 
-```{.r code-line-numbers="1-3|4-7"}
+```{.r code-line-numbers="1-3|4-6|7-8"}
 cutoff <- Hmisc::wtd.quantile(
   benefit, rep(1, nrow(dat)), c(.10, .90)
 )
 tails <- list(low = benefit <= cutoff[1],
               high = benefit >= cutoff[2])
+traits <- colon_characteristics()$variable
 lapply(tails, function(i)
-  colMeans(dat[i, c("age", "sex")]))
+  colMeans(dat[i, traits]))
 ```
 
-- Select groups using **estimated effects**, then summarize their covariates.
-- Each tail contains about 500 observations.
-- Both tails can include observations from either treatment arm.
+- **60 patients per tail**, selected by estimated benefit.
+- Each tail can contain patients from either randomized arm.
+- The model learned these groups using outcomes from this sample.
 
 ::: notes
-21–23 minutes. Tail groups are not treated/control arms or outcome groups. Sex is 0/1, so its mean is the female proportion. The package uses thresholds; ties can alter group sizes. There are no relevant ties here. This step is descriptive; formal inference follows.
+CA describes covariates in selected effect tails. Means of binary indicators are proportions. Cutoffs can give group sizes slightly different from 10%. All twelve traits were specified; perforation and age-sex indicators are descriptive traits, not extra interaction terms.
 :::
 
-## Comparing the tails with dumbbells {.figure-slide}
+## Age, sex and positive nodes {.figure-slide}
 
 ::: columns
 ::: {.column width="70%"}
-![](results/figures/classification.png){.panel-figure width=100%}
+![](results/colon/slides/classification-demographics.png){.panel-figure width=100%}
 :::
 ::: {.column width="30%" .figure-notes}
-- Endpoints: means in the **bottom and top 10%** of fitted effects.
-- Mean age: **`r sprintf("%.0f", age_tail$least_mean)` vs `r sprintf("%.0f", age_tail$most_mean)` years**. Sex composition is less clearly separated.
-- The line shows a group difference, **not a confidence interval**.
-- These are descriptions of the fitted model's tails.
+- Low tail: **all women**, mean age **43**.
+- High tail: **92% men**, mean age **53**.
+- More than four nodes: **13% vs 88%**.
+- The high tail is not mainly older men.
 :::
+:::
+
+::: {.source}
+Descriptive means; 60 patients per tail. Lines join two means, not confidence limits.
 :::
 
 ::: notes
-23–26 minutes. Read the legend, then the direction. Distances across panels are not standardized effect sizes. Age differs greatly; the smaller sex gap will prove uncertain after refitting and reclassification. Relate this to the age-by-sex plot. A tail characteristic difference is not an independent discovery of effect modification or a treatment interaction test.
+More complex than one age cutoff. Only four high-tail patients are men aged at least 65. Traits overlap, so these profiles and their p-values are not independent findings.
 :::
 
-# Inference {#uncertainty .chapter-slide data-chapter-label="Inference" data-background-color="#261b37" data-background-transition="fade"}
+## Other tumour and clinical characteristics {.figure-slide}
+
+::: columns
+::: {.column width="70%"}
+![](results/colon/slides/classification-clinical.png){.panel-figure width=100%}
+:::
+::: {.column width="30%" .figure-notes}
+- Poor differentiation: **10% vs 42%**.
+- Bowel obstruction: **35% vs 20%**.
+- Perforation: **3% in both tails**.
+- Visible differences still need uncertainty estimates.
+:::
+:::
+
+::: {.source}
+Descriptive means. “Adherence” means tumour adherence to nearby organs, not adherence to treatment.
+:::
+
+::: notes
+Smoking and drinking are not recorded, so use available variables. The long interval is the documented surgery-to-registration category; no unverified day cutoff is added. All panels here are percentages; the prior age and node panels used years and counts.
+:::
+
+## What does “mostly younger women” tell us?
+
+- Patients were ranked using **age, sex and tumour characteristics together**.
+- Younger women make up most of the fitted bottom tenth.
+- This describes a **model-selected group**, not the treatment effect in all women.
+- Assessing harm requires uncertainty for a defined treatment contrast.
+
+::: {.prompt}
+Classification answers “who is in this tail?” It does not test “does treatment harm women?”
+:::
+
+::: notes
+The selection uses the same outcomes that fitted the model. Tail composition is not a causal effect of sex or a women-specific treatment estimate. A CA test differs from a treatment-by-sex interaction test.
+:::
+
+# Inference and validation {#uncertainty .chapter-slide data-chapter-label="Inference" data-background-color="#261b37" data-background-transition="fade"}
 
 ::: {.chapter-number}
 05
 :::
-
 ::: {.chapter-lead}
-How much could the curve and group comparisons change in another sample?
+How much of the pattern could be sampling variation or model choice?
 :::
-
 ::: {.chapter-cue}
-↓ Bootstrap inference in SortedEffects
+↓ Bands, classification inference and a held-out check
 :::
 
-## Obtain a confidence band with `spe()` {.code-slide}
+## Ask the package for a confidence band {.code-slide}
 
-```{.r code-line-numbers="1-5|6"}
-spe_fit <- SortedEffects::spe(
+```{.r code-line-numbers="1-4|5-7"}
+spe_result <- SortedEffects::spe(
   fm = fm, data = dat, method = "logit",
-  var_type = "categorical", var = "group",
-  compare = c("treated", "control"),
-  us = u,
-  b = 499, alpha = .05, bc = FALSE, seed = 420
+  var_type = "categorical", var = "treatment",
+  compare = c("chemotherapy", "observation"),
+  us = seq(.10, .90, .01), b = 499,
+  alpha = .05, bc = FALSE, seed = 420
 )
 ```
 
-- Returns the curve, average effect and **bootstrap uncertainty**.
-- This order of `compare` gives **control minus treated**.
+- Refit with bootstrap weights and recompute the effect curve.
+- A **uniform band** covers the displayed grid jointly, under the method's assumptions.
+- This accounts for sampling variation, not every source of model error.
 
 ::: notes
-26–28 minutes. The package calculates prediction(compare[2]) minus prediction(compare[1]). This is the actual call used for the figures. 499 draws are adequate for an illustration; assess Monte Carlo precision in a serious analysis. bcFALSE keeps uncorrected point estimates. The procedure refits and re-sorts; source inspection and independent reconstruction check the actual resampling behavior.
+All native SPE fits converged; independent reconstruction matches the bands. Full-sample spe() retains original profile weights for quantiles while refitting with bootstrap weights. Compare ordering matches direct predictions. More than 499 draws would be appropriate for polished inference.
 :::
 
-## Uncertainty in the sorted curve {.figure-slide}
+## Negative estimates do not establish harm {#sorted-band .figure-slide data-auto-animate="true"}
 
 ::: columns
 ::: {.column width="70%"}
-![](results/figures/uncertainty.png){.panel-figure width=100%}
+![](results/colon/slides/sorted-effects-band.png){.panel-figure width=100%}
 :::
 ::: {.column width="30%" .figure-notes}
-- **95% uniform band** over the displayed grid.
-- Bootstrap: **refit**, predict both risks, subtract and **sort**.
-- Lower tail includes zero; upper tail stays positive.
-- Uncertainty in the **curve**, not an individual effect.
+- 10th percentile: **−9.8 pp**.
+- Band at that point: **−24.6 to +5.1 pp**.
+- The sign is uncertain at the lower end.
+- Mean benefit: **8.1 pp**, CI **1.4 to 14.9**.
 :::
 :::
 
 ::: {.source}
-SortedEffects 1.7.0; 499 draws; 10th–90th percentiles; uncorrected estimates. Observed age/sex profiles are held fixed for this SPE band.
+Native 95% uniform SPE band over the 10th–90th percentiles; separate 95% interval for the average.
 :::
 
 ::: notes
-28–30 minutes. Uniform means joint coverage over the requested grid under the method's assumptions. The full-sample spe() path resamples training weights but retains original profile weights for effect quantiles. The displayed uncertainty conditions on that empirical distribution. A band is not a dedicated test of homogeneous effects and does not account for model misspecification.
+The 10th percentile is a cutoff, not the bottom-tenth average. The band does not rule out harm, but it does not establish it. None of these quantities is the treatment effect in all women. Conditional effect variation is also distinct from individual response variation.
 :::
 
-## Compare tail characteristics with `ca()` {.code-slide}
+## Are the tail characteristics different?
 
-```{.r code-line-numbers="1-4|5-8"}
-ca_fit <- SortedEffects::ca(
-  fm = fm, data = dat, method = "logit",
-  var_type = "categorical", var = "group",
-  compare = c("treated", "control"),
-  u = .10, interest = "moment", cl = "diff",
-  t = c("age", "sex"),
-  b = 499, alpha = .05, bc = FALSE, seed = 420
-)
-```
+| Characteristic | Low tail | High tail | Joint p |
+|:--|--:|--:|--:|
+| Female | 100% | 8% | .042 |
+| Women under 55 | 92% | 0% | .040 |
+| More than four nodes | 13% | 88% | .132 |
+| Poor differentiation | 10% | 42% | .948 |
 
-Compares **mean age** and **female proportion** between the top and bottom tails.
-
-::: notes
-30–32 minutes. ca() refits, updates thresholds and recomputes group characteristics. Its moment path also reweights thresholds and means, unlike the SPE path. We request high-minus-low differences for two traits. Report native SEs and joint adjusted p-values; no native moment confidence intervals are claimed.
-:::
-
-## Uncertainty in the tail differences
-
-```{r}
-#| label: classification_inference_table
-selected <- classification[match(c("age", "sex"), classification$characteristic), ]
-scale <- c(1, 100)
-inference_table <- data.frame(
-  Characteristic = c("Age (years)", "Female (percentage points)"),
-  `Top minus bottom` = sprintf("%.2f", selected$difference * scale),
-  `Bootstrap SE` = sprintf("%.2f", selected$standard_error * scale),
-  `Joint p` = format.pval(selected$joint_p, digits = 2, eps = .01),
-  check.names = FALSE
-)
-knitr::kable(inference_table, row.names = FALSE)
-```
-
-- **Age:** a large, well-supported difference in this simulation.
-- **Sex:** the apparent gap is uncertain after refitting and reclassification.
-- Joint p-values adjust across the **two requested characteristics**.
+- Joint comparisons account for **all twelve specified characteristics**.
+- The two small p-values concern closely related traits.
 
 ::: {.source}
-Native `ca()` output; 499 draws. Displayed p < .01 is rounded Monte Carlo output. These are comparisons of tail profiles, not subgroup treatment-effect tests.
+Audited stabilized CA reconstruction, 499 draws. Native CA was numerically unstable. The full table is in backup.
 :::
 
 ::: notes
-32–34 minutes. Female differences are proportion differences multiplied by100. Its large SE reflects changes in tail composition when two close sex curves are re-estimated. The joint maximum-statistic adjustment covers the supplied traits, not all exploratory choices. Native pointwise_p is not a usual two-sided normal-tail p-value and is not used here. See docs/example-inference.md. Native SEs and p-values are independently reconstructed. Monte Carlo zero is not an exactly zero population probability. Numerical checks do not establish coverage.
+Adjustment does not cover choosing datasets, models or tail sizes. The p-values around .04 are tentative with 499 resamples. They are not treatment-interaction tests. Point estimates agree with native output; only the stabilized reconstruction's CA inference is endorsed.
 :::
 
-## What the bootstrap does not settle
+## Does the ranking work in held-out patients? {.figure-slide}
 
-- **Identification:** is a causal interpretation justified by the design?
-- **Model:** are conditional risks and interactions estimated well?
-- **Population:** are these the profiles we want to summarize?
-- **Analysis choices:** how sensitive are results to the model and tail cutoffs?
+::: columns
+::: {.column width="70%"}
+![](results/colon/slides/validation-tertiles.png){.panel-figure width=100%}
+:::
+::: {.column width="30%" .figure-notes}
+- Fit on **296**; freeze predictions for **297**.
+- One split; three groups of **99**.
+- Ranking slope: **1.10**, CI **0.24–1.97**; adjusted **p = .025**.
+- Low-third benefit: **−8.5 pp**, CI **−25.9 to +9.0**.
+:::
+:::
+
+::: {.source}
+Pointwise, unadjusted 95% intervals in the plot. Slope p-value: Holm adjustment over the two planned rankings.
+:::
 
 ::: notes
-34–35 minutes. Here treatment is randomized and the model correctly specified. In practice, check flexible age effects, calibration and support, and account for clustering or other design structure. Near-flat or degenerate effect distributions can complicate quantile inference. Bootstrap uncertainty cannot validate the model or transport results to another population.
+Split stratified only by treatment, fixed seed 20261024. AIPW uses nominal treatment probability .5 and HC3 uncertainty. Plot compares training predictions with held-out randomized arm differences. The low third is a different group and estimand from the full-sample 10th percentile. Positive slope supports ranking, not harm below a cutoff. Top-minus-bottom observed difference 28.3 pp, CI 2.1–54.4, raw p .034, Holm p .068. This split overlaps the full-sample analysis; it is not independent replication.
+:::
+
+## A promising signal, with important limits
+
+- **Missing-data sensitivity:** a simple fill-and-indicator analysis of all 618 known outcomes changes interaction p from **.014 to .054**.
+- **One held-out split:** useful, but not external validation.
+- **Small tails and flexible modeling:** 60 patients per tail, 19 parameters.
+- **Exploratory search:** our third trial pilot; no adjustment across datasets.
+
+::: {.prompt}
+The ranking deserves follow-up. These results do not support a treatment rule or a claim of harm in women.
+:::
+
+::: notes
+All-618 sensitivity uses fixed node filling and missingness indicators; it is not a definitive missing-data solution. APE remains 8.4 pp. The change in evidence is a robustness concern, not proof heterogeneity vanishes. Prior literature has not been exhaustively checked: no novelty claim. New modeling and validation decisions should be fixed before seeing results.
+:::
+
+## A useful comparison: the stroke trial
+
+| Check | Aspirin in IST | Colon chemotherapy |
+|:--|--:|--:|
+| Estimated average benefit | 1.3 pp | 8.1 pp |
+| Joint treatment-interaction p | .355 | .014 |
+| Held-out interaction-ranking p | .822 | .013 |
+
+- IST also produced variation in fitted effects.
+- Its interaction-model ranking did **not** carry over to held-out patients.
+- A broad curve is a reason to investigate, not a validation result.
+
+::: {.source}
+Different endpoints: IST six-month death/dependence; colon three-year mortality. Raw within-pilot p-values shown; colon ranking Holm p = .025.
+:::
+
+::: notes
+One-minute comparison, not a second worked example. IST used 19,285 observed endpoints and eight interactions. Its constant-OR ranking had raw p .032, Holm p .064; this slide specifically concerns interaction rankings. ACTG 175 was the other pilot and also lacked support for its interaction ranking. No confirmatory across-trial search.
 :::
 
 # Discussion {#discussion .chapter-slide data-chapter-label="Discussion" data-background-color="#261b37" data-background-transition="fade"}
@@ -610,53 +652,36 @@ Native `ca()` output; 499 draws. Displayed p < .01 is rounded Monte Carlo output
 ::: {.chapter-number}
 06
 :::
-
 ::: {.chapter-lead}
-When would this be more useful than an interaction plot or a subgroup table?
+What would make a sorted-effects analysis useful in our own work?
 :::
-
 ::: {.chapter-cue}
-↓ Applications and limitations
+↓ Interpretation, credibility and next steps
 :::
 
-## What sorted effects add
+## What did sorting add?
 
-- A summary of the **spread** of fitted effects, alongside the average.
-- A way to compare tails without defining every subgroup in advance.
-- Descriptions of the **profiles** in those tails, with inference.
+- Two models gave almost the **same average benefit**, but different effect distributions.
+- Classification made the tails concrete: age, sex and tumour features together.
+- Uncertainty and held-out results changed how strongly we could describe the pattern.
 
 ::: {.prompt}
-Using the ranking to choose treatment needs a separate evaluation of benefits, harms and decision rules.
+Which result would you want to see before taking this pattern seriously?
 :::
 
 ::: notes
-35–37 minutes. The age-by-sex interaction plot is already informative in this small example. SPE is particularly useful when many covariates jointly determine effects. It simplifies the distribution but loses covariate labels, hence classification. A treatment rule needs independent evaluation, preferably out of sample, and suitable outcomes and harms. Ranking alone does not establish a useful policy.
+Reserve about 20 minutes overall for discussion. What model flexibility is defensible with 179 deaths? Which effect scale is clinically useful? How should missing baseline data be handled? Would a simpler predeclared subgroup contrast help? What external data could validate a profile? Treatment rules also need harms, preferences and policy-value analysis.
 :::
 
-## Questions for discussion
+## Reading and reproducible materials
 
-1. Where would a distribution of effects help in our own work?
-2. What would SPE add to the analyses we already use?
-3. Which model checks and sensitivity analyses would we require?
-4. Would the bottom and top 10% be useful groups for that application?
-
-::: {.source}
-Use the map to return to the age-by-sex plot, SPE curve, dumbbells or inference table.
-:::
+- **Send ahead:** the R tutorial, introduction and applied example [@chen2020].
+- **Optional theory:** the original method paper [@chernozhukov2018].
+- **Our example:** colon report with the full table, validation, sensitivity checks and data provenance.
+- **Code and slides:** [github.com/valentinklotzbuecher/jcod](https://github.com/valentinklotzbuecher/jcod).
 
 ::: notes
-37–60 minutes, allowing for questions already asked. Other prompts: absolute or relative effects? Standardization to a different age/sex distribution? Overfitting? Is tail selection useful if everyone has enough net benefit to justify treatment? How would many covariates or unmeasured modifiers change interpretation? Keep the focus applied.
-:::
-
-## Reading and reproducible code
-
-- **Preparation:** Chen et al. (2020), *SortedEffects: Sorted Causal Effects in R* [@chen2020]. Introduction and worked example.
-- **Optional theory:** Chernozhukov, Fernández-Val and Luo (2018) [@chernozhukov2018].
-- **Optional application (suggested):** Bilancini et al. (2022), blood-donor recruitment and retention during COVID-19 [@bilancini2022].
-- **Repository:** slides, executable R code, results and checks at [github.com/valentinklotzbuecher/jcod](https://github.com/valentinklotzbuecher/jcod).
-
-::: notes
-End of main material. The R Journal tutorial is sufficient preparation for the applied discussion; the Econometrica paper is optional theory. The blood-donor paper was suggested in the external review as a health-related observational application. Its bibliographic details come from that supplied review; full-text verification remains pending in docs/evidence.md. No numerical result or inference claim from it is presented here. All main results are simulated. Additional details and the separate mortgage benchmark follow in backup.
+Teaser: Can two models agree on average benefit yet tell different stories about who benefits? The tutorial is enough preparation. This trial demonstrates the method and its uncertainty, not a newly established clinical discovery. End of main material; backup is optional.
 :::
 
 # Additional material {#backup .chapter-slide .backup-chapter data-chapter-label="Backup" data-background-color="#261b37" data-background-transition="fade"}
@@ -664,11 +689,9 @@ End of main material. The R Journal tutorial is sufficient preparation for the a
 ::: {.chapter-number}
 \+
 :::
-
 ::: {.chapter-lead}
-Definitions, sensitivity diagnostics and software checks.
+Full tables, model specification and software checks.
 :::
-
 ::: {.chapter-cue}
 ↓ Optional slides for questions
 :::
@@ -680,74 +703,121 @@ $$
 \mathrm{APE}=E[\Delta(X)].
 $$
 
-- The distribution of $X$ defines the population being summarized.
-- Classification describes baseline characteristics in selected effect tails.
+- The distribution of $X$ defines the population summarized.
+- Classification describes covariates in selected tails of $\Delta(X)$.
 - A quantile of effects differs from a difference of outcome quantiles.
+- Randomization supports identification; sorting does not replace it.
+
+::: notes
+Conditional average effects are not realized individual effects. Complete-case selection and model assumptions matter even in a randomized trial. APE uses the full reference population, not just the displayed percentile range.
+:::
+
+## Backup · The full interaction model {.code-slide}
+
+```r
+outcome ~ treatment + splines::ns(age, df = 3) + female +
+  age_z:female + log_nodes + poor_diff + extensive +
+  obstruct + adhere + surg_late +
+  I((treatment == "chemotherapy") * age_z) +
+  I((treatment == "chemotherapy") * female) +
+  I((treatment == "chemotherapy") * age_z * female) +
+  I((treatment == "chemotherapy") * log_nodes) +
+  I((treatment == "chemotherapy") * poor_diff) +
+  I((treatment == "chemotherapy") * extensive)
+```
+
+`age_z = (age - 60) / 10`; `log_nodes = log1p(nodes)`.
 
 ::: {.source}
-[@chernozhukov2018]. Estimates use the package's weighted empirical quantile convention.
+Binomial logistic regression; 19 parameters. Comparison model omits the final six terms.
+:::
+
+## Backup · Classification: demographics and nodes {.compact-table}
+
+```{r}
+#| label: demographic_table
+#| results: asis
+ca_table(c("age", "female", "old_men", "younger_women", "nodes", "nodes_over4"))
+```
+
+Difference = high − low. Percentages differ in percentage points.
+
+::: {.source}
+60 patients per tail. SEs and joint p-values: audited stabilized CA, 499 draws. Adjustment covers all twelve traits, not just these six.
+:::
+
+## Backup · Classification: clinical characteristics {.compact-table}
+
+```{r}
+#| label: clinical_table
+#| results: asis
+ca_table(c("poor_diff", "extensive", "obstruct", "perfor", "adhere", "surg_late"))
+```
+
+Difference = high − low, in percentage points.
+
+::: {.source}
+“Long surgery interval”: surgery-to-registration category. SEs and joint p-values: audited stabilized CA, adjusted across all twelve traits.
+:::
+
+## Backup · Calling classification analysis {.code-slide}
+
+```r
+ca_result <- SortedEffects::ca(
+  fm = fm, data = dat, method = "logit",
+  var_type = "categorical", var = "treatment",
+  compare = c("chemotherapy", "observation"), u = .10,
+  interest = "moment", cl = "diff",
+  t = colon_characteristics()$variable,
+  b = 499, alpha = .05, bc = FALSE, seed = 420
+)
+```
+
+**This native call is numerically unstable for the colon model.**
+
+::: {.source}
+Raw output preserved separately. Endorsed CA inference is reconstructed by `scripts/verify-colon-inference.R stabilize` after the native audit.
+:::
+
+## Backup · What went wrong in native CA?
+
+- CA rescales bootstrap fitting weights to total **20,000**.
+- **141/499 fits did not converge**; 137 draws had undefined tail moments.
+- The routine still returned finite-looking inference, which we do not use.
+- Stable starting coefficients recovered **499 converged, finite draws**, with none discarded.
+
+::: {.source}
+Local reconstruction preserves resamples, model, threshold definitions and moment formulas. The original installed package was unchanged.
 :::
 
 ::: notes
-The paper studies estimated effect functions and classification under regularity conditions. Conditional means are not realized individual causal effects. APE is the full-population average, not the area under the displayed truncated curve. A different reference distribution changes the sorted summary.
-:::
-
-## Backup · Simulation assumptions
-
-- Baseline event risk depends on age, sex and their interaction.
-- The treatment log odds ratio also depends on age, sex and their interaction.
-- The fitted model matches the data-generating specification.
-- The 5,000 observed profiles define the primary SPE reference distribution.
-
-::: {.source}
-R/demo.R contains coefficients, seed and diagnostics. A matched-average constant-OR scenario is retained for software exercises.
-:::
-
-::: notes
-A favorable simulation with known truth and correct models does not demonstrate robustness to misspecification. The treatment intercept is calibrated to match the true average in the optional constant-OR scenario. Only the age-by-sex interaction scenario appears in the main talk. All demographic patterns are generated for teaching.
-:::
-
-## Backup · Tail membership after refitting {.figure-slide}
-
-::: columns
-::: {.column width="70%"}
-![](results/figures/membership-stability.png){.panel-figure width=100%}
-:::
-::: {.column width="30%" .figure-notes}
-- Each position is a profile in the original top 10%.
-- Vertical position: how often it stays in the top 10% after refitting.
-- Profiles near a cutoff can change groups.
-- Frequencies are sensitivity summaries, not membership probabilities.
-:::
-:::
-
-::: {.source}
-Separate teaching bootstrap, distinct from formal package classification inference.
-:::
-
-::: notes
-This diagnostic holds prediction profiles fixed. It differs from native ca() moment inference and the paper's confidence sets for classification. Frequencies are not calibrated probabilities of individual true membership. Skip this unless stability comes up in discussion.
+Large weights change default binomial initialization and numerical behavior despite leaving the exact likelihood optimum invariant to common scaling. Extreme predictions and floating-point thresholds created empty tails. NA handling distorted inference; a zero-contrast check returned about .725 instead of one. The audit checks prediction and weighted-likelihood agreement. Numerical stability does not establish small-sample coverage.
 :::
 
 ## Backup · What is resampled?
 
 - **`spe()` full sample:** refits with bootstrap weights; effect quantiles retain original profile weights.
 - **`ca()` moments:** refits and updates thresholds and characteristic means with resampled weights.
-- **Membership diagnostic:** separate fixed-profile refit-and-reclassify calculation.
+- **Held-out validation:** fits on training data; evaluates the frozen ranking using test outcomes.
 
 ::: notes
-These are the inspected behaviors of version1.7.0 documented in docs/example-inference.md. Do not claim SPE and CA condition on exactly the same empirical distribution. External standardization or clustering needs suitable handling. Native IQR/max uniform bands are used in the main slides; custom SD/max teaching bands remain separate outputs.
+Inspected version 1.7.0 behavior. SPE and CA do not condition on exactly the same reference distribution. Clustering or external standardization requires appropriate handling. Inference is conditional on the selected analysis strategy.
 :::
 
-## Backup · Interpreting `ca()` output
+## Backup · Cohort and sensitivity checks
 
-- `interest = "moment", cl = "diff"` compares high- minus low-effect characteristic means.
-- Joint p-values adjust across the **specified characteristics**.
-- Bootstrap SEs and joint p-values are returned for these differences.
-- Native moment confidence intervals are not returned by this call.
+| Analysis | Patients | Average benefit | Interaction p |
+|:--|--:|--:|--:|
+| Complete baseline and endpoint | 593 | 8.1 pp | .014 |
+| Missing baseline values with indicators | 618 | 8.4 pp | .054 |
+| Early-censored outcome assigned 0 | 594 | 8.0 pp | .017 |
+| Early-censored outcome assigned 1 | 594 | 8.4 pp | .010 |
+
+- The latter two retain complete baseline variables.
+- Eight records disagree on the supplied vs count-derived four-node indicator; the report includes a coding check.
 
 ::: notes
-Native pointwise_p is not a usual doubled normal-tail p-value and is not used. The joint maximum-statistic calculation is checked separately. Adjustment does not cover every exploratory model or tail size. A small classification p-value is not an interaction or policy-value test. Zero means0/499bootstrap maxima exceeded the observed statistic, not an exactly zero population probability or rigorous bound below1/499.
+Fixed node fill of two and missingness indicators are a sensitivity, not a missing-data solution. Primary uses continuous log node count. The coding check compares two binary-node models, not a silent replacement of the primary model.
 :::
 
 ## Backup · Original published example
@@ -755,11 +825,11 @@ Native pointwise_p is not a usual doubled normal-tail p-value and is not used. T
 ![](results/figures/mortgage-example.png){width=95%}
 
 ::: {.source}
-Mortgage data from the tutorial [@chen2020; @munnell1996]. Separate original-package benchmark.
+Tutorial mortgage data [@chen2020; @munnell1996]. Separate original-package benchmark; adjusted observational disparity.
 :::
 
 ::: notes
-The tutorial reports a bias-corrected adjusted denial disparity of5.1pp with90%interval2.1–8.1using500draws. This benchmark uses199draws, uncorrected estimates and95%bands. Direct point estimates and independently reconstructed SPE bands match to numerical precision. The race contrast is an adjusted observational disparity; causality requires additional assumptions. Native plotting succeeds on this runtime; no estimator source was changed.
+The tutorial reports bias-corrected disparity 5.1 pp with 90% interval 2.1–8.1 using 500 draws. This benchmark uses 199 draws, uncorrected estimates and 95% bands. Point estimates and independent bootstrap reconstruction match. Causal interpretation requires additional assumptions. The generic age-sex simulation remains in the repository as a teaching resource.
 :::
 
 ## References {.references-slide}

@@ -25,12 +25,14 @@ project:
     - results/colon/*.png
     - results/colon/*.pdf
     - results/colon/figures/
+    - results/colon/slides/
     - data/colon/README.md
     - data/colon/manifest.json
     - data/colon/colon.Rd
     - R/*.R
     - scripts/*.R
     - docs/*.md
+    - contributions/sortedeffects/
 
 website:
   title: "JCOD · Sorted effects"

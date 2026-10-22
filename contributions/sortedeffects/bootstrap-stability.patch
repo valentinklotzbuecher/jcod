@@ -1,0 +1,309 @@
+From a88dce12b5bc70648133edf82f51274963fcd57f Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Valentin=20Klotzb=C3=BCcher?=
+ <valentin.klotzbuecher@posteo.ch>
+Date: Thu, 22 Oct 2026 11:31:50 +0000
+Subject: [PATCH] Stabilize binomial bootstrap fits and reject invalid CA
+ inference
+
+---
+ NEWS.md                    |  12 +++++
+ R/ca.R                     |  18 +++++++
+ R/peestimate.R             |  30 +++++++----
+ tests/binomial-bootstrap.R | 105 +++++++++++++++++++++++++++++++++++++
+ tests/invalid-inference.R  |  65 +++++++++++++++++++++++
+ 5 files changed, 221 insertions(+), 9 deletions(-)
+ create mode 100644 tests/binomial-bootstrap.R
+ create mode 100644 tests/invalid-inference.R
+
+diff --git a/NEWS.md b/NEWS.md
+index 7fac885..5ec5df8 100644
+--- a/NEWS.md
++++ b/NEWS.md
+@@ -3,6 +3,18 @@ NEWS
+ Shuowen Chen
+ 9/6/2021
+ 
++# Development version
++
++- Normalize binomial GLM fitting weights inside `peestimate()`, including
++  classification and subpopulation bootstrap fits. Keep the original weights
++  for weighted quantiles and moments. This avoids numerical failures caused by
++  the bootstrap's 20,000-total quantile weights without changing the weighted
++  likelihood maximizer.
++- Stop when a binomial GLM does not converge, or when classification estimates
++  or bootstrap statistics are non-finite. Invalid draws are no longer silently
++  counted as non-exceedances in joint p-values. Classification moment inference
++  also stops when a bootstrap standard error is zero or non-finite.
++
+ # SortedEffects 1.6.0.
+ Changes from SortedEffects 1.5.0. The previous version imports a package rlist. Upon receving a warning from CRAN about reverse dependencies, we revise the code so that the package no longer relies on rlist. 
+ 
+diff --git a/R/ca.R b/R/ca.R
+index 82508b5..a47fb3d 100755
+--- a/R/ca.R
++++ b/R/ca.R
+@@ -394,6 +394,10 @@ ca <- function(fm, data, method = c("ols", "logit", "probit", "QR"),
+     trimtails <- lapply(trimtails, matrix, nrow = 1)
+     trimtails <- list_cbind(trimtails) # long vector of trimtail logics
+   }
++  if (any(!is.finite(unlist(H)))) {
++    stop("Classification estimates contain non-finite values; check the affected groups and characteristics.",
++         call. = FALSE)
++  }
+   #  ----- 4. The Bootstrap Statistics Function
+   # set a bootstrap counting variable for the purpose of showing a progress bar
+   rep_count <- 1
+@@ -577,6 +581,15 @@ ca <- function(fm, data, method = c("ols", "logit", "probit", "QR"),
+     closepb(pb)
+     data$.w <- NULL
+   }
++  # Reject failed draws before na.rm in the inference code can hide them.
++  # In particular, max(numeric(0)) is -Inf, which would otherwise count as
++  # a valid non-exceedance in joint p-values while remaining in the denominator.
++  invalid_draw <- rowSums(!is.finite(result_boot$t)) > 0
++  if (any(invalid_draw)) {
++    stop(sprintf(paste0("Classification bootstrap produced non-finite statistics in %d of %d draws; ",
++                        "inference cannot be computed. Check the affected groups and model."),
++                 sum(invalid_draw), nrow(result_boot$t)), call. = FALSE)
++  }
+   # -----  6. Inference
+   if (interest == "moment") {
+     # draws.H is B * mL
+@@ -587,6 +600,11 @@ ca <- function(fm, data, method = c("ols", "logit", "probit", "QR"),
+     # sig is 1 * mL (bootstrap standard error) (Pointwise SE)
+     sig <- (apply(Zc, 2, quantile, 0.75, na.rm = TRUE) -
+               apply(Zc, 2, quantile, 0.25, na.rm = TRUE)) / (qnorm(0.75) - qnorm(0.25))
++    if (any(!is.finite(sig) | sig <= 0)) {
++      stop(paste0("Classification bootstrap standard errors must be finite and positive; ",
++                  "check characteristics with zero bootstrap interquartile range."),
++           call. = FALSE)
++    }
+     # t.tilde is B * mL
+     t_tilde <- apply(abs(Zc)/matrix(sig, nrow = b, ncol = length(sig),
+                                     byrow = TRUE), 1, max, na.rm = TRUE)
+diff --git a/R/peestimate.R b/R/peestimate.R
+index 5b1586c..857f881 100755
+--- a/R/peestimate.R
++++ b/R/peestimate.R
+@@ -44,15 +44,27 @@ peestimate <- function(fm, data, samp_weight = NULL, var_type, var, compare,
+   if (is.null(samp_weight)) samp_weight <- rep(1, n)
+   samp_weight_t <- samp_weight[subcat]
+   # ------1. Fit a model under a chosen regression method--------------
+-  if (method == "logit") {
+-  #  model_fit <- glm(fm, data = data, weights = samp_weight,
+-  #                   family = binomial(link = "logit"))
+-    model_fit <- glm(fm, data = data, weights = samp_weight,
+-                     family = binomial(link = "logit"))
+-  }
+-  if (method == "probit") {
+-    model_fit <- glm(fm, data = data, weights = samp_weight,
+-                     family = binomial(link = "probit"))
++  if (method == "logit" || method == "probit") {
++    if (any(!is.finite(samp_weight)) || any(samp_weight < 0) ||
++        !any(samp_weight > 0)) {
++      stop("Binomial fitting weights must be finite, nonnegative, and have positive sum.",
++           call. = FALSE)
++    }
++    # CA and subpop enlarge bootstrap weights for weighted quantiles. Large
++    # weights can destabilize glm's starting values and IRLS iterations.
++    # A common positive rescaling leaves the likelihood maximizer unchanged.
++    # Normalize only the fitting weights: retain samp_weight for quantiles
++    # and subgroup weights, whose interpolation depends on their scale.
++    fit_weight <- samp_weight / mean(samp_weight)
++    # Pass the vector literally: glm otherwise looks up weights in data first,
++    # where an unrelated column named fit_weight could shadow this local value.
++    model_fit <- do.call(glm, list(formula = fm, data = data,
++                                  weights = fit_weight,
++                                  family = binomial(link = method)))
++    if (!isTRUE(model_fit$converged)) {
++      stop("The binomial GLM did not converge; inference cannot be computed.",
++           call. = FALSE)
++    }
+   }
+   if (method == "ols") model_fit <- lm(fm, data = data, weights = samp_weight)
+   if (method == "QR" && !is.null(taus)) {
+diff --git a/tests/binomial-bootstrap.R b/tests/binomial-bootstrap.R
+new file mode 100644
+index 0000000..48b140e
+--- /dev/null
++++ b/tests/binomial-bootstrap.R
+@@ -0,0 +1,105 @@
++# Weighted binomial fits must be independent of the arbitrary CA weight scale.
++# No additional test dependencies or external datasets are required.
++library(SortedEffects)
++peestimate <- getFromNamespace("peestimate", "SortedEffects")
++
++set.seed(2)
++n <- 120L
++dat <- data.frame(treatment = rep(0:1, n/2), x = rnorm(n),
++                  female = rep(rep(0:1, each = 2), n/4))
++dat$outcome <- rbinom(n, 1, plogis(-.6 + .8*dat$x + .4*dat$female +
++                                   .8*dat$treatment - .8*dat$treatment*dat$female))
++dat$x2 <- dat$x^2
++fm <- outcome ~ treatment*(x+female) + I(x^2)
++counts <- tabulate(sample.int(n, n, replace = TRUE), nbins = n)
++weights <- counts/sum(counts)*20000
++subgroup <- dat$female == 1
++
++for (link in c("logit", "probit")) {
++  reference <- suppressWarnings(peestimate(fm, dat, counts, "binary",
++    "treatment", NULL, link, subgroup))
++  scaled <- suppressWarnings(peestimate(fm, dat, weights, "binary",
++    "treatment", NULL, link, subgroup))
++  stopifnot(isTRUE(all.equal(reference$pe_est, scaled$pe_est, tolerance = 1e-6)),
++            isTRUE(all.equal(reference$pesub_est, scaled$pesub_est, tolerance = 1e-6)),
++            identical(scaled$samp_weight_sub, weights[subgroup]))
++
++  # A factor response denotes the same Bernoulli likelihood.
++  factor_dat <- dat
++  factor_dat$outcome <- factor(factor_dat$outcome, levels = 0:1)
++  factor_result <- suppressWarnings(peestimate(fm, factor_dat, weights,
++    "binary", "treatment", NULL, link, subgroup))
++  stopifnot(isTRUE(all.equal(factor_result$pe_est, scaled$pe_est,
++                            tolerance = 1e-6)))
++
++  # glm's data mask must not replace the supplied fitting weights with an
++  # unrelated column whose name happens to match an internal variable.
++  shadow_dat <- dat
++  shadow_dat$fit_weight <- seq_len(n)
++  shadow_dat$samp_weight <- rev(seq_len(n))
++  shadow_result <- suppressWarnings(peestimate(fm, shadow_dat, weights,
++    "binary", "treatment", NULL, link, subgroup))
++  stopifnot(isTRUE(all.equal(shadow_result$pe_est, scaled$pe_est,
++                            tolerance = 1e-6)))
++}
++
++# Scaling prior weights also preserves the grouped-binomial likelihood.
++grouped <- expand.grid(treatment = 0:1, female = 0:1, x = c(-1, 0, 1))
++grouped$trials <- 25 + 3*seq_len(nrow(grouped))
++probability <- plogis(-.6 + .8*grouped$x + .4*grouped$female +
++                       .8*grouped$treatment - .8*grouped$treatment*grouped$female)
++grouped$success <- round(grouped$trials*probability)
++grouped$failure <- grouped$trials - grouped$success
++grouped_weights <- rep(c(1, 2, 3), length.out = nrow(grouped))
++grouped_fm <- cbind(success, failure) ~ treatment*(x+female) + I(x^2)
++for (link in c("logit", "probit")) {
++  reference <- peestimate(grouped_fm, grouped, grouped_weights, "binary",
++    "treatment", NULL, link)
++  scaled <- peestimate(grouped_fm, grouped, grouped_weights*1000, "binary",
++    "treatment", NULL, link)
++  stopifnot(isTRUE(all.equal(reference$pe_est, scaled$pe_est, tolerance = 1e-6)))
++}
++
++# Reconstruct public ca() results from glm, original 20,000-total quantile
++# weights, tail means, and the documented centered bootstrap statistics.
++# This also checks that fitting normalization does not alter quantile weights.
++traits <- c("x", "female", "x2")
++B <- 39L
++for (link in c("logit", "probit")) {
++  moments <- function(fit_weights, quantile_weights) {
++    fit_dat <- dat
++    fit_dat$w <- fit_weights
++    fit <- suppressWarnings(glm(fm, fit_dat, family = binomial(link), weights = w))
++    stopifnot(fit$converged, fit$rank == 7L)
++    control <- treated <- dat
++    control$treatment <- 0
++    treated$treatment <- 1
++    effects <- predict(fit, treated, type = "response") -
++      predict(fit, control, type = "response")
++    cutoffs <- Hmisc::wtd.quantile(effects, quantile_weights, c(.1, .9))
++    low <- effects <= cutoffs[1]
++    high <- effects >= cutoffs[2]
++    vapply(traits, function(trait) {
++      weighted.mean(dat[[trait]][high], quantile_weights[high]) -
++        weighted.mean(dat[[trait]][low], quantile_weights[low])
++    }, numeric(1))
++  }
++  point <- moments(rep(1, n), rep(1, n))
++  set.seed(420)
++  draws <- t(replicate(B, {
++    counts <- tabulate(sample.int(n, n, replace = TRUE), nbins = n)
++    quantile_weights <- counts/sum(counts)*20000
++    moments(quantile_weights/mean(quantile_weights), quantile_weights)
++  }))
++  centered <- sweep(draws, 2, point)
++  standard_errors <- apply(centered, 2, IQR)/diff(qnorm(c(.25, .75)))
++  stopifnot(all(is.finite(draws)), all(standard_errors > 0))
++  maxima <- apply(abs(sweep(centered, 2, standard_errors, "/")), 1, max)
++  joint <- vapply(abs(point/standard_errors), function(z) mean(maxima > z), numeric(1))
++  result <- suppressWarnings(SortedEffects::ca(fm, dat, method = link,
++    var = "treatment", var_type = "binary", interest = "moment", cl = "diff",
++    t = traits, b = B, seed = 420, bc = FALSE))
++  stopifnot(isTRUE(all.equal(as.numeric(result$est), unname(point), tolerance = 1e-7)),
++            isTRUE(all.equal(unname(result$bse), unname(standard_errors), tolerance = 1e-7)),
++            isTRUE(all.equal(unname(result$joint_p), unname(joint), tolerance = 1e-7)))
++}
+diff --git a/tests/invalid-inference.R b/tests/invalid-inference.R
+new file mode 100644
+index 0000000..e8edfb6
+--- /dev/null
++++ b/tests/invalid-inference.R
+@@ -0,0 +1,65 @@
++library(SortedEffects)
++
++expect_error <- function(expr, pattern) {
++  error <- tryCatch({ force(expr); NULL }, error = identity)
++  stopifnot(inherits(error, "error"),
++            grepl(pattern, conditionMessage(error), fixed = TRUE))
++}
++
++# Separation can still prevent convergence after weight normalization. Public
++# functions suppress glm warnings, so this must be an error rather than a warning.
++separated <- data.frame(treatment = rep(0:1, 60),
++                        x = seq(-1, 1, length.out = 120))
++separated$outcome <- as.integer(separated$x > 0)
++expect_error(spe(outcome ~ treatment + x, data = separated,
++                 method = "logit", var_type = "binary", var = "treatment",
++                 us = c(.1, .5, .9), b = 9),
++             "The binomial GLM did not converge")
++
++set.seed(2)
++n <- 120
++d <- data.frame(treatment = rep(0:1, n / 2), x = rnorm(n),
++                female = rep(rep(0:1, each = 2), n / 4))
++d$outcome <- rbinom(n, 1, plogis(-.6 + .8 * d$x + .4 * d$female +
++                                .8 * d$treatment - .8 * d$treatment * d$female))
++d$constant <- 1
++d$missing_characteristic <- NA_real_
++fm <- outcome ~ treatment * (x + female) + I(x^2)
++args <- list(fm = fm, data = d, method = "logit", var_type = "binary",
++             var = "treatment", interest = "moment", cl = "diff",
++             t = c("x", "female"), b = 39, seed = 420, bc = FALSE)
++
++# Distribution estimates are stored as a list before inference; the shared
++# finite-value check must accept that representation as well as moment matrices.
++dist_args <- args
++dist_args$interest <- "dist"
++dist_args$t <- "x"
++dist_args$range_cb <- c(.2, .4, .6, .8)
++distribution <- do.call(ca, dist_args)
++stopifnot(all(is.finite(unlist(distribution$infresults))))
++
++missing_args <- args
++missing_args$t <- c("x", "missing_characteristic")
++expect_error(do.call(ca, missing_args),
++             "Classification estimates contain non-finite values")
++
++constant_args <- args
++constant_args$t <- c("x", "constant")
++expect_error(do.call(ca, constant_args),
++             "Classification bootstrap standard errors must be finite and positive")
++
++# Exercise failure handling after boot returns. Cloning the closure leaves the
++# installed namespace untouched. Test both an entirely invalid draw (which used
++# to become -Inf in the maximum) and a draw missing only one characteristic.
++for (invalid in list(c(NA_real_, NaN), c(0, Inf))) {
++  checked_ca <- ca
++  test_env <- new.env(parent = environment(ca))
++  test_env$boot <- function(...) {
++    result <- boot::boot(...)
++    result$t[1, ] <- invalid
++    result
++  }
++  environment(checked_ca) <- test_env
++  expect_error(do.call(checked_ca, args),
++               "non-finite statistics in 1 of 39 draws")
++}
+-- 
+2.52.0
+

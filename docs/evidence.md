@@ -1,8 +1,10 @@
 # Source and interpretation notes
 
-Checked on 20 October 2026. This is the evidence ledger for the sorted-effects
-session; simulated example results are generated separately and are not clinical
-study findings.
+Initial source checks on 20 October 2026; updated on 22 October 2026 with the
+trial analyses used in the presentation. This is the evidence ledger for the
+sorted-effects session. The colon results are our exploratory reanalysis of
+public trial data, not published subgroup findings. The earlier simulated
+example remains a separate teaching resource.
 
 ## Sources checked directly
 
@@ -77,9 +79,9 @@ from Munnell et al. (1996), *Mortgage Lending in Boston: Interpreting HMDA Data*
 
 Pedagogical framing: a model estimates larger conditional disparities for some
 profiles than others. This does not identify individual causal effects of race.
-For the teaching simulation we instead define *benefit* as control minus
-treated event probability, so its positive direction differs from this denial
-contrast. Label the sign on every figure.
+For the trial analyses and teaching simulation we instead define *benefit* as
+control minus treated event probability, so its positive direction differs from
+this denial contrast. Label the sign on every figure.
 
 The [author repository README](https://github.com/shuowencs/SortedEffects)
 independently documents the same application and the sample composition.
@@ -97,6 +99,73 @@ brainstorming notes was not independently verified here.
 The benchmark implementation and any local plotting compatibility fix must be
 documented alongside the benchmark output. Successful plotting alone does not
 validate bootstrap or classification inference.
+
+## Public trial analyses used in the session
+
+### Main example: colon chemotherapy
+
+The unchanged `survival::colon` source data and dictionary are pinned to the
+survival maintainer's repository. The source vignette documents randomization
+to three arms. The retained comparison is observation versus levamisole plus
+fluorouracil, using one death record per person and death by three years.
+There are 619 selected participants, 618 known outcomes and 593 patients with
+complete baseline covariates in the primary analysis. The exact source hashes,
+licence provenance, endpoint rules and exclusions are in
+[`data/colon/README.md`](../data/colon/README.md) and
+[`docs/colon-data.md`](colon-data.md).
+
+The [analysis plan](colon-analysis-plan.md) specifies two logistic models,
+twelve classification traits, one fixed held-out split and sensitivity checks.
+It was written after inspecting the data and crude arm risks but before fitting
+the interaction models. This is an exploratory plan, not a preregistration.
+The [full report](../colon-pilot.qmd) distinguishes our calculated results from
+the original trial's published findings.
+
+- Primary average fitted mortality benefit: 8.14 percentage points. The six
+  treatment interactions have a joint likelihood-ratio p=.014 on the log-odds
+  scale; this is not a test of constant absolute risk reductions.
+- The estimated 10th-percentile benefit is −9.76 percentage points, with a
+  native 95% uniform band of −24.58 to +5.06 at that percentile. This is a
+  distributional quantile, not the average effect in the bottom tenth or in
+  women as a whole.
+- Younger women dominate the model-selected bottom tenth. Membership depends
+  on the full fitted covariate profile and was estimated using the same outcomes.
+  A classification trait comparison does not establish treatment-effect
+  modification by that trait.
+- In the one fixed held-out check, the interaction score has a positive ranking
+  slope (Holm-adjusted p=.025 across two scores). The observed bottom-third
+  benefit is −8.46 percentage points, with a pointwise 95% interval of −25.88
+  to +8.97. These are different groups and estimands from the full-sample
+  classification deciles and SPE quantiles. The low-ranked group's sign remains
+  uncertain; these results do not establish harm from chemotherapy in women.
+- The all-618 sensitivity uses working baseline imputation, not multiple
+  imputation, and gives interaction p=.054. Both the model and reference
+  population differ from the complete-baseline analysis. This limits the
+  robustness of the apparent heterogeneity.
+
+Native SortedEffects 1.7.0 SPE fits and bands were independently reconstructed.
+Native CA is numerically invalid for this dataset: failed weighted fits produce
+undefined tail moments. The report and slide inference therefore use an
+explicitly labelled, separately audited stabilized CA reconstruction. This
+changes numerical initialization, retains all bootstrap draws and preserves
+the intended weighted fitting and classification definitions. Raw native output
+is retained separately. These checks address computation, not statistical
+coverage, clinical validity or replication.
+
+The source dictionary cites the historical trial reports, but their full texts
+and prior subgroup analyses were not accessible for review. Do not claim that
+this pattern is a new clinical discovery, and do not use this historical regimen
+to recommend present-day treatment. The original trial data, the exploratory
+model, and evidence from other trials remain distinct.
+
+### Brief comparison: International Stroke Trial
+
+The corrected public IST data, dictionary, licence and source hashes are retained
+in `data/ist/`; the [data notes](ist-data.md) document the mirror and the limits of
+source verification. The [pilot report](../ist-pilot.qmd) compares two specified
+aspirin-effect models for six-month death or dependence. Its fixed held-out
+check did not support the apparent ranking. This comparison illustrates why a
+non-flat sorted curve by itself does not establish useful heterogeneity.
 
 ## Clinical applications: useful leads, not verified teaching claims
 
@@ -130,5 +199,7 @@ findings, causal claims or subgroup conclusions in the slides:
   [Scientific Reports](https://www.nature.com/articles/s41598-023-36493-7).
 
 Do not present these application summaries as verified findings without reading
-the corresponding papers. A verified original tutorial application plus the
-simulated treated/control example provide the material used in the presentation.
+the corresponding papers. The verified original tutorial application introduces
+the method; our exploratory colon analysis provides the main worked example,
+with IST as a brief comparison. The simulated treated/control example remains
+available as a teaching resource.

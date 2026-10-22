@@ -6,7 +6,10 @@ This is a Quarto website with a sorted-partial-effects slide deck. Key paths:
 - `index.qmd` (landing page), `slides.qmd` (main presentation and speaker notes).
 - `references.bib` and `*.csl` for citations.
 - Styling in `theme.scss` and `beamer-unibas.tex`.
-- `R/demo.R` generates the age-and-sex simulation; `results/` holds its figures and tables.
+- `R/colon-walkthrough.R` is the executable walkthrough for the main trial example;
+  `scripts/plot-colon-slides.R` builds slide figures from saved colon results.
+- `R/demo.R` generates the earlier age-and-sex simulation, retained as a teaching
+  resource; `results/` holds its figures and tables.
 - `scripts/` holds numerical validation and an optional original-package benchmark.
 - `docs/` records evidence and software-validation scope.
 - `ist-pilot.qmd` is a separate real-data report. `data/ist/` holds the corrected
@@ -41,6 +44,8 @@ Generated artifacts: `_site/`, `*_cache/`, `*_files/` (do not edit by hand).
 - `Rscript scripts/verify-colon-inference.R` - audit and reconstruct all native bootstrap fits.
 - `Rscript scripts/verify-colon-inference.R stabilize` - reconstruct CA with the documented numerical initialization change.
 - `Rscript scripts/plot-colon.R` - refresh the descriptive colon figures.
+- `Rscript R/colon-walkthrough.R` - fit the two colon models and verify the saved point estimates.
+- `Rscript scripts/plot-colon-slides.R` - refresh slide figures from saved results without fitting models or bootstraps.
 - `quarto publish quarto-pub` - publishes externally; run only when explicitly requested.
 
 In the prepared cloud environment, first run `source /workspace/.tools/activate`.
@@ -57,7 +62,11 @@ For changes to the simulation, regenerate its outputs and run the numerical vali
 - `quarto render` for a full build.
 - For slides, render both formats to check layout and citations.
 
-Keep simulated truth, model estimates, published study findings and uncertainty scopes distinct. The main example uses simulated randomized treated/control groups, a binary adverse outcome, age and sex. The model is `outcome ~ group * age_z * sex`, with `sex` coded 0 for male and 1 for female. Primary inference uses the original SortedEffects 1.7.0 `spe()` and `ca()` routines, with their inspected resampling targets documented in `docs/example-inference.md`. Dumbbell endpoints are descriptive means; report the separate native classification SEs and joint p-values without inventing moment confidence intervals. The transparent teaching bootstrap and membership frequencies remain separate diagnostics. Do not claim coverage guarantees or individual causal effects.
+Keep simulated truth, model estimates, published study findings and uncertainty scopes distinct. The main example uses the public colon trial, comparing observation with levamisole plus fluorouracil for three-year mortality in 593 complete-baseline patients. Benefit is observation risk minus chemotherapy risk. The six-interaction model is compared with a constant-treatment-odds-ratio model; twelve characteristics describe the fitted tails. Preserve the one fixed held-out split and all specified sensitivities: the interaction test changes from p=.014 in the primary analysis to p=.054 in the all-618 working-imputation sensitivity. This is preliminary ranking evidence, not a finding of harm in women or a verified new clinical discovery.
+
+Colon SPE bands use native SortedEffects 1.7.0 and have been independently reconstructed. Native colon CA is numerically invalid; any displayed CA inference must be explicitly identified as the separately audited stabilized reconstruction. Dumbbell endpoints are descriptive means, not confidence intervals. A sorted-effect quantile is not the average effect in a tail or a women-specific treatment effect. Held-out tertiles differ from the full-sample classification deciles. Do not claim coverage guarantees or individual causal effects. Rendering reads saved results and does not require new bootstrap runs.
+
+IST is a brief comparison in the main deck. The earlier simulated treated/control example is retained for teaching and backup; its model is `outcome ~ group * age_z * sex`, with `sex` coded 0 for male and 1 for female. Its original-package inference, resampling scope, separate teaching bootstrap and membership diagnostics remain documented in `docs/example-inference.md`.
 
 ## Commit & Pull Request Guidelines
 Recent commit messages are short, lowercase summaries (e.g., `landing page`). Follow the same style.

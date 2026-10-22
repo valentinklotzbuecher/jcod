@@ -7,8 +7,21 @@ clinical-statistics journal club with 35–40 minutes of presentation and discus
 `slides.qmd` renders to RevealJS HTML and Beamer PDF; `index.qmd` is the landing page.
 Speaker notes are in `::: notes` blocks. The current theme is `theme.scss`.
 
-`R/demo.R` generates an explicitly simulated randomized-trial example. Preserve
-its fixed random seeds, effect sign convention and uncertainty declarations.
+The main example is the public colon chemotherapy trial, with three-year
+mortality, twelve classification traits and one fixed held-out split. Its
+findings are preliminary: the primary interaction p=.014 changes to p=.054
+in the all-618 working-imputation sensitivity. Do not claim harm in women,
+individual effects or verified clinical novelty. IST is a brief comparison.
+
+`R/colon-walkthrough.R` fits both colon models and checks the saved point
+estimates. `scripts/plot-colon-slides.R` draws slide figures from saved results;
+rendering does not rerun bootstraps. SPE uses native SortedEffects 1.7.0.
+Classification inference uses an explicitly labelled audited stabilized
+reconstruction; the failed native CA output is retained separately.
+
+`R/demo.R` and `R/example-walkthrough.R` retain the earlier simulated
+randomized-trial example as a teaching resource. Preserve its fixed random
+seeds, effect sign convention and uncertainty declarations.
 `scripts/validate-demo.R` checks its numerical claims; the optional
 `scripts/benchmark-sortedeffects.R` exercises the pinned original software.
 
