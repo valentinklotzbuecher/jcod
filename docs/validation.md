@@ -124,13 +124,16 @@ its tests and full package-check results. It was developed and tested in isolate
 libraries; the package used for the saved slide results remains unchanged.
 
 - `bash scripts/render.sh`: passed full-site rendering, including the portable
-  RevealJS HTML export and matching 43-page, 16:9 Beamer handout. The colon
-  trial is now the main example: 32 slides through discussion (including
+  RevealJS HTML export and matching 44-page, 16:9 Beamer handout. The colon
+  trial is now the main example: 33 slides through discussion (including
   title and chapter covers), followed by 11 optional backup slides.
 - All PDF pages were visually inspected. Figure sizes and source-note typography
   were adjusted to avoid caption clipping. The foundational and tutorial
   references render correctly.
-- Headless Chromium exercised all 43 HTML slides, verified image loading,
+- The closing causal-forest slide and expanded references were visually checked
+  in the updated PDF. The added slide distinguishes effect estimation from
+  sorted summaries and explicitly retains the need for suitable inference.
+- Headless Chromium exercised all 44 HTML slides, verified image loading,
   checked slide boundaries and JavaScript errors, and confirmed native MathML
   rendering. Math and fonts do not require external services.
 - Six main chapter stacks and one backup stack form the two-dimensional deck.

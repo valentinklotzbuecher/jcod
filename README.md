@@ -56,7 +56,9 @@ The six main chapters cover the literature, trial data, effects, classification,
 inference and discussion. Short R examples show the model, predictions and tail
 summaries. The classification table and dumbbell plots describe the lowest- and
 highest-benefit tails; one fixed held-out split checks whether the estimated
-ranking predicts differences in observed benefit.
+ranking predicts differences in observed benefit. One closing slide relates
+causal forests to sorted effects: flexible effect estimation followed by a
+distributional summary, with separate requirements for valid inference.
 
 `R/colon-walkthrough.R` contains executable versions of the slide calculations.
 It fits the two specified models and verifies the saved point estimates.

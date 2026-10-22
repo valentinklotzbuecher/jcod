@@ -51,6 +51,29 @@ Teaching implications grounded in the tutorial:
   tail-characteristics table is a descriptive illustration unless the matching
   inference has actually been performed.
 
+### Closing connection: causal forests
+
+Athey, Tibshirani and Wager (2019), *Generalized Random Forests*,
+**The Annals of Statistics** 47(2), 1148–1178,
+DOI [10.1214/18-AOS1709](https://doi.org/10.1214/18-AOS1709).
+The official grf [causal-forest source documentation](https://github.com/grf-labs/grf/blob/5bee99b51471f76cb2d63acbc8a9b0ffec408ba0/r-package/grf/R/causal_forest.R)
+and [algorithm reference](https://github.com/grf-labs/grf/blob/5bee99b51471f76cb2d63acbc8a9b0ffec408ba0/REFERENCE.md)
+were checked for this conceptual slide (source snapshot reporting version 2.6.1).
+
+- For binary treatment, causal forests estimate conditional average treatment
+  effects. Splits target treatment-effect heterogeneity; the forest supplies
+  adaptive-neighbor weights for estimation. Honesty separates split selection
+  from effect estimation within each tree.
+- Forest estimates can be sorted and their selected tails described. This is
+  a descriptive connection, not an assertion that the native SortedEffects
+  interface accepts forests or that its current inference applies to them.
+  Forest pointwise intervals do not automatically provide uniform SPE bands
+  or valid inference for selected tail characteristics.
+- No forest was fitted or additional model searched for this presentation.
+  For a future mortality analysis, grf's treated-minus-control convention would
+  need reversing to match the deck's positive-benefit convention. Identification,
+  overlap, sample size and validation remain relevant.
+
 ### Verified published application: mortgage denial
 
 The R Journal tutorial uses Boston mortgage applications from 1990, with data

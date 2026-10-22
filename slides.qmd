@@ -673,6 +673,28 @@ Which result would you want to see before taking this pattern seriously?
 Reserve about 20 minutes overall for discussion. What model flexibility is defensible with 179 deaths? Which effect scale is clinically useful? How should missing baseline data be handled? Would a simpler predeclared subgroup contrast help? What external data could validate a profile? Treatment rules also need harms, preferences and policy-value analysis.
 :::
 
+## Where do causal forests fit? {#causal-forests}
+
+| Causal forests | Sorted effects + classification |
+|:--|:--|
+| **Estimate** how treatment effects vary across patient profiles. | **Summarize** the distribution of fitted effects and who lies in its tails. |
+| Many trees learn useful splits and interactions in the baseline characteristics. | Sort the estimates, then compare low- and high-effect profiles. |
+
+- A forest could replace our regression model; sorting asks the same descriptive questions.
+- Forest estimates need suitable inference for **bands and tail comparisons**.
+
+::: {.source}
+Generalized random forests [@athey2019]. A conceptual connection; no forest was fitted for this example.
+:::
+
+::: notes
+Keep this to about one minute. With a binary treatment, a causal forest estimates a conditional average treatment effect: the average treatment contrast among people with a given covariate profile, not an individual's realized effect. It combines many trees whose splits target treatment-effect variation. In the generalized-random-forest formulation, trees define adaptive neighborhoods and the effect is estimated using their weights. This lets the data learn nonlinearities and interactions instead of specifying each one in a regression.
+
+Honesty separates observations used to choose splits from those used to estimate within-tree effects; this is not a substitute for external validation. Randomization, or appropriate observational identification assumptions and overlap, still matter. The grf convention is treated minus control; for our mortality-benefit convention, the sign would need reversing before sorting.
+
+We can descriptively sort forest predictions and compare tail profiles. Forest pointwise intervals do not automatically give valid simultaneous SPE bands or inference for selected tail characteristics. Nor can a forest be passed directly into the current SortedEffects spe()/ca() model interface. Suitable theory and inference would need to be established for that combination; no such analysis was run here. With only 593 complete-baseline patients, flexibility is a reason to validate carefully, not a guarantee of better results.
+:::
+
 ## Reading and reproducible materials
 
 - **Send ahead:** the R tutorial, introduction and applied example [@chen2020].
