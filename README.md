@@ -75,6 +75,10 @@ its native inference and independent bootstrap reconstruction. Its source files
 and licence provenance are under `data/actg175/`; results are under
 `results/actg175/`. Neither pilot supports an established new interaction ranking.
 
+The [comparison of other public trials](docs/trial-candidates.md) identifies
+colon chemotherapy and a charitable matching-gift experiment as the strongest
+options for a second example, with data checks and design limitations.
+
 ## Session files
 
 - `slides.qmd`: HTML RevealJS and Beamer PDF, including speaker notes and technical backup slides.
