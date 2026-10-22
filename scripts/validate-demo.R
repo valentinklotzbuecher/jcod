@@ -4,16 +4,20 @@ source("R/demo.R")
 stopifnot(file.exists("results/demo.rds"))
 demo <- readRDS("results/demo.rds")
 tables <- demo_tables(demo)
+stopifnot(setequal(names(demo$reference), c("age", "age_z", "sex")))
+stopifnot(all(demo$reference$sex %in% 0:1),
+          all(demo$reference$age >= 40 & demo$reference$age <= 80),
+          max(abs(demo$reference$age_z - (demo$reference$age - 60) / 10)) < 1e-12)
 
 # A known constant-OR identity tests the scale/sign calculation independently.
 p0 <- c(0.1, 0.4)
 p1 <- 0.60 * p0 / (1 - p0 + 0.60 * p0)
 stopifnot(max(abs((p0 - p1) - c(0.0375, 0.1142857142857143))) < 1e-12)
-stopifnot(all(tables$patient_profiles$absolute_benefit > 0))
+stopifnot(all(tables$risk_profiles$absolute_benefit > 0))
 
-# Each dumbbell endpoint must equal the clinical tail summary in its own units.
+# Each dumbbell endpoint must equal the demographic tail summary in its own units.
 dumbbells <- tables$classification_dumbbells
-stopifnot(nrow(dumbbells) == 8L,
+stopifnot(nrow(dumbbells) == 4L,
           all(dumbbells$n == floor(nrow(demo$reference) / 10)))
 stopifnot(nrow(demo$reference) == nrow(demo$scenarios$interaction$data))
 stopifnot(identical(demo$reference, demo$scenarios$interaction$data[names(demo$reference)]))
@@ -22,8 +26,7 @@ for (group in c("smallest", "largest")) {
     tables$classification$scenario == "interaction" & tables$classification$group == group,
     , drop = FALSE
   ]
-  expected <- c(source_row$mean_age, source_row$mean_severity,
-                100 * source_row$proportion_female, 100 * source_row$mean_baseline_risk)
+  expected <- c(source_row$mean_age, 100 * source_row$proportion_female)
   plotted <- dumbbells$value[dumbbells$group == group]
   stopifnot(max(abs(plotted - expected)) < 1e-12)
 }
@@ -57,6 +60,18 @@ for (name in names(demo$scenarios)) {
   stopifnot(abs(mean(s$contrast$benefit) - mean(s$truth)) < 0.035)
 }
 
+# The age-by-sex plot must use the main model, with a control-minus-treated sign.
+s <- demo$scenarios$interaction
+grid <- expand.grid(age = c(50, 70), sex = 0:1)
+grid$age_z <- (grid$age - 60) / 10
+grid$treatment <- 0
+design_control <- model.matrix(delete.response(terms(s$fit)), grid)
+grid$treatment <- 1
+design_treated <- model.matrix(delete.response(terms(s$fit)), grid)
+manual <- plogis(as.numeric(design_control %*% coef(s$fit))) -
+  plogis(as.numeric(design_treated %*% coef(s$fit)))
+stopifnot(max(abs(manual - benefit_from_fit(s$fit, grid)$benefit)) < 1e-12)
+
 # Recompute a small deterministic subset twice to check seed-controlled resampling.
 s <- demo$scenarios$constant
 set.seed(421)
@@ -70,8 +85,8 @@ stopifnot(identical(first$quantiles, second$quantiles))
 expected_figures <- c("baseline-risk", "sorted-effects-teaching", "uncertainty-teaching", "classification-teaching",
                       "membership-stability", "sorted-effects-comparison",
                       "uncertainty-comparison", "classification-comparison",
-                      "membership-stability-comparison")
-if (file.exists("results/clinical-spe.csv")) {
+                      "membership-stability-comparison", "effects-by-age-sex")
+if (file.exists("results/example-spe.csv")) {
   expected_figures <- c(expected_figures, "sorted-effects", "uncertainty",
                         "classification", "classification-inference")
 }
@@ -84,6 +99,6 @@ for (name in expected_figures) {
 
 cat("Validated: exact risk contrast, matched true averages, different true distributions,\n",
     "refit-and-sort bootstrap, finite bands, tail membership, seeded reproducibility,\n",
-    "clinical dumbbell endpoints, and ", 2L * length(expected_figures), " figure artifacts.\n", sep = "")
+    "demographic dumbbell endpoints, and ", 2L * length(expected_figures), " figure artifacts.\n", sep = "")
 cat("Scope: numerical validation of a teaching simulation; no coverage study or formal\n",
     "validation of original SortedEffects classification inference is claimed.\n", sep = "")

@@ -94,17 +94,24 @@ $code-block-font-size: 0.7em;
 .reveal .small { font-size: 0.72em; }
 .reveal .source { font-size: 0.52em; color: #697283; margin-top: 0.9em; }
 .reveal .prompt { border-left: 4px solid #cf7045; padding: 0.2em 0.8em; margin-top: 0.9em; }
-.reveal .patient-card {
+.reveal .profile-card {
   background: linear-gradient(145deg, #fffefd, #f0eaf4);
   border: 1px solid #dfd3e7;
   padding: 0.8em 1em;
   border-radius: 18px;
   box-shadow: 0 9px 20px #35234808;
 }
-.reveal .patient-card h3 { margin-top: 0; }
+.reveal .profile-card h3 { margin-top: 0; }
 .reveal .metric { font-size: 1.7em; color: #5a317e; font-weight: 700; line-height: 1.1; }
 .reveal .columns { display: flex; align-items: stretch; gap: 1.3em; }
 .reveal .columns > .column { flex: 1 1 0; min-width: 0; }
+.reveal .figure-slide .columns { align-items: center; gap: 1em; }
+.reveal .figure-slide .columns > .column:first-child { flex: 7 1 0; }
+.reveal .figure-slide .columns > .figure-notes { flex: 3 1 0; font-size: 0.74em; }
+.reveal .figure-notes ul { margin-left: 0.8em; }
+.reveal .figure-notes li { margin-bottom: 0.8em; }
+.reveal .figure-slide .panel-figure { width: 100%; max-height: 450px; }
+.reveal .figure-slide .source { margin-top: 0.5em; }
 .reveal table { font-size: 0.78em; margin: 0.8em 0; width: 100%; border-collapse: collapse; }
 .reveal table th { color: #5a317e; border-bottom: 2px solid #5a317e; }
 .reveal table td, .reveal table th { padding: 0.35em 0.5em; }

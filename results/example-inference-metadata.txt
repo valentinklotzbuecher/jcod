@@ -1,4 +1,4 @@
-List of 27
+List of 29
  $ package                        : chr "SortedEffects"
  $ package_version                : chr "1.7.0"
  $ source_commit                  : chr "18a1196e474ee1b62d6722754e8e377cba4ddc1f"
@@ -6,23 +6,25 @@ List of 27
  $ seed                           : int 420
  $ alpha                          : num 0.05
  $ bias_correction                : logi FALSE
- $ trial_n                        : int 5000
+ $ sample_n                       : int 5000
  $ reference_n                    : int 5000
- $ contrast                       : chr "Predicted readmission risk: usual minus intensified"
- $ comparison_order               : chr [1:2] "intensified" "usual"
+ $ outcome                        : chr "Binary undesirable event; simulated data"
+ $ sex_coding                     : chr "0 = male, 1 = female"
+ $ contrast                       : chr "Predicted outcome risk: control minus treated"
+ $ comparison_order               : chr [1:2] "treated" "control"
  $ tail_fraction                  : num 0.1
  $ least_group_n                  : int 500
  $ most_group_n                   : int 500
- $ spe_scope                      : chr "SPE training bootstrap, fixed original trial covariates/quantile weights"
+ $ spe_scope                      : chr "SPE training bootstrap, fixed original data covariates/quantile weights"
  $ ca_scope                       : chr "CA refits with resampled weights and reweights effect thresholds/tail means"
- $ ca_family                      : chr "Most-minus-least mean differences across age, congestion score and female proportion"
+ $ ca_family                      : chr "Most-minus-least mean differences across age and female proportion"
  $ ca_moment_ci                   : chr "Not returned by package; no native moment confidence intervals are claimed"
  $ native_pointwise_p             : chr "Native ca() field is 1-Phi(abs(z)); not conventional two-sided p; main display uses joint_p only"
  $ joint_p_resolution             : chr "Multiples of 1/499; zero means 0/499 bootstrap maxima exceeded the observed statistic, not a bound on the true "| __truncated__
  $ spe_point_error                : num 0
  $ ape_error                      : num 0
  $ ca_point_error                 : num 0
- $ spe_band_error                 : num 3.61e-16
+ $ spe_band_error                 : num 5.55e-16
  $ ca_scale_error                 : num 0
  $ ca_joint_p_error               : num 0
  $ independent_bootstrap_converged: int 499

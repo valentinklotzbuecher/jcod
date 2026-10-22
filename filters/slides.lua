@@ -4,7 +4,7 @@ local beamer = FORMAT == "beamer"
 
 function Image(image)
   if beamer then
-    image.attributes.width = "80%"
+    image.attributes.width = image.classes:includes("panel-figure") and "100%" or "80%"
     image.attributes.height = nil
   end
   return image

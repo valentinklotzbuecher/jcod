@@ -1,9 +1,7 @@
 # Reproducible sorted-effects teaching example.
-# All outcomes and patient profiles are simulated; no patient data are used.
-# Main teaching story: intensified diuretic strategy versus usual discharge
-# regimen after heart-failure admission; unplanned readmission within 90 days.
-# The existing standardized `severity` variable is a fictional congestion index.
-# Clinical names are narrative labels, not evidence for a real treatment effect.
+# All outcomes and demographic profiles are simulated; no personal data are used.
+# A randomized treatment and a generic binary undesirable outcome are used.
+# Age and sex illustrate how model-based risk reductions can vary.
 # Benefit is Pr(Y=1 | A=0, X) - Pr(Y=1 | A=1, X), so positive is favourable.
 # The reference cohort is FIXED throughout bootstrap inference. The uncertainty
 # therefore concerns the fitted conditional risks on this reference population,
@@ -11,25 +9,29 @@
 
 scenario_labels <- c(
   constant = "Constant treatment odds ratio",
-  interaction = "Treatment-by-severity interaction"
+  interaction = "Treatment interactions with age and sex"
 )
 
 demo_quantiles <- function(x, probs) {
   as.numeric(stats::quantile(x, probs = probs, type = 8, names = FALSE))
 }
 
-make_patients <- function(n) {
+make_profiles <- function(n) {
   age <- stats::runif(n, 40, 80)
-  severity <- pmax(-2.5, pmin(2.5, stats::rnorm(n)))
-  female <- stats::rbinom(n, 1, 0.5)
+  sex <- stats::rbinom(n, 1, 0.5)
   data.frame(
-    age = age, age_z = (age - 60) / 10,
-    severity = severity, female = female
+    age = age, age_z = (age - 60) / 10, sex = sex
   )
 }
 
 baseline_logit <- function(data) {
-  -1.4 + 0.35 * data$age_z + 0.75 * data$severity + 0.15 * data$female
+  -1.25 + 0.30 * data$age_z + 0.15 * data$sex +
+    0.08 * data$age_z * data$sex
+}
+
+treatment_log_or <- function(data, interaction_intercept) {
+  interaction_intercept - 0.40 * data$age_z + 0.10 * data$sex +
+    0.04 * data$age_z * data$sex
 }
 
 true_benefit <- function(data, scenario, interaction_intercept) {
@@ -37,7 +39,7 @@ true_benefit <- function(data, scenario, interaction_intercept) {
   log_or <- if (scenario == "constant") {
     rep(log(0.60), nrow(data))
   } else {
-    interaction_intercept - 0.55 * data$severity
+    treatment_log_or(data, interaction_intercept)
   }
   stats::plogis(eta) - stats::plogis(eta + log_or)
 }
@@ -69,7 +71,7 @@ bootstrap_scenario <- function(data, formula, reference, fitted_effect,
   membership <- matrix(0L, nrow = nrow(reference), ncol = 2L,
                        dimnames = list(NULL, c("smallest", "largest")))
   tail_means <- array(NA_real_, dim = c(B, 2L, 3L), dimnames = list(
-    NULL, c("smallest", "largest"), c("age", "severity", "baseline_risk")
+    NULL, c("smallest", "largest"), c("age", "sex", "baseline_risk")
   ))
   converged <- logical(B)
   for (b in seq_len(B)) {
@@ -89,7 +91,7 @@ bootstrap_scenario <- function(data, formula, reference, fitted_effect,
       idx <- groups[[g]]
       membership[idx, g] <- membership[idx, g] + 1L
       tail_means[b, g, ] <- c(
-        mean(reference$age[idx]), mean(reference$severity[idx]),
+        mean(reference$age[idx]), mean(reference$sex[idx]),
         mean(contrast$p0[idx])
       )
     }
@@ -120,9 +122,9 @@ run_demo <- function(B = 499L, n_trial = 5000L,
                      seed = 20261020L, progress = TRUE) {
   stopifnot(B >= 99L, n_trial >= 500L)
   set.seed(seed)
-  trial_covariates <- make_patients(n_trial)
+  trial_covariates <- make_profiles(n_trial)
   # Use the observed trial profiles as the fixed SPE reference, matching the
-  # original package's full-sample spe() path used by the clinical workflow.
+  # original package's full-sample spe() path used by the example workflow.
   reference <- trial_covariates
   target_average <- mean(true_benefit(reference, "constant", 0))
   interaction_intercept <- stats::uniroot(function(beta) {
@@ -133,8 +135,8 @@ run_demo <- function(B = 499L, n_trial = 5000L,
   outcome_uniforms <- stats::runif(n_trial)
   probs <- seq(0.1, 0.9, by = 0.01)
   formulas <- list(
-    constant = outcome ~ treatment + age_z + severity + female,
-    interaction = outcome ~ treatment * severity + age_z + female
+    constant = outcome ~ treatment + age_z * sex,
+    interaction = outcome ~ treatment * age_z * sex
   )
   # Avoid retaining the complete simulation frame inside saved model formulas.
   formulas <- lapply(formulas, function(formula) {
@@ -149,7 +151,7 @@ run_demo <- function(B = 499L, n_trial = 5000L,
     log_or <- if (scenario == "constant") {
       rep(log(0.60), n_trial)
     } else {
-      interaction_intercept - 0.55 * data$severity
+      treatment_log_or(data, interaction_intercept)
     }
     data$outcome <- as.integer(outcome_uniforms < stats::plogis(
       baseline_logit(data) + treatment * log_or
@@ -195,10 +197,9 @@ classification_dumbbell_data <- function(classification) {
     row <- selected[i, ]
     data.frame(
       scenario = "interaction", group = row$group, n = row$n,
-      characteristic = c("Age", "Baseline congestion", "Female", "Untreated readmission risk"),
-      units = c("years", "standardized units", "%", "%"),
-      value = c(row$mean_age, row$mean_severity, 100 * row$proportion_female,
-                100 * row$mean_baseline_risk)
+      characteristic = c("Age", "Female"),
+      units = c("years", "%"),
+      value = c(row$mean_age, 100 * row$proportion_female)
     )
   }))
 }
@@ -244,8 +245,7 @@ demo_tables <- function(demo) {
       data.frame(
         scenario = name, label = unname(scenario_labels[name]), group = group,
         n = length(idx), mean_age = mean(demo$reference$age[idx]),
-        mean_severity = mean(demo$reference$severity[idx]),
-        proportion_female = mean(demo$reference$female[idx]),
+        proportion_female = mean(demo$reference$sex[idx]),
         mean_baseline_risk = mean(s$contrast$p0[idx]),
         mean_benefit = mean(s$contrast$benefit[idx]),
         mean_true_benefit = mean(s$truth[idx]),
@@ -256,7 +256,7 @@ demo_tables <- function(demo) {
   # Exact illustrative risk profiles under the constant-OR model, not trial estimates.
   p0 <- c(0.10, 0.40)
   p1 <- 0.60 * p0 / (1 - p0 + 0.60 * p0)
-  patient_profiles <- data.frame(
+  risk_profiles <- data.frame(
     profile = c("Lower baseline risk", "Higher baseline risk"),
     risk_without_treatment = p0, risk_with_treatment = p1,
     odds_ratio = 0.60, absolute_benefit = p0 - p1,
@@ -264,7 +264,7 @@ demo_tables <- function(demo) {
   )
   list(
     scenario_summary = scenario_summary, sorted_effects = sorted_effects,
-    classification = classification, patient_profiles = patient_profiles,
+    classification = classification, risk_profiles = risk_profiles,
     classification_dumbbells = classification_dumbbell_data(classification)
   )
 }
@@ -290,13 +290,13 @@ percent_label <- function(x) paste0(round(100 * x), "%")
 
 demo_figures <- function(demo, tables = demo_tables(demo)) {
   if (!requireNamespace("ggplot2", quietly = TRUE)) stop("Install ggplot2 first.")
-  # Both the exact OR relationship and fitted patient effects are informative.
+  # Both the exact OR relationship and fitted demographic effects are informative.
   risk_grid <- seq(0.01, 0.90, length.out = 300)
   risk_curve <- data.frame(
     p0 = risk_grid,
     benefit = risk_grid - 0.60 * risk_grid / (1 - risk_grid + 0.60 * risk_grid)
   )
-  labels <- tables$patient_profiles
+  labels <- tables$risk_profiles
   baseline_plot <- ggplot2::ggplot(risk_curve, ggplot2::aes(p0, benefit)) +
     ggplot2::geom_line(colour = "#5A317E", linewidth = 1.4) +
     ggplot2::geom_segment(data = labels, ggplot2::aes(
@@ -367,17 +367,15 @@ demo_figures <- function(demo, tables = demo_tables(demo)) {
     row <- tables$classification[i, ]
     data.frame(
       label = row$label, group = row$group,
-      characteristic = c("Age (years)", "Severity (standardized units)",
-                         "Predicted untreated risk (%)"),
-      value = c(row$mean_age, row$mean_severity, 100 * row$mean_baseline_risk)
+      characteristic = c("Age (years)", "Female (%)", "Predicted control risk (%)"),
+      value = c(row$mean_age, 100 * row$proportion_female, 100 * row$mean_baseline_risk)
     )
   }))
   classification_data$group <- factor(classification_data$group,
                                       levels = c("smallest", "largest"),
                                       labels = c("Smallest-benefit 10%", "Largest-benefit 10%"))
   classification_data$characteristic <- factor(classification_data$characteristic,
-    levels = c("Age (years)", "Severity (standardized units)",
-               "Predicted untreated risk (%)"))
+    levels = c("Age (years)", "Female (%)", "Predicted control risk (%)"))
   classification_plot <- ggplot2::ggplot(classification_data,
                                         ggplot2::aes(value, group, colour = group)) +
     ggplot2::geom_point(size = 3.5) +
@@ -385,10 +383,10 @@ demo_figures <- function(demo, tables = demo_tables(demo)) {
                       nudge_y = 0.22, size = 4.3, show.legend = FALSE) +
     ggplot2::facet_grid(label ~ characteristic, scales = "free_x", labeller = ggplot2::labeller(
       label = c("Constant treatment odds ratio" = "Constant OR",
-                "Treatment-by-severity interaction" = "Interaction"),
+                "Treatment interactions with age and sex" = "Age/sex interactions"),
       characteristic = c("Age (years)" = "Age (years)",
-        "Severity (standardized units)" = "Severity\n(standardized units)",
-        "Predicted untreated risk (%)" = "Predicted untreated\nrisk (%)")
+        "Female (%)" = "Female (%)",
+        "Predicted control risk (%)" = "Predicted control\nrisk (%)")
     )) +
     ggplot2::scale_x_continuous(expand = ggplot2::expansion(mult = 0.18)) +
     ggplot2::scale_colour_manual(values = c("#94A3B8", "#5A317E")) +
@@ -419,24 +417,24 @@ demo_figures <- function(demo, tables = demo_tables(demo)) {
       x = "Rank within the estimated largest-benefit 10% (highest benefit first)",
       y = "Top-tail membership frequency",
       subtitle = "Group membership can change when the fitted model changes",
-      caption = "Refit-and-reclassify sensitivity summary; frequencies are not probabilities that a patient truly belongs to a group."
+      caption = "Refit-and-reclassify diagnostic; frequencies do not measure the chance of true group membership."
     ) + demo_theme()
 
   # Keep the two-scenario views for optional backup, while the main session
-  # follows one fictional clinical trial (the existing interaction scenario).
+  # follows one simulated treated/control example (the interaction scenario).
   comparisons <- list(
     "sorted-effects-comparison" = sorted_plot,
     "uncertainty-comparison" = uncertainty_plot,
     "classification-comparison" = classification_plot,
     "membership-stability-comparison" = membership_plot
   )
-  clinical <- tables$sorted_effects[
+  example <- tables$sorted_effects[
     tables$sorted_effects$scenario == "interaction", , drop = FALSE
   ]
-  clinical_scenario <- demo$scenarios$interaction
-  clinical_sorted <- ggplot2::ggplot(clinical, ggplot2::aes(percentile, estimate)) +
+  example_scenario <- demo$scenarios$interaction
+  example_sorted <- ggplot2::ggplot(example, ggplot2::aes(percentile, estimate)) +
     ggplot2::geom_hline(yintercept = 0, colour = "#A7A0B0", linewidth = 0.4) +
-    ggplot2::geom_hline(yintercept = mean(clinical_scenario$contrast$benefit),
+    ggplot2::geom_hline(yintercept = mean(example_scenario$contrast$benefit),
                        colour = "#A34E2A", linetype = "dashed", linewidth = 0.8) +
     ggplot2::geom_line(colour = "#5A317E", linewidth = 1.5) +
     ggplot2::geom_line(ggplot2::aes(y = truth), colour = "#5A317E",
@@ -445,15 +443,15 @@ demo_figures <- function(demo, tables = demo_tables(demo)) {
                               breaks = c(0.1, 0.25, 0.5, 0.75, 0.9)) +
     ggplot2::scale_y_continuous(labels = function(x) sprintf("%.0f", 100 * x)) +
     ggplot2::labs(
-      x = "Percentile of conditional benefit", y = "Readmission risk reduction (pp)",
+      x = "Percentile of estimated risk reduction", y = "Risk reduction (percentage points)",
       subtitle = "Solid: fitted sorted effects   |   Dotted: known simulation truth",
       caption = sprintf(
-        "Fictional heart-failure trial. Dashed: average fitted benefit (%.1f pp). Central 10th–90th percentiles shown.",
-        100 * mean(clinical_scenario$contrast$benefit)
+        "Simulated treated/control data. Dashed: average risk reduction (%.1f pp).",
+        100 * mean(example_scenario$contrast$benefit)
       )
     ) + demo_theme()
 
-  clinical_uncertainty <- ggplot2::ggplot(clinical, ggplot2::aes(percentile, estimate)) +
+  example_uncertainty <- ggplot2::ggplot(example, ggplot2::aes(percentile, estimate)) +
     ggplot2::geom_hline(yintercept = 0, colour = "#A7A0B0", linewidth = 0.4) +
     ggplot2::geom_ribbon(ggplot2::aes(ymin = simultaneous_lower,
                                     ymax = simultaneous_upper,
@@ -469,29 +467,27 @@ demo_figures <- function(demo, tables = demo_tables(demo)) {
                               breaks = c(0.1, 0.25, 0.5, 0.75, 0.9)) +
     ggplot2::scale_y_continuous(labels = function(x) sprintf("%.0f", 100 * x)) +
     ggplot2::labs(
-      x = "Percentile of conditional benefit", y = "Readmission risk reduction (pp)",
-      subtitle = "The same fictional trial: refit the model and re-sort after every resample",
+      x = "Percentile of estimated risk reduction", y = "Risk reduction (percentage points)",
+      subtitle = "Refit the model and re-sort after every resample",
       caption = sprintf(
         "%s pairs-bootstrap draws; fixed reference cohort. Simultaneous coverage targets the displayed percentile grid.",
         demo$metadata$B
       )
     ) + demo_theme()
 
-  # Four separate axes retain each characteristic's clinical unit. The line
+  # Separate axes retain each characteristic's units. The line
   # connects two descriptive group summaries; it is not a confidence interval.
   dumbbells <- tables$classification_dumbbells
   dumbbells$panel <- factor(
     dumbbells$characteristic,
-    levels = c("Age", "Baseline congestion", "Female", "Untreated readmission risk"),
-    labels = c("Age (years)", "Congestion index (standardized units)",
-               "Female (%)", "Predicted untreated readmission risk (%)")
+    levels = c("Age", "Female"), labels = c("Age (years)", "Female (%)")
   )
   low <- dumbbells[dumbbells$group == "smallest", , drop = FALSE]
   high <- dumbbells[dumbbells$group == "largest", , drop = FALSE]
   connectors <- data.frame(panel = low$panel, smallest = low$value, largest = high$value)
   dumbbell_bounds <- data.frame(
     panel = factor(rep(levels(dumbbells$panel), each = 2), levels = levels(dumbbells$panel)),
-    value = c(40, 80, -2.5, 2.5, 0, 100, 0, 100)
+    value = c(40, 80, 0, 100)
   )
   dumbbells$group <- factor(dumbbells$group, levels = c("smallest", "largest"),
     labels = c("Smallest-benefit 10%", "Largest-benefit 10%"))
@@ -513,7 +509,7 @@ demo_figures <- function(demo, tables = demo_tables(demo)) {
     ggplot2::labs(
       x = NULL, y = NULL,
       caption = sprintf(
-        "Fictional trial; %s reference profiles per tail. Descriptive means/proportions with separate axes; no classification intervals.",
+        "Simulated data; %s profiles per tail. Connecting lines show descriptive differences, not confidence intervals.",
         floor(nrow(demo$reference) / 10)
       )
     ) + demo_theme() + ggplot2::theme(
@@ -522,24 +518,43 @@ demo_figures <- function(demo, tables = demo_tables(demo)) {
       panel.spacing = grid::unit(1.3, "lines")
     )
 
-  clinical_membership <- membership_data[
+  example_membership <- membership_data[
     membership_data$label == scenario_labels[["interaction"]], , drop = FALSE
   ]
-  clinical_membership_plot <- ggplot2::ggplot(clinical_membership,
+  example_membership_plot <- ggplot2::ggplot(example_membership,
     ggplot2::aes(rank_within_tail, frequency)) +
     ggplot2::geom_line(linewidth = 1.1, colour = "#5A317E") +
     ggplot2::scale_y_continuous(labels = percent_label, limits = c(0, 1)) +
     ggplot2::labs(
       x = "Rank within the largest-benefit 10% (highest benefit first)",
       y = "Top-tail membership frequency",
-      subtitle = "The same fictional trial: which profiles keep their tail label after refitting?",
-      caption = "Refit-and-reclassify sensitivity summary; frequencies are not probabilities that a patient truly belongs to a group."
+      subtitle = "How often does each profile stay in the top 10% after refitting?",
+      caption = "Custom bootstrap diagnostic; frequencies do not measure the chance of true group membership."
+    ) + demo_theme()
+
+  # Before sorting, retain the demographic labels of the same fitted effects.
+  age_sex <- expand.grid(age = seq(40, 80, by = 0.25), sex = 0:1)
+  age_sex$age_z <- (age_sex$age - 60) / 10
+  age_sex$benefit <- benefit_from_fit(example_scenario$fit, age_sex)$benefit
+  age_sex$sex_label <- factor(age_sex$sex, levels = 0:1, labels = c("Male", "Female"))
+  age_sex_plot <- ggplot2::ggplot(age_sex,
+    ggplot2::aes(age, benefit, colour = sex_label, linetype = sex_label)) +
+    ggplot2::geom_hline(yintercept = 0, colour = "#A7A0B0", linewidth = 0.5) +
+    ggplot2::geom_line(linewidth = 1.4) +
+    ggplot2::scale_colour_manual(values = c("#237F91", "#5A317E")) +
+    ggplot2::scale_linetype_manual(values = c("solid", "longdash")) +
+    ggplot2::scale_x_continuous(breaks = seq(40, 80, 10)) +
+    ggplot2::scale_y_continuous(labels = function(x) sprintf("%.0f", 100 * x)) +
+    ggplot2::labs(
+      x = "Age (years)", y = "Risk reduction (percentage points)",
+      caption = "Simulated data. Fitted control risk minus fitted treated risk, at each age and sex."
     ) + demo_theme()
 
   c(list(
-    "baseline-risk" = baseline_plot, "sorted-effects" = clinical_sorted,
-    "uncertainty" = clinical_uncertainty, "classification" = dumbbell_plot,
-    "membership-stability" = clinical_membership_plot
+    "baseline-risk" = baseline_plot, "sorted-effects" = example_sorted,
+    "uncertainty" = example_uncertainty, "classification" = dumbbell_plot,
+    "membership-stability" = example_membership_plot,
+    "effects-by-age-sex" = age_sex_plot
   ), comparisons)
 }
 
@@ -573,12 +588,12 @@ write_demo <- function(demo, output_dir = "results") {
   invisible(tables)
 }
 
-write_clinical_inference_figures <- function(output_dir = "results") {
-  # Called after scripts/clinical-inference.R has written fresh original-package
+write_example_inference_figures <- function(output_dir = "results") {
+  # Called after scripts/example-inference.R has written fresh original-package
   # output. Keep the package estimates and multiplicity adjustment intact.
-  paths <- file.path(output_dir, c("clinical-spe.csv", "clinical-ape.csv",
-                                   "clinical-inference.csv", "demo.rds"))
-  if (!all(file.exists(paths))) stop("Generate the clinical inference outputs first.")
+  paths <- file.path(output_dir, c("example-spe.csv", "example-ape.csv",
+                                   "example-inference.csv", "demo.rds"))
+  if (!all(file.exists(paths))) stop("Generate the example inference outputs first.")
   spe <- utils::read.csv(paths[1L])
   ape <- utils::read.csv(paths[2L])
   ca <- utils::read.csv(paths[3L])
@@ -586,7 +601,7 @@ write_clinical_inference_figures <- function(output_dir = "results") {
   stopifnot(all(c("percentile", "estimate", "lower_uniform", "upper_uniform") %in% names(spe)))
   stopifnot(all(c("characteristic", "least_mean", "most_mean", "difference",
                   "standard_error", "joint_p") %in% names(ca)))
-  stopifnot(setequal(ca$characteristic, c("age", "severity", "female")))
+  stopifnot(setequal(ca$characteristic, c("age", "sex")))
   stopifnot(all(is.finite(spe$estimate)), all(is.finite(ca$joint_p)))
   stopifnot(nrow(ape) == 1L,
             abs(ape$estimate - mean(demo$scenarios$interaction$contrast$benefit)) < 1e-8)
@@ -613,10 +628,9 @@ write_clinical_inference_figures <- function(output_dir = "results") {
                               breaks = c(0.1, 0.25, 0.5, 0.75, 0.9)) +
     ggplot2::scale_y_continuous(labels = function(x) sprintf("%.0f", 100 * x)) +
     ggplot2::labs(
-      x = "Percentile of conditional benefit", y = "Readmission risk reduction (pp)",
-      subtitle = "One fictional heart-failure trial: what does the average conceal?",
+      x = "Percentile of estimated risk reduction", y = "Risk reduction (percentage points)",
       caption = sprintf(
-        "SortedEffects 1.7.0 estimates; observed trial profiles held fixed. Dashed: average benefit (%.1f pp).",
+        "Simulated data. Dashed: average estimated risk reduction (%.1f pp).",
         100 * ape$estimate[1L]
       )
     ) + demo_theme()
@@ -625,33 +639,33 @@ write_clinical_inference_figures <- function(output_dir = "results") {
                          fill = "#D9CEE5", alpha = 0.8) +
     ggplot2::geom_line(colour = "#5A317E", linewidth = 1.3) +
     ggplot2::labs(
-      subtitle = "Original-package inference: 95% simultaneous confidence band",
+      subtitle = "95% simultaneous confidence band",
       caption = paste(
         "SortedEffects 1.7.0 refit-and-sort bootstrap; percentile grid shown.",
-        "Uncertainty is conditional on the outcome model and fixed trial profiles."
+        "Uncertainty is conditional on the outcome model and fixed covariate profiles."
       )
     )
 
-  units <- c(age = "years", severity = "SD", female = "percentage points")
-  scale <- ifelse(ca$characteristic == "female", 100, 1)
-  labels <- c(age = "Age (years)", severity = "Baseline congestion (SD)", female = "Female (%)")
+  units <- c(age = "years", sex = "percentage points")
+  scale <- ifelse(ca$characteristic == "sex", 100, 1)
+  labels <- c(age = "Age (years)", sex = "Female (%)")
   plot_data <- do.call(rbind, lapply(seq_len(nrow(ca)), function(i) {
     data.frame(
       characteristic = ca$characteristic[i], panel = unname(labels[ca$characteristic[i]]),
-      group = c("Smallest-benefit 10%", "Largest-benefit 10%"),
+      group = c("Bottom 10%", "Top 10%"),
       value = c(ca$least_mean[i], ca$most_mean[i]) * scale[i]
     )
   }))
   plot_data$panel <- factor(plot_data$panel, levels = unname(labels))
   plot_data$group <- factor(plot_data$group,
-                            levels = c("Smallest-benefit 10%", "Largest-benefit 10%"))
+                            levels = c("Bottom 10%", "Top 10%"))
   connectors <- data.frame(
     panel = factor(unname(labels[ca$characteristic]), levels = unname(labels)),
     smallest = ca$least_mean * scale, largest = ca$most_mean * scale
   )
   dumbbell_bounds <- data.frame(
     panel = factor(rep(unname(labels), each = 2), levels = unname(labels)),
-    value = c(40, 80, -2.5, 2.5, 0, 100)
+    value = c(40, 80, 0, 100)
   )
   dumbbell_plot <- ggplot2::ggplot(plot_data, ggplot2::aes(value, 1)) +
     ggplot2::geom_blank(data = dumbbell_bounds, ggplot2::aes(value, 1), inherit.aes = FALSE) +
@@ -660,7 +674,7 @@ write_clinical_inference_figures <- function(output_dir = "results") {
     ), inherit.aes = FALSE, colour = "#C6BBCF", linewidth = 2.2) +
     ggplot2::geom_point(ggplot2::aes(colour = group, shape = group), size = 4.7) +
     ggplot2::geom_text(ggplot2::aes(
-      y = ifelse(group == "Smallest-benefit 10%", 1.16, 0.84),
+      y = ifelse(group == "Bottom 10%", 1.16, 0.84),
       label = sprintf("%.1f", value), colour = group
     ), size = 5.4, fontface = "bold", show.legend = FALSE) +
     ggplot2::facet_wrap(~panel, nrow = 1, scales = "free_x") +
@@ -669,10 +683,10 @@ write_clinical_inference_figures <- function(output_dir = "results") {
     ggplot2::scale_colour_manual(values = c("#A34E2A", "#5A317E")) +
     ggplot2::scale_shape_manual(values = c(16, 17)) +
     ggplot2::labs(
-      x = "Mean or proportion within the estimated benefit tail", y = NULL,
+      x = "Mean age or female proportion in each estimated effect group", y = NULL,
       caption = paste(
-        "Original ca() tail means. Separate axes retain each characteristic's units.",
-        "Connecting lines are not confidence intervals; inference for differences follows."
+        "Groups are defined by estimated risk reduction, not treatment assignment.",
+        "The connecting line is not a confidence interval."
       )
     ) + demo_theme() + ggplot2::theme(panel.grid.major.y = ggplot2::element_blank())
 
@@ -685,7 +699,7 @@ write_clinical_inference_figures <- function(output_dir = "results") {
                            format.pval(ca$joint_p, digits = 2)),
     bootstrap_draws = inference_B
   )
-  utils::write.csv(display, file.path(output_dir, "clinical-classification-display.csv"),
+  utils::write.csv(display, file.path(output_dir, "example-classification-display.csv"),
                    row.names = FALSE)
   display$y <- 4 - seq_len(nrow(display))
   display$difference_text <- sprintf("%+.2f", display$difference)
@@ -708,7 +722,7 @@ write_clinical_inference_figures <- function(output_dir = "results") {
     ggplot2::labs(
       subtitle = "Differences between the estimated benefit tails, using original-package classification inference",
       caption = paste0(
-        "Joint p values adjust across the three preselected characteristics. Female differences/SE are in percentage points.\n",
+        "Joint p values adjust across age and sex. Female differences/SE are in percentage points.\n",
         "B = ", inference_B,
         "; 0 / B denotes zero bootstrap exceedances, not a population p value of zero."
       )
@@ -739,6 +753,6 @@ if (sys.nframe() == 0L) {
   demo <- run_demo(B = B)
   tables <- write_demo(demo)
   print(tables$scenario_summary)
-  message("Wrote teaching figures and data to results/. Run Rscript scripts/clinical-inference.R ",
+  message("Wrote teaching figures and data to results/. Run Rscript scripts/example-inference.R ",
           "to refresh the main inferential figures, then Rscript scripts/validate-demo.R.")
 }

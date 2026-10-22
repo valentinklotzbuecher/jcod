@@ -1,49 +1,49 @@
 #!/usr/bin/env Rscript
-# Original SortedEffects inference for the ONE fictional clinical example.
+# Original SortedEffects inference for the simulated treated/control example.
 # Run after Rscript R/demo.R, from the repository root.
 options(warn = 1)
 stopifnot(requireNamespace("SortedEffects", quietly = TRUE))
 stopifnot(as.character(utils::packageVersion("SortedEffects")) == "1.7.0")
 stopifnot(requireNamespace("Hmisc", quietly = TRUE))
-source("R/clinical-walkthrough.R")
+source("R/example-walkthrough.R")
 
 demo <- readRDS("results/demo.rds")
-walkthrough <- clinical_walkthrough(demo)
-trial <- walkthrough$trial
+walkthrough <- example_walkthrough(demo)
+data <- walkthrough$data
 fm <- walkthrough$formula
 benefit <- walkthrough$benefit
-n <- nrow(trial)
+n <- nrow(data)
 stopifnot(n == 5000L)
-# The demo and original package now use the same empirical trial profiles.
+# The demo and original package now use the same empirical data profiles.
 stopifnot(nrow(demo$reference) == n)
 stopifnot(isTRUE(all.equal(
-  demo$reference[, c("age", "age_z", "severity", "female")],
-  trial[, c("age", "age_z", "severity", "female")], check.attributes = FALSE
+  demo$reference[, c("age", "age_z", "sex")],
+  data[, c("age", "age_z", "sex")], check.attributes = FALSE
 )))
 stopifnot(max(abs(benefit - demo$scenarios$interaction$contrast$benefit)) < 1e-10)
 
-B <- as.integer(Sys.getenv("CLINICAL_BOOTSTRAPS", "499"))
+B <- as.integer(Sys.getenv("EXAMPLE_BOOTSTRAPS", "499"))
 stopifnot(B >= 99L)
 seed <- 420L
 alpha <- 0.05
 us <- seq(0.10, 0.90, by = 0.01)
-traits <- c("age", "severity", "female")
-compare <- c("intensified", "usual")
+traits <- c("age", "sex")
+compare <- c("treated", "control")
 
 # peestimate() returns prediction(compare[2]) - prediction(compare[1]).
 # This supported categorical contrast therefore makes positive values beneficial:
-# Pr(readmission | usual, X) - Pr(readmission | intensified, X).
-message("Original-package clinical SPE inference (", B, " bootstrap draws).")
+# Pr(outcome | control, X) - Pr(outcome | treated, X).
+message("Original-package example SPE inference (", B, " bootstrap draws).")
 spe <- SortedEffects::spe(
-  fm = fm, data = trial, method = "logit",
-  var_type = "categorical", var = "strategy", compare = compare,
+  fm = fm, data = data, method = "logit",
+  var_type = "categorical", var = "group", compare = compare,
   us = us, alpha = alpha, b = B, seed = seed, bc = FALSE
 )
 
-message("Original-package clinical classification inference.")
+message("Original-package example classification inference.")
 ca <- SortedEffects::ca(
-  fm = fm, data = trial, method = "logit",
-  var_type = "categorical", var = "strategy", compare = compare,
+  fm = fm, data = data, method = "logit",
+  var_type = "categorical", var = "group", compare = compare,
   u = 0.10, interest = "moment", cl = "diff", t = traits,
   alpha = alpha, b = B, seed = seed, bc = FALSE
 )
@@ -56,8 +56,8 @@ ape_error <- abs(mean(benefit) - spe$ape[[1]])
 thresholds <- Hmisc::wtd.quantile(benefit, weights, c(0.10, 0.90))
 least <- benefit <= thresholds[1]
 most <- benefit >= thresholds[2]
-least_mean <- colMeans(trial[least, traits, drop = FALSE])
-most_mean <- colMeans(trial[most, traits, drop = FALSE])
+least_mean <- colMeans(data[least, traits, drop = FALSE])
+most_mean <- colMeans(data[most, traits, drop = FALSE])
 direct_ca <- most_mean - least_mean
 ca_point_error <- max(abs(direct_ca - as.numeric(ca$est)))
 stopifnot(max(abs(as.numeric(walkthrough$spe_curve) - direct_spe)) < 1e-12)
@@ -75,7 +75,7 @@ stopifnot(all(spe$spe[[4]] > 0), all(ca$bse > 0))
 # SPE: resampled training counts, fixed original quantile weights.
 # CA: resampled training counts, resampled quantile weights AND tail means.
 # This distinction is important; CA is not the same fixed-X conditional target.
-message("Independently checking the clinical bootstrap outputs.")
+message("Independently checking the example bootstrap outputs.")
 set.seed(seed)
 bootstrap_spe <- matrix(NA_real_, nrow = B, ncol = length(us))
 bootstrap_ca <- matrix(NA_real_, nrow = B, ncol = length(traits))
@@ -83,12 +83,12 @@ colnames(bootstrap_ca) <- traits
 bootstrap_ape <- numeric(B)
 for (b in seq_len(B)) {
   counts <- tabulate(sample.int(n, n, replace = TRUE), nbins = n)
-  boot_data <- trial
+  boot_data <- data
   boot_data$.counts <- counts
   fit <- glm(fm, data = boot_data, family = binomial(), weights = .counts)
   stopifnot(fit$converged, all(is.finite(coef(fit))))
-  p0 <- predict(fit, transform(trial, strategy = "usual"), type = "response")
-  p1 <- predict(fit, transform(trial, strategy = "intensified"), type = "response")
+  p0 <- predict(fit, transform(data, group = "control"), type = "response")
+  p1 <- predict(fit, transform(data, group = "treated"), type = "response")
   effect <- as.numeric(p0 - p1)
   stopifnot(all(is.finite(effect)))
   bootstrap_spe[b, ] <- Hmisc::wtd.quantile(effect, weights, us)
@@ -101,15 +101,15 @@ for (b in seq_len(B)) {
   fit_ca <- glm(fm, data = boot_data, family = binomial(), weights = .ca_weights)
   stopifnot(fit_ca$converged, all(is.finite(coef(fit_ca))))
   effect_ca <- as.numeric(
-    predict(fit_ca, transform(trial, strategy = "usual"), type = "response") -
-      predict(fit_ca, transform(trial, strategy = "intensified"), type = "response")
+    predict(fit_ca, transform(data, group = "control"), type = "response") -
+      predict(fit_ca, transform(data, group = "treated"), type = "response")
   )
   cut <- Hmisc::wtd.quantile(effect_ca, boot_data$.ca_weights, c(0.10, 0.90))
   lo <- effect_ca <= cut[1]
   hi <- effect_ca >= cut[2]
   bootstrap_ca[b, ] <- vapply(traits, function(trait) {
-    weighted.mean(trial[[trait]][hi], boot_data$.ca_weights[hi]) -
-      weighted.mean(trial[[trait]][lo], boot_data$.ca_weights[lo])
+    weighted.mean(data[[trait]][hi], boot_data$.ca_weights[hi]) -
+      weighted.mean(data[[trait]][lo], boot_data$.ca_weights[lo])
   }, numeric(1))
 }
 
@@ -139,35 +139,37 @@ utils::write.csv(data.frame(
   lower_uniform = as.numeric(spe$spe[[3]]),
   upper_uniform = as.numeric(spe$spe[[2]]),
   standard_error = as.numeric(spe$spe[[4]])
-), "results/clinical-spe.csv", row.names = FALSE)
+), "results/example-spe.csv", row.names = FALSE)
 utils::write.csv(data.frame(
   estimate = as.numeric(spe$ape[[1]]), lower = as.numeric(spe$ape[[3]]),
   upper = as.numeric(spe$ape[[2]]), standard_error = as.numeric(spe$ape[[4]])
-), "results/clinical-ape.csv", row.names = FALSE)
+), "results/example-ape.csv", row.names = FALSE)
 utils::write.csv(data.frame(
   characteristic = traits, least_mean = as.numeric(least_mean),
   most_mean = as.numeric(most_mean), difference = as.numeric(ca$est),
   standard_error = as.numeric(ca$bse), joint_p = as.numeric(ca$joint_p),
-  unit = c("years", "SD", "proportion"),
+  unit = c("years", "proportion"),
   bootstrap_draws = B,
   # Preserve the native field for audit, not as a conventional two-sided p-value.
   package_pointwise_p = as.numeric(ca$pointwise_p),
   normal_two_sided_p = 2 * pnorm(-abs(as.numeric(ca$est) / as.numeric(ca$bse)))
-), "results/clinical-inference.csv", row.names = FALSE)
+), "results/example-inference.csv", row.names = FALSE)
 utils::write.csv(walkthrough$profiles,
-                 "results/clinical-profiles.csv", row.names = FALSE)
+                 "results/example-profiles.csv", row.names = FALSE)
 
 metadata <- list(
   package = "SortedEffects", package_version = "1.7.0",
   source_commit = "18a1196e474ee1b62d6722754e8e377cba4ddc1f",
   bootstrap_draws = B, seed = seed, alpha = alpha, bias_correction = FALSE,
-  trial_n = n, reference_n = n,
-  contrast = "Predicted readmission risk: usual minus intensified",
+  sample_n = n, reference_n = n,
+  outcome = "Binary undesirable event; simulated data",
+  sex_coding = "0 = male, 1 = female",
+  contrast = "Predicted outcome risk: control minus treated",
   comparison_order = compare, tail_fraction = 0.10,
   least_group_n = sum(least), most_group_n = sum(most),
-  spe_scope = "SPE training bootstrap, fixed original trial covariates/quantile weights",
+  spe_scope = "SPE training bootstrap, fixed original data covariates/quantile weights",
   ca_scope = "CA refits with resampled weights and reweights effect thresholds/tail means",
-  ca_family = "Most-minus-least mean differences across age, congestion score and female proportion",
+  ca_family = "Most-minus-least mean differences across age and female proportion",
   ca_moment_ci = "Not returned by package; no native moment confidence intervals are claimed",
   native_pointwise_p = "Native ca() field is 1-Phi(abs(z)); not conventional two-sided p; main display uses joint_p only",
   joint_p_resolution = paste0("Multiples of 1/", B, "; zero means 0/", B,
@@ -178,16 +180,16 @@ metadata <- list(
   independent_bootstrap_converged = B
 )
 utils::capture.output(str(metadata), utils::sessionInfo(),
-                      file = "results/clinical-inference-metadata.txt")
+                      file = "results/example-inference-metadata.txt")
 saveRDS(list(spe = spe, ca = ca, metadata = metadata,
              profiles = walkthrough$profiles, least = least, most = most,
              bootstrap_spe = bootstrap_spe, bootstrap_ca = bootstrap_ca),
-        "results/clinical-inference.rds")
+        "results/example-inference.rds")
 
 # Plot functions are owned by the scientific figure implementation in R/demo.R.
 source("R/demo.R")
-if (!exists("write_clinical_inference_figures", mode = "function")) {
-  stop("R/demo.R must provide write_clinical_inference_figures(). CSV results were saved.")
+if (!exists("write_example_inference_figures", mode = "function")) {
+  stop("R/demo.R must provide write_example_inference_figures(). CSV results were saved.")
 }
-write_clinical_inference_figures()
-message("Clinical SPE/CA inference and independent checks passed. See results/clinical-inference-metadata.txt.")
+write_example_inference_figures()
+message("Example SPE/CA inference and independent checks passed. See results/example-inference-metadata.txt.")

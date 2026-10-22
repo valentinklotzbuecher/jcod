@@ -1,35 +1,39 @@
 # Validation of this session
 
-Validated on 20 October 2026 in the prepared cloud environment: R 4.5.0,
+Validated on 22 October 2026 in the prepared cloud environment: R 4.5.0,
 ggplot2 3.5.1, Quarto 1.8.27 and XeLaTeX (TeX Live 2025/Debian).
 
 ## Scientific outputs
 
 - `Rscript R/demo.R`: completed 499 successful refit-and-sort bootstrap draws
   for each scenario, using seed 20261020. Both true average benefits equal
-  7.396 percentage points across the observed trial profiles. The scenario with a
-  severity interaction includes conditional average harm in part of the population.
+  7.982 percentage points across the observed profiles. The main scenario uses
+  treatment interactions with age and sex and includes negative risk reductions
+  in part of the population. The full fitted model matches its specification.
 - `Rscript scripts/validate-demo.R`: passed analytic risk-contrast checks,
   matched true averages, differing true distributions, bootstrap monotonicity
   and finite uncertainty, tail-membership accounting, seed reproducibility,
-  checks of the clinical dumbbell endpoints, and all 26 teaching figure artifacts.
-- `Rscript scripts/clinical-inference.R`: completed original-package clinical
+  checks of demographic dumbbell endpoints, an independent model-matrix check
+  of age-by-sex risk differences, and all 28 current figure artifacts.
+- `Rscript scripts/example-inference.R`: completed original-package
   SPE and classification inference with 499 draws, seed 420. Direct SPE/APE and
   classification point estimates match exactly. Independent bootstrap
-  reconstructions agree within 3.61e-16 for SPE scales/bands and exactly for CA
+  reconstructions agree within 5.55e-16 for SPE scales/bands and exactly for CA
   standard errors and joint adjusted p-values. All reconstruction fits converged.
-  Clinical average benefit is 7.648 percentage points, with native 95% interval
-  5.499–9.797 percentage points.
-- `Rscript scripts/benchmark-sortedeffects.R`: original SortedEffects 1.7.0
+  Average risk reduction is 8.350 percentage points, with native 95% interval
+  6.311–10.389 percentage points. Mean age is 42.3 versus 78.0 in the bottom
+  and top tails. Female proportion is 72% versus 60%; its native joint p-value
+  is 0.88 and bootstrap SE for the difference is 31.5 percentage points.
+- The unchanged original SortedEffects 1.7.0 benchmark was validated on 20 October:
   mortgage example completed with 199 draws. SPE/APE and classification point
   estimates match direct calculations exactly. An independent reconstruction
   of the package's IQR/max simultaneous band agrees within 3.33e-16. Identical
   seeds reproduce the package's SPE result exactly. Its native plot method
   succeeds on this runtime; no package repair is claimed.
 
-See `clinical-inference.md` and `software-validation.md` for inferential scope.
+See `example-inference.md` and `software-validation.md` for inferential scope.
 Neither a repeated-sampling coverage study nor full package checks were
-performed. The clinical SPE band conditions on the observed profile distribution;
+performed. The SPE band conditions on the observed profile distribution;
 CA uses its own reweighted threshold/moment bootstrap. Dumbbell endpoints are
 descriptive means, with formal native SEs and joint p-values reported separately
 for their differences. No moment confidence intervals or individual causal
@@ -38,11 +42,11 @@ effects are claimed.
 ## Rendering and runtime
 
 - `bash scripts/render.sh`: passed full-site rendering, including the portable
-  RevealJS HTML export and matching 40-page, 16:9 Beamer handout.
+  RevealJS HTML export and matching 39-page, 16:9 Beamer handout.
 - All PDF pages were visually inspected. Figure sizes and source-note typography
   were adjusted to avoid caption clipping. The foundational and tutorial
   references render correctly.
-- Headless Chromium exercised all 40 HTML slides, verified image loading,
+- Headless Chromium exercised all 39 HTML slides, verified image loading,
   checked slide boundaries and JavaScript errors, and confirmed native MathML
   rendering. Math and fonts do not require external services.
 - Six main chapter stacks and one backup stack form the two-dimensional deck.

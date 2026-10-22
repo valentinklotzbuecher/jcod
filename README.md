@@ -1,6 +1,6 @@
 # JCOD: sorted partial effects
 
-An application-led session for statisticians: approximately 35–40 minutes of presentation with discussion during a one-hour slot. The active site is about sorted partial effects. All files from the former Synthetic Control Methods session are preserved in `archive/scm-2026/`.
+A one-hour session for statisticians, with about 35–40 minutes of presentation and time for discussion. One simulated treated/control example shows how sorted partial effects describe variation in absolute risk reductions by age and sex. The previous Synthetic Control Methods session is preserved in `archive/scm-2026/`.
 
 ## Build and preview
 
@@ -11,20 +11,20 @@ source /workspace/.tools/activate
 cd /workspace/jcod
 Rscript R/demo.R
 Rscript scripts/validate-demo.R
-Rscript scripts/clinical-inference.R
+Rscript scripts/example-inference.R
 # Optional: rerun the original package benchmark (SortedEffects 1.7.0 required)
 Rscript scripts/benchmark-sortedeffects.R
 bash scripts/render.sh
 quarto preview --no-browser --host 127.0.0.1 --port 4200
 ```
 
-On another machine, use your installed R and Quarto; the activation line is cloud-specific. Regenerating the clinical analysis requires ggplot2 and the pinned original SortedEffects 1.7.0 package, including its dependencies. The installation source is documented in `docs/software-validation.md`. Rendering the committed figures and CSVs does not require rerunning the analysis. `scpi` and `marginaleffects` are not required.
+On another machine, use your installed R and Quarto; the activation line is specific to this cloud environment. Regenerating the analysis requires ggplot2 and the original SortedEffects 1.7.0 package, including its dependencies. The source version and installation are documented in `docs/software-validation.md`. Rendering the committed figures and CSVs does not require rerunning the analysis.
 
 ## Presenting
 
 Download [`presentation.html`](presentation.html) and open it in a modern browser.
-The HTML embeds its figures, styles, fonts and scripts and works without external
-assets. [`presentation.pdf`](presentation.pdf) is the matching handout.
+The HTML embeds its figures, styles and scripts and uses no external assets.
+[`presentation.pdf`](presentation.pdf) is the matching handout.
 `bash scripts/render.sh` rebuilds the website and refreshes both portable exports.
 
 The presentation uses two dimensions: six main chapters run horizontally, and
@@ -40,9 +40,11 @@ Use the clickable session map or chapter dock to jump to a topic.
 Transitions and auto-animation respect reduced-motion preferences. The PDF shows
 the completed slides in reading order, with fragment states consolidated.
 
-The main presentation introduces the literature and follows one fictional heart-failure discharge trial throughout. `R/clinical-walkthrough.R` supplies executable counterparts of the visible model, prediction, quantile and classification code. `R/demo.R` generates simulated data and teaching diagnostics; `scripts/clinical-inference.R` then runs original-package SPE and classification inference, validates its calculations independently, and writes the primary plots. Keep outputs in sync by running both steps after analysis changes. Rendering reads those results rather than repeating the bootstrap for each format.
+The six main chapters cover the literature, example data, effects, classification, inference and discussion. Short R examples show the model, predictions and tail summaries. An age-by-sex plot shows the fitted risk reductions before they are sorted; dumbbell plots compare the characteristics of the lowest- and highest-benefit tails.
 
-Primary SPE bands use the package's IQR/max bootstrap on the observed trial profiles. Primary classification uses `ca()` standard errors and p-values adjusted jointly across age, congestion and female proportion. Dumbbell endpoints show means, with no invented endpoint confidence intervals. The package's SPE and CA routines use different resampling-weight conventions; see `docs/clinical-inference.md`. Separate `*-teaching` outputs and membership frequencies remain diagnostics. No frequentist coverage study or individual causal-effect inference is claimed.
+`R/example-walkthrough.R` contains executable versions of the slide code. Run `R/demo.R` and then `scripts/example-inference.R` after analysis changes. The second script calls the original package, independently checks its calculations and writes the primary figures. Rendering reads the saved results.
+
+Primary SPE bands use the package's IQR/max bootstrap on the observed profiles. Classification uses native standard errors and p-values adjusted jointly across age and female proportion. Dumbbell endpoints are descriptive means; inference for their differences is reported separately. The SPE and CA routines use different resampling weights, as documented in `docs/example-inference.md`. The separate `*-teaching` outputs and membership frequencies are diagnostics. These checks do not establish coverage or identify individual causal effects.
 
 ## Session files
 
@@ -50,13 +52,13 @@ Primary SPE bands use the package's IQR/max bootstrap on the observed trial prof
 - `presentation.html` and `presentation.pdf`: generated, portable exports retained on GitHub.
 - `assets/deck.js`: chapter navigation and overview support.
 - `index.qmd`: session landing page and reading links.
-- `R/demo.R`: reproducible simulated trial, sorted curves and bootstrap.
-- `R/clinical-walkthrough.R`: executable core R examples for the fictional trial.
-- `scripts/clinical-inference.R`: original-package clinical SPE/CA inference and independent bootstrap checks.
+- `R/demo.R`: simulated data, figures and teaching bootstrap.
+- `R/example-walkthrough.R`: executable R examples for the treated/control analysis.
+- `scripts/example-inference.R`: original-package SPE/CA inference and independent bootstrap checks.
 - `scripts/validate-demo.R`: statistical and output checks.
 - `docs/evidence.md`: verified sources and boundaries of the application claims.
 - `docs/software-validation.md`: original-package reproduction and benchmark results.
-- `docs/clinical-inference.md`: clinical inferential target, resampling and output interpretation.
+- `docs/example-inference.md`: inferential target, resampling and output interpretation.
 - `docs/validation.md`: current scientific, rendering and runtime verification.
 - `references.bib`: bibliography for this session.
 

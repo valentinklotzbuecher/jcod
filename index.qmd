@@ -12,7 +12,7 @@ Journal Club / Open Discussion · Clinical Research
 # Who benefits most?
 
 ::: {.lead}
-Exploring treatment-effect heterogeneity beyond the average with **sorted partial effects**.
+How **sorted partial effects** describe treatment effects beyond their average.
 :::
 
 One hour together: around 35–40 minutes of examples and interpretation, with time for discussion throughout.
@@ -24,23 +24,23 @@ One hour together: around 35–40 minutes of examples and interpretation, with t
 :::
 :::
 
-## What we will explore
+## What we will cover
 
-A brief introduction to the method and its literature leads into one fictional randomized trial: intensified diuretic management after a heart-failure admission, with unplanned readmission by 90 days as the endpoint.
+A short introduction to the method and papers, followed by one simulated example with **treated and control groups**, age and sex.
 
-Short R examples show how to fit the model, predict both strategies, calculate benefits and sort them. Dumbbell plots describe the patient profiles at the benefit tails. The original package's `spe()` and `ca()` procedures then add confidence bands, classification standard errors and joint comparisons.
+Short R examples show how to fit an outcome model, predict each profile under both groups and calculate absolute risk reductions. We first plot effects by age and sex, then sort them. Dumbbell plots compare the bottom and top 10% of estimated effects. The original package's `spe()` and `ca()` procedures provide confidence bands, standard errors and joint comparisons.
 
 The HTML presentation has a chapter map and a two-dimensional overview: use **→** to move between chapters, **↓** to explore their examples, **Space** to follow the full story, and **Esc** to see the whole deck.
 
-## Start reading
+## Before the session
 
-- Chernozhukov, Fernández-Val and Luo (2018), [*The Sorted Effects Method*](https://doi.org/10.3982/ECTA14415).
-- Chen, Chernozhukov, Fernández-Val and Luo (2020), [*SortedEffects: Sorted Causal Effects in R*](https://doi.org/10.32614/RJ-2020-006).
+- **Suggested reading:** Chen, Chernozhukov, Fernández-Val and Luo (2020), [*SortedEffects: Sorted Causal Effects in R*](https://doi.org/10.32614/RJ-2020-006). Start with the introduction and mortgage example.
+- **Optional theory:** Chernozhukov, Fernández-Val and Luo (2018), [*The Sorted Effects Method*](https://doi.org/10.3982/ECTA14415).
 
 ## Explore the example
 
-The clinical trial is entirely simulated; its coefficients and treatment patterns are invented for teaching. Main estimates and inference come from the unmodified SortedEffects 1.7.0 package. Dumbbell endpoints are descriptive means; uncertainty for their differences is reported separately. The source notes explain the inferential assumptions and limitations.
+The data and age/sex patterns are simulated for teaching. Main estimates and inference come from the unmodified SortedEffects 1.7.0 package. The source notes explain the assumptions and the scope of the uncertainty estimates.
 
-[R walkthrough](R/clinical-walkthrough.R) · [Inference script](scripts/clinical-inference.R) · [Clinical profiles](results/clinical-profiles.csv) · [Classification results](results/clinical-inference.csv) · [Inference notes](docs/clinical-inference.md)
+[R walkthrough](R/example-walkthrough.R) · [Inference script](scripts/example-inference.R) · [Example profiles](results/example-profiles.csv) · [Classification results](results/example-inference.csv) · [Inference notes](docs/example-inference.md)
 
 The previous Synthetic Control Methods session is preserved in the repository under `archive/scm-2026/`, including its slides, figures, bibliography and literature.

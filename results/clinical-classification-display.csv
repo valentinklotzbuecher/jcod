@@ -1,4 +1,0 @@
-"characteristic","label","least_mean","most_mean","difference","standard_error","difference_unit","joint_p","joint_p_label","bootstrap_draws"
-"age","Age (years)",63.6954066620767,63.5490521430224,-0.146354519054299,2.87295302033363,"years",1,"1.00",499
-"severity","Baseline congestion (SD)",-1.70652777078827,1.74421495907434,3.45074272986261,0.0560341545444698,"SD",0,"0 / 499",499
-"female","Female (%)",59,55,-3.99999999999999,4.00361666813983,"percentage points",0.633266533066132,"0.63",499

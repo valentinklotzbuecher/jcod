@@ -1,6 +1,6 @@
 # Sorted-effects software validation
 
-The clinical teaching example in `R/demo.R` uses transparent `glm()` contrasts
+The simulated age-and-sex example in `R/demo.R` uses direct `glm()` contrasts
 and a fixed reference cohort. It can run without the archived `SortedEffects`
 package. An additional benchmark exercises the original package's published
 mortgage example and checks the estimator against direct calculations.
@@ -81,12 +81,13 @@ adapter uses explicit argument names; it changes presentation only.
 
 ## Interpretation and limits
 
-The main presentation now follows one fictional heart-failure trial and calls
-the original package's `spe()` and `ca()` for its primary inference. All 5,000
-observed trial profiles define the primary SPE reference distribution.
-`scripts/clinical-inference.R` independently verifies clinical point estimates,
+The main presentation uses simulated treated/control groups with age and sex,
+and calls the original package's `spe()` and `ca()` for its primary inference.
+All 5,000 observed profiles define the primary SPE reference distribution.
+`scripts/example-inference.R` independently verifies point estimates,
 SPE bootstrap bands, and CA standard errors/joint adjusted p-values.
-See `clinical-inference.md` for the inspected differences between the SPE and
+Classification compares age and female proportion in the bottom and top 10%
+of estimated risk reductions. See `example-inference.md` for the inspected differences between the SPE and
 CA resampling paths and for interpretation of the native p-value fields.
 
 The simpler SD/max teaching bootstrap remains separate, under `*-teaching`

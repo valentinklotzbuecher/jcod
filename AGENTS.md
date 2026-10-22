@@ -6,7 +6,7 @@ This is a Quarto website with a sorted-partial-effects slide deck. Key paths:
 - `index.qmd` (landing page), `slides.qmd` (main presentation and speaker notes).
 - `references.bib` and `*.csl` for citations.
 - Styling in `theme.scss` and `beamer-unibas.tex`.
-- `R/demo.R` generates the clinical simulation; `results/` holds its figures and tables.
+- `R/demo.R` generates the age-and-sex simulation; `results/` holds its figures and tables.
 - `scripts/` holds numerical validation and an optional original-package benchmark.
 - `docs/` records evidence and software-validation scope.
 - `archive/scm-2026/` preserves the previous session. Do not change its historical files.
@@ -20,7 +20,7 @@ Generated artifacts: `_site/`, `*_cache/`, `*_files/` (do not edit by hand).
 - `quarto render slides.qmd --to revealjs` - HTML slides; `--to beamer` - PDF slides.
 - `Rscript R/demo.R` - regenerate simulated data summaries and figures (499 bootstrap draws by default).
 - `Rscript scripts/validate-demo.R` - validate statistical claims and output artifacts.
-- `Rscript scripts/clinical-inference.R` - run primary clinical SPE/CA inference and refresh its figures after changing the simulation.
+- `Rscript scripts/example-inference.R` - run primary SPE/CA inference and refresh its figures after changing the simulation.
 - `Rscript scripts/benchmark-sortedeffects.R` - rerun original-package integration checks, requiring SortedEffects 1.7.0.
 - `quarto publish quarto-pub` - publishes externally; run only when explicitly requested.
 
@@ -38,7 +38,7 @@ For changes to the simulation, regenerate its outputs and run the numerical vali
 - `quarto render` for a full build.
 - For slides, render both formats to check layout and citations.
 
-Keep simulated truth, model estimates, published study findings and uncertainty scopes distinct. The main presentation uses one fictional clinical trial. Primary inference uses the original SortedEffects 1.7.0 `spe()` and `ca()` routines, with their inspected resampling targets documented in `docs/clinical-inference.md`. Dumbbell endpoints are descriptive means; report the separate native classification SEs and joint p-values without inventing moment confidence intervals. The transparent teaching bootstrap and membership frequencies remain separate diagnostics. Do not claim coverage guarantees or individual causal effects.
+Keep simulated truth, model estimates, published study findings and uncertainty scopes distinct. The main example uses simulated randomized treated/control groups, a binary adverse outcome, age and sex. The model is `outcome ~ group * age_z * sex`, with `sex` coded 0 for male and 1 for female. Primary inference uses the original SortedEffects 1.7.0 `spe()` and `ca()` routines, with their inspected resampling targets documented in `docs/example-inference.md`. Dumbbell endpoints are descriptive means; report the separate native classification SEs and joint p-values without inventing moment confidence intervals. The transparent teaching bootstrap and membership frequencies remain separate diagnostics. Do not claim coverage guarantees or individual causal effects.
 
 ## Commit & Pull Request Guidelines
 Recent commit messages are short, lowercase summaries (e.g., `landing page`). Follow the same style.

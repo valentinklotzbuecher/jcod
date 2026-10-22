@@ -1,7 +1,7 @@
 # Source and interpretation notes
 
 Checked on 20 October 2026. This is the evidence ledger for the sorted-effects
-session; simulated trial results are generated separately and are not clinical
+session; simulated example results are generated separately and are not clinical
 study findings.
 
 ## Sources checked directly
@@ -77,7 +77,7 @@ from Munnell et al. (1996), *Mortgage Lending in Boston: Interpreting HMDA Data*
 
 Pedagogical framing: a model estimates larger conditional disparities for some
 profiles than others. This does not identify individual causal effects of race.
-For the clinical simulation we instead define *benefit* as untreated minus
+For the teaching simulation we instead define *benefit* as control minus
 treated event probability, so its positive direction differs from this denial
 contrast. Label the sign on every figure.
 
@@ -120,4 +120,4 @@ findings, causal claims or subgroup conclusions in the slides:
 
 Do not present these application summaries as verified findings without reading
 the corresponding papers. A verified original tutorial application plus the
-explicitly simulated clinical trial provide a complete initial presentation.
+simulated treated/control example provide the material used in the presentation.

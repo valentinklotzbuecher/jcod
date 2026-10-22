@@ -1,0 +1,3 @@
+"characteristic","label","least_mean","most_mean","difference","standard_error","difference_unit","joint_p","joint_p_label","bootstrap_draws"
+"age","Age (years)",42.2985760481097,78.0319732842781,35.7333972361684,1.26514538412435,"years",0,"0 / 499",499
+"sex","Female (%)",72,60,-12,31.5263469798332,"percentage points",0.879759519038076,"0.88",499
