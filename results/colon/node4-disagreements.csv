@@ -1,0 +1,9 @@
+"id","treatment","nodes","node4","included_primary"
+256,"observation",5,0,TRUE
+269,"observation",4,1,TRUE
+408,"observation",1,1,TRUE
+486,"chemotherapy",1,1,TRUE
+503,"observation",1,1,TRUE
+561,"observation",1,1,TRUE
+626,"observation",8,0,TRUE
+928,"chemotherapy",4,1,TRUE

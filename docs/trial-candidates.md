@@ -5,6 +5,10 @@ design and teaching value. No new treatment-effect models were fitted and no
 candidate was selected using a new heterogeneity p-value. Published findings
 below remain distinct from our own descriptive data checks.
 
+Subsequent work: the [colon pilot](../colon-pilot.qmd) now implements the
+clinical recommendation below. Its findings, validation and numerical
+classification amendment are reported separately from this selection exercise.
+
 ## Two leading choices
 
 **Colon chemotherapy is the strongest clinical alternative.** It offers a

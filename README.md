@@ -79,6 +79,24 @@ The [comparison of other public trials](docs/trial-candidates.md) identifies
 colon chemotherapy and a charitable matching-gift experiment as the strongest
 options for a second example, with data checks and design limitations.
 
+The [colon chemotherapy report](colon-pilot.html) now implements that next
+check: 593 complete-baseline patients, six specified interactions, twelve
+classification characteristics and one held-out split. Its [plan](docs/colon-analysis-plan.md)
+records the sensitivities and a subsequent numerical amendment: native CA
+bootstrap fits fail on this dataset, so the report distinguishes raw output
+from an audited stabilized reconstruction. Download the HTML to read it in a
+browser, or inspect its [Quarto source](colon-pilot.qmd).
+
+```sh
+python3 scripts/fetch-colon-data.py --verify-only
+Rscript scripts/analyze-colon.R
+Rscript scripts/validate-colon-ranking.R
+Rscript scripts/verify-colon-inference.R
+Rscript scripts/verify-colon-inference.R stabilize
+Rscript scripts/plot-colon.R
+bash scripts/render.sh
+```
+
 ## Session files
 
 - `slides.qmd`: HTML RevealJS and Beamer PDF, including speaker notes and technical backup slides.

@@ -81,6 +81,26 @@ adapter uses explicit argument names; it changes presentation only.
 
 ## Interpretation and limits
 
+The colon pilot exposes a dataset-specific numerical failure in native CA.
+With 593 profiles and the specified 19-coefficient logistic model, the native
+20,000-total fitting weights cause 141 of 499 default-start bootstrap fits
+not to converge. In 137 draws, extreme effects and empirical-quantile rounding
+produce empty tails and nonfinite moments. Native summaries omit nonfinite
+values when computing scales and return `-Inf` for an all-missing maximum;
+the final joint p-values still divide by all 499 draws. A zero observed
+contrast consequently receives p = 362/499 rather than 1. Finite final outputs
+therefore do not establish successful inference.
+
+The separate colon audit exactly reconstructs this failure and all native
+SPE/APE results. Both SPE models have 499 converged count-weight fits. The
+post-plan CA reconstruction initializes each scaled-weight fit at the
+count-weight estimate while retaining all draws and native threshold/moment
+weights. All 499 fits then converge, with no numerical warnings or undefined
+moments; maximum prediction disagreement with the count-weight fits is
+8.36e-7. This is an explicitly labeled stabilized reconstruction, not a change
+to the installed package or a claim of unchanged native CA output. See
+`colon-analysis-plan.md`, `colon-pilot.qmd` and `verify-colon-inference.R`.
+
 The IST and ACTG 175 pilots add real-data checks. Native `ca()` moment estimates
 are returned in source-data column order even when the `t` argument requests a
 different order. Their scripts therefore match `colnames(ca$est)` to the requested

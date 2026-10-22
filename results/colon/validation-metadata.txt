@@ -1,0 +1,79 @@
+List of 15
+ $ seed                             : int 20261024
+ $ split                            : chr "Single 50/50 split stratified on treatment assignment only"
+ $ training_n                       : int 296
+ $ test_n                           : int 297
+ $ split_selected_using_outcome     : logi FALSE
+ $ model_selected_using_test_results: logi FALSE
+ $ estimand                         : chr "Observation minus chemotherapy risk of death within three years"
+ $ population                       : chr "Known three-year endpoint and complete primary baseline measurements"
+ $ tertiles                         : chr "Test-prediction tertiles; thresholds use covariates and frozen training fits only"
+ $ tertile_intervals                : chr "Unpooled binomial Wald 95% intervals; pointwise and unadjusted"
+ $ calibration                      : chr "Training-nuisance AIPW benefit pseudo-outcome on centered frozen score, HC3 SE"
+ $ calibration_null                 : chr "Zero score slope; perfect linear calibration would have slope one"
+ $ randomization                    : chr "Nominal chemotherapy propensity 0.5 within the two retained arms; iid working analysis"
+ $ multiplicity                     : chr "Raw exploratory p-values plus Holm adjustment across the two ranking slopes. A separate Holm column adjusts the"| __truncated__
+ $ scope                            : chr "One small training sample; no repeated-split or external validation claim"
+     split    treatment Freq
+1     test  observation  152
+2 training  observation  152
+3     test chemotherapy  145
+4 training chemotherapy  144
+                  model training_n test_n training_events test_events
+constant       constant        296    297              85          94
+interaction interaction        296    297              85          94
+            training_parameters rank converged warning_count fitted_min
+constant                     13   13      TRUE             0 0.04164488
+interaction                  19   19      TRUE             0 0.02006144
+            fitted_max fitted_near_boundary score_mean   score_sd   score_q10
+constant     0.8849939                    0 0.05793848 0.01414432  0.03726160
+interaction  0.9282012                    0 0.06770899 0.13015946 -0.08689543
+             score_q90 test_brier test_log_loss
+constant    0.07522999  0.1957622     0.5787483
+interaction 0.24363715  0.1902733     0.5674389
+                       term   estimate standard_error        lower     upper
+constant.1     mean_benefit 0.08916840     0.05165413 -0.012071846 0.1904086
+constant.2    ranking_slope 2.13361964     3.65656385 -5.033113803 9.3003531
+interaction.1  mean_benefit 0.09071861     0.05098720 -0.009214467 0.1906517
+interaction.2 ranking_slope 1.10090238     0.44179342  0.235003179 1.9668016
+                  p_zero     p_one hc3_reference_error       model
+constant.1    0.08430089        NA        4.796163e-14    constant
+constant.2    0.55955406 0.7565433        4.796163e-14    constant
+interaction.1 0.07519996        NA        1.304512e-15 interaction
+interaction.2 0.01270640 0.8193410        1.304512e-15 interaction
+              test_score_mean test_score_sd test_n p_holm_two_rankings
+constant.1         0.05793848    0.01414432    297                  NA
+constant.2         0.05793848    0.01414432    297          0.55955406
+interaction.1      0.06770899    0.13015946    297                  NA
+interaction.2      0.06770899    0.13015946    297          0.02541279
+                  model                                 comparison   estimate
+constant       constant top minus bottom predicted-benefit tertile 0.04251762
+interaction interaction top minus bottom predicted-benefit tertile 0.28255381
+            standard_error       lower     upper     p_zero
+constant         0.1285971 -0.20952798 0.2945632 0.74092648
+interaction      0.1333918  0.02111076 0.5439969 0.03415599
+            predicted_difference p_holm_two_rankings
+constant              0.03203108          0.74092648
+interaction           0.27800335          0.06831197
+R version 4.5.0 (2025-04-11)
+Platform: x86_64-pc-linux-gnu
+Running under: Debian GNU/Linux 13 (trixie)
+
+Matrix products: default
+BLAS:   /usr/lib/x86_64-linux-gnu/blas/libblas.so.3.12.1 
+LAPACK: /usr/lib/x86_64-linux-gnu/lapack/liblapack.so.3.12.1;  LAPACK version 3.12.0
+
+locale:
+ [1] LC_CTYPE=C.UTF-8       LC_NUMERIC=C           LC_TIME=C.UTF-8       
+ [4] LC_COLLATE=C.UTF-8     LC_MONETARY=C.UTF-8    LC_MESSAGES=C.UTF-8   
+ [7] LC_PAPER=C.UTF-8       LC_NAME=C              LC_ADDRESS=C          
+[10] LC_TELEPHONE=C         LC_MEASUREMENT=C.UTF-8 LC_IDENTIFICATION=C   
+
+time zone: Etc/UTC
+tzcode source: system (glibc)
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+loaded via a namespace (and not attached):
+[1] compiler_4.5.0 splines_4.5.0 

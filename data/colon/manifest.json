@@ -1,0 +1,49 @@
+{
+  "dataset": "colon object in the public survival package",
+  "source_repository": "https://github.com/therneau/survival",
+  "source_commit": "b76de62301f2ed4efcdbd8c062acc6759a54e511",
+  "source_package_version": "3.8-13",
+  "verified_equal_installed_colon_version": "3.8-3",
+  "license": "LGPL (>= 2), as declared in the original package DESCRIPTION",
+  "license_text_source": "GNU license texts supplied by the R source distribution",
+  "license_text_source_commit": "afa4d6c2b0163d85790d5f188e0cf09b99004fcd",
+  "dataset_specific_license": "No separate dataset-specific license was supplied",
+  "files": [
+    {
+      "file": "cancer.rda",
+      "url": "https://raw.githubusercontent.com/therneau/survival/b76de62301f2ed4efcdbd8c062acc6759a54e511/data/cancer.rda",
+      "bytes": 171118,
+      "sha256": "31f15835cfc5cb7c3b1ba0556acc4c9a34f4ab318cb2a28ba47b2a6045cd773f"
+    },
+    {
+      "file": "colon.Rd",
+      "url": "https://raw.githubusercontent.com/therneau/survival/b76de62301f2ed4efcdbd8c062acc6759a54e511/man/colon.Rd",
+      "bytes": 3200,
+      "sha256": "dc231706d01d695d8e35153acc49d79187df532318b3991dfada9dfa8ee22069"
+    },
+    {
+      "file": "DESCRIPTION",
+      "url": "https://raw.githubusercontent.com/therneau/survival/b76de62301f2ed4efcdbd8c062acc6759a54e511/DESCRIPTION",
+      "bytes": 898,
+      "sha256": "70d443f5c447ff1b505a9e39c8e3af2d5bb7be22cc344adbc447010daf3f41ce"
+    },
+    {
+      "file": "survival.Rnw",
+      "url": "https://raw.githubusercontent.com/therneau/survival/b76de62301f2ed4efcdbd8c062acc6759a54e511/vignettes/survival.Rnw",
+      "bytes": 173152,
+      "sha256": "1948df993345e9a9ed73a0b81b7cf712527498cf17c854dbaff877f76996b285"
+    },
+    {
+      "file": "LGPL-2",
+      "url": "https://raw.githubusercontent.com/wch/r-source/afa4d6c2b0163d85790d5f188e0cf09b99004fcd/share/licenses/LGPL-2",
+      "bytes": 25292,
+      "sha256": "655bbf126cb0247df3a5cfce85e2293e76a1cbd588568b3b482b6e5029646097"
+    },
+    {
+      "file": "GPL-2",
+      "url": "https://raw.githubusercontent.com/wch/r-source/afa4d6c2b0163d85790d5f188e0cf09b99004fcd/share/licenses/GPL-2",
+      "bytes": 18092,
+      "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
+    }
+  ]
+}

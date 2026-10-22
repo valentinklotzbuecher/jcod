@@ -1,0 +1,5 @@
+"split","treatment","Freq"
+"test","observation",152
+"training","observation",152
+"test","chemotherapy",145
+"training","chemotherapy",144

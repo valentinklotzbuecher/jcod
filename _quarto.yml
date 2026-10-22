@@ -4,11 +4,13 @@ project:
     - index.qmd
     - slides.qmd
     - ist-pilot.qmd
+    - colon-pilot.qmd
   resources:
     - assets/
     - presentation.html
     - presentation.pdf
     - ist-pilot.html
+    - colon-pilot.html
     - results/figures/
     - results/*.csv
     - results/ist/*.csv
@@ -19,6 +21,13 @@ project:
     - data/ist/manifest.json
     - data/ist/IST_variables.csv
     - data/ist/license_text
+    - results/colon/*.csv
+    - results/colon/*.png
+    - results/colon/*.pdf
+    - results/colon/figures/
+    - data/colon/README.md
+    - data/colon/manifest.json
+    - data/colon/colon.Rd
     - R/*.R
     - scripts/*.R
     - docs/*.md

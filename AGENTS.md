@@ -15,6 +15,10 @@ This is a Quarto website with a sorted-partial-effects slide deck. Key paths:
   plan in `docs/ist-analysis-plan.md`; report both models and the fixed validation
   split. Do not select a model or split because it yields a stronger signal.
 - `archive/scm-2026/` preserves the previous session. Do not change its historical files.
+- `colon-pilot.qmd` and `docs/colon-analysis-plan.md` record the subsequent colon
+  trial pilot. Native CA is numerically unstable for these data; raw output is
+  retained in `classification-native.csv`, while the report uses the separately
+  audited `classification-stabilized.csv`. Preserve that distinction.
 Generated artifacts: `_site/`, `*_cache/`, `*_files/` (do not edit by hand).
 
 ## Build, Test, and Development Commands
@@ -31,6 +35,12 @@ Generated artifacts: `_site/`, `*_cache/`, `*_files/` (do not edit by hand).
 - `Rscript scripts/analyze-ist.R` - run the two IST models and native SPE/CA inference.
 - `Rscript scripts/validate-ist-ranking.R` - validate both rankings on the fixed held-out sample.
 - `Rscript scripts/plot-ist.R` - refresh IST report figures after inference.
+- `python3 scripts/fetch-colon-data.py --verify-only` - verify pinned colon source files.
+- `Rscript scripts/analyze-colon.R` - run the specified colon models and sensitivities.
+- `Rscript scripts/validate-colon-ranking.R` - run the one fixed colon validation split.
+- `Rscript scripts/verify-colon-inference.R` - audit and reconstruct all native bootstrap fits.
+- `Rscript scripts/verify-colon-inference.R stabilize` - reconstruct CA with the documented numerical initialization change.
+- `Rscript scripts/plot-colon.R` - refresh the descriptive colon figures.
 - `quarto publish quarto-pub` - publishes externally; run only when explicitly requested.
 
 In the prepared cloud environment, first run `source /workspace/.tools/activate`.

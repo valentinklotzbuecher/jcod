@@ -1,0 +1,3 @@
+"model","n","discordant_nodes","count_derived_average","source_indicator_average","mean_absolute_change","rank_correlation"
+"constant",593,8,0.0846927109565594,0.0852451495026209,0.00123236852694091,0.975217364582409
+"interaction",593,8,0.0849957412376729,0.0855416194951821,0.0100650081424264,0.991666525675913

@@ -75,6 +75,42 @@ effects are claimed.
   robustness to model misspecification, or external validation. See
   `ist-analysis-plan.md`, `ist-data.md` and `actg175-pilot.md` for scope.
 
+## Colon pilot
+
+- Verified all six pinned source-file hashes. The `colon` object in the
+  downloaded survival 3.8-13 source snapshot is identical to the installed
+  survival 3.8-3 object. Data preparation checks one death record per person,
+  baseline agreement across paired records, endpoint coding, exclusions and
+  the eight node-coding disagreements. Selected/known/primary counts are
+  619/618/593.
+- Models and sensitivity checks were recorded before fitting. Both primary
+  models are full rank and converged, with 13 and 19 coefficients. Native SPE
+  and APE estimates, scales, bands and intervals independently reconstruct
+  exactly. All 998 count-weight bootstrap fits converged.
+- Native CA failed numerically: 141/499 scaled-weight fits did not converge
+  and 137 draws have nonfinite moments. Independent reconstruction matches
+  these raw outputs exactly but explicitly rejects their inferential use.
+  A documented subsequent initialization change gives 499 converged scaled
+  fits, with no discarded draws or nonfinite moments. Prediction, score and
+  likelihood agreement with count-weight fits were checked. Raw and stabilized
+  classification tables remain separately labeled.
+- The one fixed validation split uses 296 training and 297 test patients.
+  IDs are disjoint, prediction thresholds do not use validation outcomes,
+  and AIPW/HC3 calculations were independently reproduced. Delete-one QR
+  calculations agree with HC3 covariance to within 4.8e-14. The interaction
+  slope is 1.101, raw p .0127 and Holm p .0254; the all-618 sensitivity weakens
+  the full-sample interaction test from .0136 to .0536. These are preliminary
+  internal results, not independent replication or a novel clinical claim.
+- Both SPE comparison and 12-trait classification figures were visually
+  inspected as PNGs and one-page PDFs. Dumbbells are descriptive; no moment
+  confidence intervals are invented. The validation figure has wide pointwise
+  intervals and does not establish harm in the low-ranked group.
+- The full site renders with the added report. Its portable HTML passed a
+  Chromium check through an isolated local HTTP server with all other network
+  requests blocked: all four tables and three images load, with no JavaScript
+  errors, failed requests or horizontal page overflow. Its CA table has all
+  twelve rows and is explicitly labeled as stabilized reconstruction.
+
 ## Rendering and runtime
 
 - `bash scripts/render.sh`: passed full-site rendering, including the portable

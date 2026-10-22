@@ -1,0 +1,16 @@
+"check","max_absolute_error","tolerance","finite","passed"
+"constant_spe_point",0,1e-08,TRUE,TRUE
+"constant_spe_scale",0,1e-08,TRUE,TRUE
+"constant_spe_band",0,1e-08,TRUE,TRUE
+"constant_ape_point",0,1e-08,TRUE,TRUE
+"constant_ape_scale",0,1e-08,TRUE,TRUE
+"constant_ape_interval",0,1e-08,TRUE,TRUE
+"interaction_spe_point",0,1e-08,TRUE,TRUE
+"interaction_spe_scale",0,1e-08,TRUE,TRUE
+"interaction_spe_band",0,1e-08,TRUE,TRUE
+"interaction_ape_point",0,1e-08,TRUE,TRUE
+"interaction_ape_scale",0,1e-08,TRUE,TRUE
+"interaction_ape_interval",0,1e-08,TRUE,TRUE
+"ca_point",0,1e-08,TRUE,TRUE
+"ca_scale",0,1e-08,TRUE,TRUE
+"ca_joint_p",0,1e-08,TRUE,TRUE
