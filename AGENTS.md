@@ -9,6 +9,11 @@ This is a Quarto website with a sorted-partial-effects slide deck. Key paths:
 - `R/demo.R` generates the age-and-sex simulation; `results/` holds its figures and tables.
 - `scripts/` holds numerical validation and an optional original-package benchmark.
 - `docs/` records evidence and software-validation scope.
+- `ist-pilot.qmd` is a separate real-data report. `data/ist/` holds the corrected
+  public trial data, original documentation and licence; preserve its raw bytes.
+- `R/ist-data.R`, `R/ist-analysis.R` and the IST scripts implement the exploratory
+  plan in `docs/ist-analysis-plan.md`; report both models and the fixed validation
+  split. Do not select a model or split because it yields a stronger signal.
 - `archive/scm-2026/` preserves the previous session. Do not change its historical files.
 Generated artifacts: `_site/`, `*_cache/`, `*_files/` (do not edit by hand).
 
@@ -22,6 +27,10 @@ Generated artifacts: `_site/`, `*_cache/`, `*_files/` (do not edit by hand).
 - `Rscript scripts/validate-demo.R` - validate statistical claims and output artifacts.
 - `Rscript scripts/example-inference.R` - run primary SPE/CA inference and refresh its figures after changing the simulation.
 - `Rscript scripts/benchmark-sortedeffects.R` - rerun original-package integration checks, requiring SortedEffects 1.7.0.
+- `python3 scripts/fetch-ist-data.py --verify-only` - verify pinned public IST files.
+- `Rscript scripts/analyze-ist.R` - run the two IST models and native SPE/CA inference.
+- `Rscript scripts/validate-ist-ranking.R` - validate both rankings on the fixed held-out sample.
+- `Rscript scripts/plot-ist.R` - refresh IST report figures after inference.
 - `quarto publish quarto-pub` - publishes externally; run only when explicitly requested.
 
 In the prepared cloud environment, first run `source /workspace/.tools/activate`.

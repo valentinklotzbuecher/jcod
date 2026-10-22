@@ -1,0 +1,47 @@
+{
+  "dataset": "International Stroke Trial database, version 2 (corrected)",
+  "canonical_dataset": "https://doi.org/10.7488/ds/104",
+  "database_paper": "https://doi.org/10.1186/1745-6215-12-101",
+  "correction": "https://doi.org/10.1186/1745-6215-13-24",
+  "mirror_repository": "https://github.com/ebergel/ist-1-database",
+  "mirror_commit": "e9ebea9d6202bed786abc89785740e13ac087fed",
+  "license": "ODC Attribution License v1.0",
+  "license_url": "https://opendatacommons.org/licenses/by/1-0/",
+  "files": [
+    {
+      "file": "IST_corrected.csv",
+      "source_path": "data/IST_corrected.csv",
+      "url": "https://raw.githubusercontent.com/ebergel/ist-1-database/e9ebea9d6202bed786abc89785740e13ac087fed/data/IST_corrected.csv",
+      "bytes": 4798288,
+      "sha256": "a350aed2329bbcde23c05caaa96b9275b44b017adecc2fd02231d590454695d5"
+    },
+    {
+      "file": "IST_variables.csv",
+      "source_path": "docs/IST_variables.csv",
+      "url": "https://raw.githubusercontent.com/ebergel/ist-1-database/e9ebea9d6202bed786abc89785740e13ac087fed/docs/IST_variables.csv",
+      "bytes": 6129,
+      "sha256": "bab564a5e44328d4c8c1cce534d029366d2847c79548d8a5de5f00f2d1bbcf8c"
+    },
+    {
+      "file": "license_text",
+      "source_path": "license_text",
+      "url": "https://raw.githubusercontent.com/ebergel/ist-1-database/e9ebea9d6202bed786abc89785740e13ac087fed/license_text",
+      "bytes": 20765,
+      "sha256": "48d327284f2e0eb65312be37199ca20695eae409777e9aca99156ec309959626"
+    },
+    {
+      "file": "IST version 2 additional commentary.pdf",
+      "source_path": "docs/IST version 2 additional commentary.pdf",
+      "url": "https://raw.githubusercontent.com/ebergel/ist-1-database/e9ebea9d6202bed786abc89785740e13ac087fed/docs/IST%20version%202%20additional%20commentary.pdf",
+      "bytes": 9307,
+      "sha256": "eb392b636feb05a8e4b442a54f8ec959b72206376bd282adcceeb82f599b4208"
+    },
+    {
+      "file": "IST_database_paper.pdf",
+      "source_path": "docs/IST_database_paper.pdf",
+      "url": "https://raw.githubusercontent.com/ebergel/ist-1-database/e9ebea9d6202bed786abc89785740e13ac087fed/docs/IST_database_paper.pdf",
+      "bytes": 88482,
+      "sha256": "168a482f078e3581dc9e7f09d30c13ecddf89fa8af96e720808f4fc1a78e4b0d"
+    }
+  ]
+}

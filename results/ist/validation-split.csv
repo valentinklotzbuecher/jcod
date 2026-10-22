@@ -1,0 +1,5 @@
+"split","aspirin","Freq"
+"test","no_aspirin",4823
+"training","no_aspirin",4823
+"test","aspirin",4820
+"training","aspirin",4819

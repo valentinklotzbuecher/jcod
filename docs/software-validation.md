@@ -81,6 +81,14 @@ adapter uses explicit argument names; it changes presentation only.
 
 ## Interpretation and limits
 
+The IST and ACTG 175 pilots add real-data checks. Native `ca()` moment estimates
+are returned in source-data column order even when the `t` argument requests a
+different order. Their scripts therefore match `colnames(ca$est)` to the requested
+characteristics before aligning estimates, SEs and joint p-values. Independent
+direct tail means check that mapping. ACTG 175 also reconstructs all 499 bootstrap
+draws for both OLS SPE models and its classification comparisons. See the pilot
+reports for exploratory scope and held-out validation.
+
 The main presentation uses simulated treated/control groups with age and sex,
 and calls the original package's `spe()` and `ca()` for its primary inference.
 All 5,000 observed profiles define the primary SPE reference distribution.

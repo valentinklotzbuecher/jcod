@@ -1,0 +1,2 @@
+"test","df","statistic","p_value","interpretation"
+"Eight specified aspirin interactions, log-odds scale",8,8.85548941519301,0.354633096560951,"Exploratory likelihood-ratio test; not a test of constant risk differences"

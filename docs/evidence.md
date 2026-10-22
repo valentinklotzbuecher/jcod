@@ -109,10 +109,21 @@ findings, causal claims or subgroup conclusions in the slides:
   hypertension risk*, **Journal of Environmental Economics and Management**,
   DOI [10.1016/j.jeem.2022.102723](https://doi.org/10.1016/j.jeem.2022.102723).
   The proposed sample size and age/sex/smoking subgroup findings remain unchecked.
-- *Prosocial behavior in emergencies: Evidence from blood donors* (2022),
-  **Social Science & Medicine**,
+- Bilancini et al. (2022), *Prosocial behavior in emergencies: Evidence from blood
+  donors recruitment and retention during the COVID-19 pandemic*,
+  **Social Science & Medicine** 314, 115438.
+  [PubMed record](https://pubmed.ncbi.nlm.nih.gov/36327632/) ·
   [PMC record](https://pmc.ncbi.nlm.nih.gov/articles/PMC9595396/).
-  The claim of little convincing heterogeneity remains unchecked.
+  Added as optional suggested reading following the user's supplied external
+  review on 22 October 2026. The title, author surname, year, journal, volume,
+  article number and description as an observational health application come
+  from that review. They have not been independently verified here. The BibTeX
+  entry uses the supplied lead-author surname followed by “and others”, pending
+  verification of the complete author list.
+  The review recommends Section 3.3 and describes sorted effects, uniform bands
+  and tail comparisons; those method and finding claims remain unverified and
+  are not presented as results in the slides. Fresh attempts to retrieve PMC,
+  PubMed, EuropePMC full-text XML, Crossref and OpenAlex all returned HTTP 403.
 - *Heterogeneous gender gaps in mental wellbeing* (2023),
   [PubMed 37535987](https://pubmed.ncbi.nlm.nih.gov/37535987/).
 - *Lessons on the COVID-19 pandemic: who are the most affected* (2023),

@@ -36,10 +36,14 @@ The HTML presentation has a chapter map and a two-dimensional overview: use **鈫
 
 - **Suggested reading:** Chen, Chernozhukov, Fern谩ndez-Val and Luo (2020), [*SortedEffects: Sorted Causal Effects in R*](https://doi.org/10.32614/RJ-2020-006). Start with the introduction and mortgage example.
 - **Optional theory:** Chernozhukov, Fern谩ndez-Val and Luo (2018), [*The Sorted Effects Method*](https://doi.org/10.3982/ECTA14415).
+- **Optional application (suggested):** Bilancini et al. (2022), [*Prosocial behavior in emergencies: Evidence from blood donors recruitment and retention during the COVID-19 pandemic*](https://pubmed.ncbi.nlm.nih.gov/36327632/). A health-related observational application suggested in the review; source verification is pending in the [evidence notes](docs/evidence.md).
 
 ## Explore the example
 
-The data and age/sex patterns are simulated for teaching. Main estimates and inference come from the unmodified SortedEffects 1.7.0 package. The source notes explain the assumptions and the scope of the uncertainty estimates.
+[Read the International Stroke Trial pilot](ist-pilot.qmd): a real-data check of
+aspirin effects, a larger classification table and validation in held-out patients.
+
+In the slides' teaching example, the data and age/sex patterns are simulated. Main estimates and inference come from the unmodified SortedEffects 1.7.0 package. The source notes explain the assumptions and the scope of the uncertainty estimates.
 
 [R walkthrough](R/example-walkthrough.R) 路 [Inference script](scripts/example-inference.R) 路 [Example profiles](results/example-profiles.csv) 路 [Classification results](results/example-inference.csv) 路 [Inference notes](docs/example-inference.md)
 

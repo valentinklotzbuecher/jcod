@@ -1,0 +1,80 @@
+List of 14
+ $ seed                             : int 20261022
+ $ split                            : chr "Single 50/50 split stratified on aspirin assignment only"
+ $ training_n                       : int 9642
+ $ test_n                           : int 9643
+ $ split_selected_using_outcome     : logi FALSE
+ $ model_selected_using_test_results: logi FALSE
+ $ estimand                         : chr "No-aspirin minus aspirin risk of death/dependence at six months"
+ $ quintiles                        : chr "Test-prediction quintiles; thresholds use covariates and frozen training fits only"
+ $ quintile_intervals               : chr "Unpooled binomial Wald 95% intervals; descriptive, not multiplicity-adjusted"
+ $ calibration                      : chr "OLS of training-nuisance AIPW benefit pseudo-outcome on centered frozen score, HC3 SE"
+ $ calibration_null                 : chr "Zero score slope; perfect linear calibration would have slope one"
+ $ randomization                    : chr "Nominal aspirin propensity 0.5; exploratory iid large-sample diagnostics, not exact trial-allocation inference"
+ $ multiplicity                     : chr "p_zero fields are exploratory and unadjusted. Additional Holm columns adjust the two rankings within calibratio"| __truncated__
+ $ scope                            : chr "Conditional on this one training sample; no repeated-split or external validation claim"
+     split    aspirin Freq
+1     test no_aspirin 4823
+2 training no_aspirin 4823
+3     test    aspirin 4820
+4 training    aspirin 4819
+                  model training_n test_n training_parameters converged
+constant       constant       9642   9643                  28      TRUE
+interaction interaction       9642   9643                  36      TRUE
+            score_mean    score_sd    score_q10  score_q90 test_brier
+constant    0.01073808 0.004195913  0.003687764 0.01482181  0.1765675
+interaction 0.01087438 0.026844547 -0.018473529 0.04756434  0.1767454
+            test_log_loss
+constant        0.5255350
+interaction     0.5259555
+                                    term   estimate standard_error
+constant.intercept          mean_benefit 0.01591198    0.008558754
+constant.centered_score    ranking_slope 3.55775084    1.660873542
+interaction.intercept       mean_benefit 0.01594371    0.008560521
+interaction.centered_score ranking_slope 0.07810034    0.346879324
+                                   lower      upper     p_zero       model
+constant.intercept         -0.0008628688 0.03268683 0.06300632    constant
+constant.centered_score     0.3024985139 6.81300317 0.03218574    constant
+interaction.intercept      -0.0008346066 0.03272202 0.06253699 interaction
+interaction.centered_score -0.6017706419 0.75797132 0.82186155 interaction
+                           test_score_mean test_score_sd test_n
+constant.intercept              0.01073808   0.004195913   9643
+constant.centered_score         0.01073808   0.004195913   9643
+interaction.intercept           0.01087438   0.026844547   9643
+interaction.centered_score      0.01087438   0.026844547   9643
+                           p_holm_two_rankings
+constant.intercept                          NA
+constant.centered_score             0.06437149
+interaction.intercept                       NA
+interaction.centered_score          0.82186155
+                  model                                  comparison    estimate
+constant       constant top minus bottom predicted-benefit quintile 0.056617120
+interaction interaction top minus bottom predicted-benefit quintile 0.004113079
+            standard_error        lower     upper     p_zero
+constant        0.02579608  0.006057735 0.1071765 0.02817826
+interaction     0.03132069 -0.057274340 0.0655005 0.89552100
+            predicted_difference p_holm_two_rankings
+constant              0.01113302          0.05635652
+interaction           0.07356804          0.89552100
+R version 4.5.0 (2025-04-11)
+Platform: x86_64-pc-linux-gnu
+Running under: Debian GNU/Linux 13 (trixie)
+
+Matrix products: default
+BLAS:   /usr/lib/x86_64-linux-gnu/blas/libblas.so.3.12.1 
+LAPACK: /usr/lib/x86_64-linux-gnu/lapack/liblapack.so.3.12.1;  LAPACK version 3.12.0
+
+locale:
+ [1] LC_CTYPE=C.UTF-8       LC_NUMERIC=C           LC_TIME=C.UTF-8       
+ [4] LC_COLLATE=C.UTF-8     LC_MONETARY=C.UTF-8    LC_MESSAGES=C.UTF-8   
+ [7] LC_PAPER=C.UTF-8       LC_NAME=C              LC_ADDRESS=C          
+[10] LC_TELEPHONE=C         LC_MEASUREMENT=C.UTF-8 LC_IDENTIFICATION=C   
+
+time zone: Etc/UTC
+tzcode source: system (glibc)
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+loaded via a namespace (and not attached):
+[1] compiler_4.5.0 splines_4.5.0 

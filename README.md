@@ -46,6 +46,35 @@ The six main chapters cover the literature, example data, effects, classificatio
 
 Primary SPE bands use the package's IQR/max bootstrap on the observed profiles. Classification uses native standard errors and p-values adjusted jointly across age and female proportion. Dumbbell endpoints are descriptive means; inference for their differences is reported separately. The SPE and CA routines use different resampling weights, as documented in `docs/example-inference.md`. The separate `*-teaching` outputs and membership frequencies are diagnostics. These checks do not establish coverage or identify individual causal effects.
 
+## Real-data pilot
+
+The [International Stroke Trial report](ist-pilot.html) compares two specified
+aspirin-effect models and checks their rankings on one fixed held-out sample.
+The corrected public data, dictionary, licence and source hashes are retained in
+`data/ist/`. The report is separate from the main simulated slide example.
+Download the HTML to read it in a browser; [its Quarto source](ist-pilot.qmd)
+shows how the saved results enter the report.
+
+```sh
+python3 scripts/fetch-ist-data.py --verify-only
+Rscript scripts/analyze-ist.R
+Rscript scripts/validate-ist-ranking.R
+Rscript scripts/plot-ist.R
+bash scripts/render.sh
+```
+
+The [analysis plan](docs/ist-analysis-plan.md) records the outcome, eight
+interactions, 12 classification traits and validation strategy. The
+[data notes](docs/ist-data.md) explain the endpoint and factorial design.
+Patient bootstrap results are exploratory; this pilot does not establish a new
+subgroup effect or a validated treatment rule.
+
+A [fixed ACTG 175 secondary check](docs/actg175-pilot.md) uses a continuous CD4
+endpoint and one treatment contrast. Run `Rscript R/actg175-pilot.R` to reproduce
+its native inference and independent bootstrap reconstruction. Its source files
+and licence provenance are under `data/actg175/`; results are under
+`results/actg175/`. Neither pilot supports an established new interaction ranking.
+
 ## Session files
 
 - `slides.qmd`: HTML RevealJS and Beamer PDF, including speaker notes and technical backup slides.

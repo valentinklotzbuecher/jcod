@@ -1,0 +1,3 @@
+"model","estimate","standard_error","lower","upper","p_null_zero","p_null_one","predicted_sd","interpretation"
+"main",NA,NA,NA,NA,NA,NA,3.52640997563394e-14,"Constant effect: ranking slope undefined"
+"interaction",0.294849405710468,0.368052772276375,-0.428187635486517,1.01788644690745,0.423432493647223,0.0559212141327222,32.3251904853642,"Held-out AIPW slope; zero=no supported ranking, one=ideal calibration"

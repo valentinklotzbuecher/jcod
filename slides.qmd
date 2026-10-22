@@ -280,6 +280,27 @@ Subtract the treated risk from the control risk.
 Keep the effect scale and sign consistent. A percentage point is an absolute difference between probabilities. These estimates describe average responses for a covariate profile, not an individual's realized treatment effect. All values are generated from the fitted model.
 :::
 
+## Effect scale matters {.figure-slide}
+
+::: columns
+::: {.column width="70%"}
+![](results/figures/baseline-risk.png){.panel-figure width=100%}
+:::
+::: {.column width="30%" .figure-notes}
+- The treatment odds ratio is **0.60** at every baseline risk.
+- Control risks of **10% and 40%** give risk reductions of **3.8 and 11.4 pp**.
+- Absolute benefits can vary even without a treatment interaction on the log-odds scale.
+:::
+:::
+
+::: {.source}
+Analytic conversion from odds to risks. The effect scale determines what counts as a constant effect.
+:::
+
+::: notes
+Spend about one minute on this distinction before discussing model interactions. For odds ratio theta and control risk p, treated risk is theta*p/(1-p+theta*p). With theta=0.60, the reductions are exactly 3.75 and 11.43 percentage points at control risks of 10% and 40%. Absolute benefit peaks at 1/(1+sqrt(theta)), so it is not globally increasing with baseline risk. The following age/sex model includes treatment interactions, but varying absolute effects do not require them. This slide is an algebraic scale illustration.
+:::
+
 ## What effect are we estimating?
 
 $$
@@ -395,7 +416,7 @@ Equal profile weights. The weighted-quantile convention matches SortedEffects 1.
 - **Horizontal:** percentile of fitted risk reductions.
 - **Vertical:** risk reduction in percentage points.
 - Dashed line: mean of **`r pp(ape$estimate)` pp**.
-- Sorting shows the spread; it removes the age and sex labels.
+- Same model as the age–sex plot, evaluated at the **observed profiles** and sorted.
 :::
 :::
 
@@ -511,14 +532,15 @@ spe_fit <- SortedEffects::spe(
 ![](results/figures/uncertainty.png){.panel-figure width=100%}
 :::
 ::: {.column width="30%" .figure-notes}
-- Shading: **95% uniform confidence band** over the displayed grid.
-- The lower-tail band crosses zero; the upper-tail band stays above zero.
-- The band concerns the **curve**, not an individual's treatment effect.
+- **95% uniform band** over the displayed grid.
+- Bootstrap: **refit**, predict both risks, subtract and **sort**.
+- Lower tail includes zero; upper tail stays positive.
+- Uncertainty in the **curve**, not an individual effect.
 :::
 :::
 
 ::: {.source}
-SortedEffects 1.7.0; 499 bootstrap draws; 10th–90th percentiles; uncorrected estimates.
+SortedEffects 1.7.0; 499 draws; 10th–90th percentiles; uncorrected estimates. Observed age/sex profiles are held fixed for this SPE band.
 :::
 
 ::: notes
@@ -630,10 +652,11 @@ Use the map to return to the age-by-sex plot, SPE curve, dumbbells or inference 
 
 - **Preparation:** Chen et al. (2020), *SortedEffects: Sorted Causal Effects in R* [@chen2020]. Introduction and worked example.
 - **Optional theory:** Chernozhukov, Fernández-Val and Luo (2018) [@chernozhukov2018].
+- **Optional application (suggested):** Bilancini et al. (2022), blood-donor recruitment and retention during COVID-19 [@bilancini2022].
 - **Repository:** slides, executable R code, results and checks at [github.com/valentinklotzbuecher/jcod](https://github.com/valentinklotzbuecher/jcod).
 
 ::: notes
-End of main material. The R Journal tutorial is sufficient preparation for the applied discussion; the Econometrica paper is optional theory. All main results are simulated. Additional details and the separate mortgage benchmark follow in backup.
+End of main material. The R Journal tutorial is sufficient preparation for the applied discussion; the Econometrica paper is optional theory. The blood-donor paper was suggested in the external review as a health-related observational application. Its bibliographic details come from that supplied review; full-text verification remains pending in docs/evidence.md. No numerical result or inference claim from it is presented here. All main results are simulated. Additional details and the separate mortgage benchmark follow in backup.
 :::
 
 # Additional material {#backup .chapter-slide .backup-chapter data-chapter-label="Backup" data-background-color="#261b37" data-background-transition="fade"}
@@ -667,18 +690,6 @@ $$
 
 ::: notes
 The paper studies estimated effect functions and classification under regularity conditions. Conditional means are not realized individual causal effects. APE is the full-population average, not the area under the displayed truncated curve. A different reference distribution changes the sorted summary.
-:::
-
-## Backup · Effect scale matters
-
-![](results/figures/baseline-risk.png){width=95%}
-
-::: {.source}
-A constant odds ratio of 0.60 still gives varying absolute risk reductions. Separate analytic illustration.
-:::
-
-::: notes
-For OR theta and control risk p, treated risk is theta*p/(1-p+theta*p). Absolute benefit peaks at1/(1+sqrt(theta)); it is not globally increasing. Risk-difference heterogeneity can arise without log-odds interaction. This is a scale property, not evidence for a biological mechanism.
 :::
 
 ## Backup · Simulation assumptions
