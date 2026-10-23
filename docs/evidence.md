@@ -1,7 +1,7 @@
 # Source and interpretation notes
 
-Initial source checks on 20 October 2026; updated on 22 October 2026 with the
-trial analyses used in the presentation. This is the evidence ledger for the
+Initial source checks on 20 October 2026; updated on 23 October 2026 for the
+single-trial presentation and causal-forest teaser. This is the evidence ledger for the
 sorted-effects session. The colon results are our exploratory reanalysis of
 public trial data, not published subgroup findings. The earlier simulated
 example remains a separate teaching resource.
@@ -51,7 +51,7 @@ Teaching implications grounded in the tutorial:
   tail-characteristics table is a descriptive illustration unless the matching
   inference has actually been performed.
 
-### Closing connection: causal forests
+### Next-session teaser: causal forests
 
 Athey, Tibshirani and Wager (2019), *Generalized Random Forests*,
 **The Annals of Statistics** 47(2), 1148–1178,
@@ -69,6 +69,13 @@ were checked for this conceptual slide (source snapshot reporting version 2.6.1)
   interface accepts forests or that its current inference applies to them.
   Forest pointwise intervals do not automatically provide uniform SPE bands
   or valid inference for selected tail characteristics.
+- The flexibility gain is relative to our chosen logistic specification, not
+  an inherent limitation of SPE. The teaser states the common causal requirements:
+  randomization or conditional exchangeability, overlap and well-defined treatment.
+  Notes and backup add consistency/no interference, selection/missingness, and
+  the distinct estimation and inference requirements. Both approaches concern
+  conditional average effects, not realized individual effects. A non-flat
+  fitted curve alone does not establish causal heterogeneity.
 - No forest was fitted or additional model searched for this presentation.
   For a future mortality analysis, grf's treated-minus-control convention would
   need reversing to match the deck's positive-benefit convention. Identification,
@@ -123,7 +130,7 @@ The benchmark implementation and any local plotting compatibility fix must be
 documented alongside the benchmark output. Successful plotting alone does not
 validate bootstrap or classification inference.
 
-## Public trial analyses used in the session
+## Public trial analyses and retained resources
 
 ### Main example: colon chemotherapy
 
@@ -181,14 +188,14 @@ this pattern is a new clinical discovery, and do not use this historical regimen
 to recommend present-day treatment. The original trial data, the exploratory
 model, and evidence from other trials remain distinct.
 
-### Brief comparison: International Stroke Trial
+### Separate resource: International Stroke Trial
 
 The corrected public IST data, dictionary, licence and source hashes are retained
 in `data/ist/`; the [data notes](ist-data.md) document the mirror and the limits of
 source verification. The [pilot report](../ist-pilot.qmd) compares two specified
 aspirin-effect models for six-month death or dependence. Its fixed held-out
-check did not support the apparent ranking. This comparison illustrates why a
-non-flat sorted curve by itself does not establish useful heterogeneity.
+check did not support the interaction-model ranking. The report is retained
+as a separate resource; the presentation now uses only the colon trial.
 
 ## Clinical applications: useful leads, not verified teaching claims
 

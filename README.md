@@ -1,11 +1,10 @@
 # JCOD: sorted partial effects
 
 A one-hour session for statisticians, with about 35–40 minutes of presentation
-and time for discussion. The public colon chemotherapy trial is the main
+and time for discussion. The public colon chemotherapy trial is the sole worked
 example: sorted partial effects describe differences in estimated three-year
 mortality benefit, and classification compares twelve patient characteristics.
-A brief International Stroke Trial comparison puts the held-out ranking check
-in context. The earlier simulation remains a teaching resource; the previous
+The earlier trial pilots and simulation remain separate resources; the previous
 Synthetic Control Methods session is preserved in `archive/scm-2026/`.
 
 ## Build and preview
@@ -53,12 +52,14 @@ Transitions and auto-animation respect reduced-motion preferences. The PDF shows
 the completed slides in reading order, with fragment states consolidated.
 
 The six main chapters cover the literature, trial data, effects, classification,
-inference and discussion. Short R examples show the model, predictions and tail
-summaries. The classification table and dumbbell plots describe the lowest- and
+inference and discussion. R examples show the model, predictions and full
+`spe()` and `ca()` calls, with stepwise highlighting of the important arguments.
+The classification table and dumbbell plots describe the lowest- and
 highest-benefit tails; one fixed held-out split checks whether the estimated
-ranking predicts differences in observed benefit. One closing slide relates
-causal forests to sorted effects: flexible effect estimation followed by a
-distributional summary, with separate requirements for valid inference.
+ranking predicts differences in observed benefit. A closing teaser for the next
+session introduces causal forests: what flexible effect estimation adds, how
+it relates to sorted summaries, and which assumptions support a causal reading.
+No forest is fitted in this session.
 
 `R/colon-walkthrough.R` contains executable versions of the slide calculations.
 It fits the two specified models and verifies the saved point estimates.
@@ -80,14 +81,15 @@ has p=.014; the specified sensitivity retaining all 618 known outcomes with
 working baseline imputation has p=.054. Neither the negative lower-tail
 estimate nor the held-out low-ranked group's result establishes harm from
 chemotherapy in women. Prior subgroup literature has not been checked well
-enough to claim a new clinical finding.
+enough to claim a new clinical finding. Colon was the third exploratory trial
+pilot; inference is not adjusted for searching across datasets.
 
 ## Trial reports and analysis
 
 The [International Stroke Trial report](ist-pilot.html) compares two specified
 aspirin-effect models and checks their rankings on one fixed held-out sample.
 The corrected public data, dictionary, licence and source hashes are retained in
-`data/ist/`. The deck uses this pilot as a brief comparison with the colon trial.
+`data/ist/`. This remains a separate report; the deck focuses on colon throughout.
 Download the HTML to read it in a browser; [its Quarto source](ist-pilot.qmd)
 shows how the saved results enter the report.
 

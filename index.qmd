@@ -30,11 +30,15 @@ A short introduction to the method and papers, followed by a public randomized
 **colon chemotherapy trial**: does the average reduction in three-year mortality
 hide differences between patient profiles?
 
-Short R examples show how to fit an outcome model, predict each profile under
-observation and chemotherapy, and calculate absolute risk reductions. We sort
-those estimates, compare twelve characteristics in the bottom and top 10%,
-and check the ranking in held-out patients. A brief International Stroke Trial
-comparison shows why a sorted curve alone is not evidence of a useful ranking.
+R examples show how to predict each profile under observation and chemotherapy,
+then use the full `spe()` and `ca()` calls with highlighted arguments. We sort
+the estimated risk reductions, compare twelve characteristics in the bottom and
+top 10%, and check the ranking in held-out patients. Colon is the one worked
+trial throughout.
+
+We close with a teaser for next time: what causal forests add to effect
+estimation, how they relate to sorted effects, and what makes an effect estimate
+causal.
 
 The HTML presentation has a chapter map and a two-dimensional overview: use **→** to move between chapters, **↓** to explore their examples, **Space** to follow the full story, and **Esc** to see the whole deck.
 
@@ -59,8 +63,8 @@ distinction and the assumptions behind the estimates.
 
 [Colon R walkthrough](R/colon-walkthrough.R) · [Analysis plan](docs/colon-analysis-plan.md) · [Classification results](results/colon/classification-stabilized.csv) · [Slide figures](scripts/plot-colon-slides.R)
 
-[Read the International Stroke Trial pilot](ist-pilot.qmd): aspirin effects and
-a held-out ranking check that did not support the apparent heterogeneity.
+[Read the separate International Stroke Trial pilot](ist-pilot.qmd): aspirin
+effects and a held-out check that did not support the interaction-model ranking.
 
 The earlier simulated treated/control example remains available as a teaching
 resource: [R walkthrough](R/example-walkthrough.R),

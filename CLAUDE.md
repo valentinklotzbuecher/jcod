@@ -11,7 +11,14 @@ The main example is the public colon chemotherapy trial, with three-year
 mortality, twelve classification traits and one fixed held-out split. Its
 findings are preliminary: the primary interaction p=.014 changes to p=.054
 in the all-618 working-imputation sensitivity. Do not claim harm in women,
-individual effects or verified clinical novelty. IST is a brief comparison.
+individual effects or verified clinical novelty. Colon is the sole worked trial
+in the deck; IST remains a separate report. Preserve the exploratory context:
+colon was the third trial pilot, without adjustment across datasets.
+
+The main slides use full `spe()` and `ca()` calls with stepwise argument
+highlighting. A closing teaser introduces causal forests for a future session,
+distinguishing flexible effect estimation from sorted summaries and the
+assumptions needed for causal interpretation. No forest is fitted here.
 
 `R/colon-walkthrough.R` fits both colon models and checks the saved point
 estimates. `scripts/plot-colon-slides.R` draws slide figures from saved results;

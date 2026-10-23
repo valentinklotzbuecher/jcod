@@ -128,7 +128,7 @@ What would convince us?
 :::
 
 ::: notes
-One hour including discussion; allow 35–40 minutes for prepared material. Six main chapters plus optional backup. Colon is the worked example; IST is a brief comparison. This is exploratory secondary analysis, not a clinical recommendation. Chapters take roughly 4, 5, 8, 7, 10 and 4 minutes. Move quickly through covers and skip backup unless asked.
+One hour including discussion; allow 35–40 minutes for prepared material. Six main chapters plus optional backup. Colon is the sole worked trial. This is exploratory secondary analysis, not a clinical recommendation. Chapters take roughly 4, 5, 8, 7, 10 and 4 minutes. Move quickly through covers and skip backup unless asked. End with causal forests as a teaser for a future session.
 :::
 
 # Literature {#literature .chapter-slide data-chapter-label="Literature" data-background-color="#261b37" data-background-transition="fade"}
@@ -305,22 +305,26 @@ Fit the model, predict both conditions, then sort the risk differences.
 ↓ R code and the sorted-effects curve
 :::
 
-## Choose a working model {.code-slide}
+## Specify where effects may differ {#outcome-model .code-slide}
 
-```{.r code-line-numbers="1-3|4-5"}
-source("R/colon-data.R")
-source("R/colon-analysis.R")
-dat <- prepare_colon_data()$data
-fm <- colon_formulas()$interaction
+```{.r code-line-numbers="1-3|4-9|11"}
+fm <- outcome ~ treatment + splines::ns(age, df = 3) + female +
+  age_z:female + log_nodes + poor_diff + extensive +
+  obstruct + adhere + surg_late +
+  I((treatment == "chemotherapy") * age_z) +
+  I((treatment == "chemotherapy") * female) +
+  I((treatment == "chemotherapy") * age_z * female) +
+  I((treatment == "chemotherapy") * log_nodes) +
+  I((treatment == "chemotherapy") * poor_diff) +
+  I((treatment == "chemotherapy") * extensive)
+
 fit <- glm(fm, data = dat, family = binomial())
 ```
 
-- **Comparison model:** one treatment odds ratio, adjusted for baseline risk.
-- **Interaction model:** adds treatment × age, sex, age × sex, nodes, grade and extent.
-- Both specifications were written down before fitting this pilot.
+**1–3:** common model · **4–9:** six treatment interactions · **11:** fit the model.
 
 ::: {.source}
-Full formula in backup; executable calculations in `R/colon-walkthrough.R`.
+The comparison model omits lines 4–9. `age_z = (age - 60) / 10`; `log_nodes = log1p(nodes)`. Data preparation and point checks: `R/colon-walkthrough.R`.
 :::
 
 ::: notes
@@ -436,25 +440,56 @@ Which patient profiles sit in the two tails?
 ↓ Twelve characteristics, in their original units
 :::
 
-## Describe the two tails {.code-slide}
+## Compare the tails with ca() {#ca-call .code-slide .code-focus}
 
-```{.r code-line-numbers="1-3|4-6|7-8"}
-cutoff <- Hmisc::wtd.quantile(
-  benefit, rep(1, nrow(dat)), c(.10, .90)
+::: columns
+::: {.column width="68%"}
+```{.r code-line-numbers="2-5|6|7-8|9-10"}
+ca_result <- SortedEffects::ca(
+  fm = fm, data = dat,
+  method = "logit",
+  var_type = "categorical", var = "treatment",
+  compare = c("chemotherapy", "observation"),
+  u = .10,
+  interest = "moment", cl = "diff",
+  t = colon_characteristics()$variable,
+  b = 499, alpha = .05,
+  bc = FALSE, seed = 420
 )
-tails <- list(low = benefit <= cutoff[1],
-              high = benefit >= cutoff[2])
-traits <- colon_characteristics()$variable
-lapply(tails, function(i)
-  colMeans(dat[i, traits]))
 ```
+:::
+::: {.column width="32%" .code-explanations}
+::: {.code-callout data-code-lines="2-5"}
+**Model and contrast**
 
-- **60 patients per tail**, selected by estimated benefit.
-- Each tail can contain patients from either randomized arm.
-- The model learned these groups using outcomes from this sample.
+Same mortality model; benefit = observation − chemotherapy.
+:::
+::: {.code-callout data-code-lines="6"}
+**Choose the tails**
+
+Bottom and top 10%: 60 patients each here.
+:::
+::: {.code-callout data-code-lines="7-8"}
+**Compare characteristics**
+
+High − low means, across all twelve traits.
+:::
+::: {.code-callout data-code-lines="9-10"}
+**Bootstrap inference**
+
+499 draws; SEs and joint p-values.
+:::
+:::
+:::
+
+::: {.source}
+Native CA fails numerically for this model. Displayed inference uses the audited stabilized reconstruction; details in backup.
+:::
 
 ::: notes
-CA describes covariates in selected effect tails. Means of binary indicators are proportions. Cutoffs can give group sizes slightly different from 10%. All twelve traits were specified; perforation and age-sex indicators are descriptive traits, not extra interaction terms.
+Step through the highlighted arguments with Space. This is the complete native call used in the audit, not a claim that the unpatched call yields valid inference on these data. Its point estimates match the descriptive tail means; its failed bootstrap output is preserved separately. The plotted means and reported inference use the audited reconstruction. The package-fix contribution is separate and was not substituted into the saved analysis.
+
+CA describes covariates in selected effect tails, not the randomized arms. Both tails can contain treated and control patients. The model learned the ranking using this sample's outcomes. Means of binary indicators are proportions. Cutoffs can give group sizes slightly different from 10%. All twelve traits were specified; perforation and age-sex indicators are descriptive traits, not extra interaction terms. cl = "diff" gives high-minus-low characteristic means, a different contrast from observation-minus-chemotherapy mortality benefit. The direct tail calculation is in backup. alpha and bc are retained as in the audited call; moment output provides SEs/joint p-values, not ready-made 95% moment intervals.
 :::
 
 ## Age, sex and positive nodes {.figure-slide}
@@ -528,24 +563,55 @@ How much of the pattern could be sampling variation or model choice?
 ↓ Bands, classification inference and a held-out check
 :::
 
-## Ask the package for a confidence band {.code-slide}
+## Estimate the curve and its uncertainty {#spe-call .code-slide .code-focus}
 
-```{.r code-line-numbers="1-4|5-7"}
+::: columns
+::: {.column width="68%"}
+```{.r code-line-numbers="2-3|4-5|6|7-9"}
 spe_result <- SortedEffects::spe(
-  fm = fm, data = dat, method = "logit",
+  fm = fm, data = dat,
+  method = "logit",
   var_type = "categorical", var = "treatment",
   compare = c("chemotherapy", "observation"),
-  us = seq(.10, .90, .01), b = 499,
-  alpha = .05, bc = FALSE, seed = 420
+  us = seq(.10, .90, .01),
+  b = 499,
+  alpha = .05, bc = FALSE,
+  seed = 420
 )
 ```
+:::
+::: {.column width="32%" .code-explanations}
+::: {.code-callout data-code-lines="2-3"}
+**Fit the outcome model**
 
-- Refit with bootstrap weights and recompute the effect curve.
-- A **uniform band** covers the displayed grid jointly, under the method's assumptions.
-- This accounts for sampling variation, not every source of model error.
+Our chosen formula and a logistic link.
+:::
+::: {.code-callout data-code-lines="4-5"}
+**Set the contrast**
+
+This ordering gives observation − chemotherapy.
+:::
+::: {.code-callout data-code-lines="6"}
+**Choose the percentiles**
+
+10th–90th, in one-percentile steps.
+:::
+::: {.code-callout data-code-lines="7-9"}
+**Quantify uncertainty**
+
+499 draws; 95% bounds; no bias correction.
+:::
+:::
+:::
+
+::: {.source}
+The uniform band covers the chosen grid jointly, under the method's assumptions. It accounts for sampling variation, not every source of model error.
+:::
 
 ::: notes
-All native SPE fits converged; independent reconstruction matches the bands. Full-sample spe() retains original profile weights for quantiles while refitting with bootstrap weights. Compare ordering matches direct predictions. More than 499 draws would be appropriate for polished inference.
+Step through model, contrast, grid and bootstrap arguments. spe() refits the model internally, so the input is fm, not the previously fitted glm object. The categorical contrast convention is easy to reverse; this argument order matches our direct observation-minus-chemotherapy predictions. us chooses quantiles of fitted effects, not outcome quantiles. b is the number of bootstrap draws; alpha = .05 requests 95% uncertainty; bc = FALSE keeps uncorrected point estimates; seed fixes reproducibility.
+
+All native SPE fits converged; independent reconstruction matches the bands. Full-sample spe() retains original profile weights for quantiles while refitting with bootstrap weights. More than 499 draws would be appropriate for polished inference. Formal uniform coverage requires the paper's regularity conditions as well as valid effect estimation; a bootstrap does not repair an incorrect causal model.
 :::
 
 ## Negative estimates do not establish harm {#sorted-band .figure-slide data-auto-animate="true"}
@@ -627,26 +693,6 @@ The ranking deserves follow-up. These results do not support a treatment rule or
 All-618 sensitivity uses fixed node filling and missingness indicators; it is not a definitive missing-data solution. APE remains 8.4 pp. The change in evidence is a robustness concern, not proof heterogeneity vanishes. Prior literature has not been exhaustively checked: no novelty claim. New modeling and validation decisions should be fixed before seeing results.
 :::
 
-## A useful comparison: the stroke trial
-
-| Check | Aspirin in IST | Colon chemotherapy |
-|:--|--:|--:|
-| Estimated average benefit | 1.3 pp | 8.1 pp |
-| Joint treatment-interaction p | .355 | .014 |
-| Held-out interaction-ranking p | .822 | .013 |
-
-- IST also produced variation in fitted effects.
-- Its interaction-model ranking did **not** carry over to held-out patients.
-- A broad curve is a reason to investigate, not a validation result.
-
-::: {.source}
-Different endpoints: IST six-month death/dependence; colon three-year mortality. Raw within-pilot p-values shown; colon ranking Holm p = .025.
-:::
-
-::: notes
-One-minute comparison, not a second worked example. IST used 19,285 observed endpoints and eight interactions. Its constant-OR ranking had raw p .032, Holm p .064; this slide specifically concerns interaction rankings. ACTG 175 was the other pilot and also lacked support for its interaction ranking. No confirmatory across-trial search.
-:::
-
 # Discussion {#discussion .chapter-slide data-chapter-label="Discussion" data-background-color="#261b37" data-background-transition="fade"}
 
 ::: {.chapter-number}
@@ -673,24 +719,28 @@ Which result would you want to see before taking this pattern seriously?
 Reserve about 20 minutes overall for discussion. What model flexibility is defensible with 179 deaths? Which effect scale is clinically useful? How should missing baseline data be handled? Would a simpler predeclared subgroup contrast help? What external data could validate a profile? Treatment rules also need harms, preferences and policy-value analysis.
 :::
 
-## Where do causal forests fit? {#causal-forests}
+## Next time: causal forests {#causal-forests}
 
-| Causal forests | Sorted effects + classification |
-|:--|:--|
-| **Estimate** how treatment effects vary across patient profiles. | **Summarize** the distribution of fitted effects and who lies in its tails. |
-| Many trees learn useful splits and interactions in the baseline characteristics. | Sort the estimates, then compare low- and high-effect profiles. |
+Could the data learn the age–sex–tumour pattern?
 
-- A forest could replace our regression model; sorting asks the same descriptive questions.
-- Forest estimates need suitable inference for **bands and tail comparisons**.
+- **Our regression:** we choose which interactions to include.
+- **Causal forests:** many trees learn nonlinearities and interactions.
+- **SPE + classification:** could summarize either set of effect estimates and describe the tails.
+
+::: {.prompt}
+**Causal in either case:** randomization—or no unmeasured confounding given baseline variables—plus overlap and well-defined treatment.
+:::
 
 ::: {.source}
-Generalized random forests [@athey2019]. A conceptual connection; no forest was fitted for this example.
+Flexibility changes estimation; causal identification comes from design and assumptions. Generalized random forests [@athey2019].
 :::
 
 ::: notes
-Keep this to about one minute. With a binary treatment, a causal forest estimates a conditional average treatment effect: the average treatment contrast among people with a given covariate profile, not an individual's realized effect. It combines many trees whose splits target treatment-effect variation. In the generalized-random-forest formulation, trees define adaptive neighborhoods and the effect is estimated using their weights. This lets the data learn nonlinearities and interactions instead of specifying each one in a regression.
+This is a teaser for the next session, not a second analysis. Keep it to about one minute. The extra flexibility is relative to our chosen regression, not an intrinsic limitation of SPE. Both approaches can describe heterogeneous causal effects only when the underlying treatment comparison is identified and the effect estimates are reliable. A non-flat fitted curve alone does not establish true heterogeneity. Today we rely on an adequate conditional-risk model; forests relax the need to specify each interaction, but still need enough local data, regularity, appropriate nuisance estimation and careful fitting. The backup slide distinguishes identification, estimation and inference.
 
-Honesty separates observations used to choose splits from those used to estimate within-tree effects; this is not a substitute for external validation. Randomization, or appropriate observational identification assumptions and overlap, still matter. The grf convention is treated minus control; for our mortality-benefit convention, the sign would need reversing before sorting.
+With a binary treatment, a causal forest estimates a conditional average treatment effect: the average treatment contrast among people with a given covariate profile, not an individual's realized effect. It combines many trees whose splits target treatment-effect variation. In the generalized-random-forest formulation, trees define adaptive neighborhoods and the effect is estimated using their weights.
+
+Honesty separates observations used to choose splits from those used to estimate within-tree effects; it does not replace causal identification or external validation. Overlap means comparable profiles can receive either treatment. Consistency links the observed outcome to the well-defined treatment received; no interference and appropriate missingness/selection assumptions also matter. Randomization in the original trial does not automatically justify selection into a complete-case cohort. The grf convention is treated minus control; for our mortality-benefit convention, reverse the sign before sorting.
 
 We can descriptively sort forest predictions and compare tail profiles. Forest pointwise intervals do not automatically give valid simultaneous SPE bands or inference for selected tail characteristics. Nor can a forest be passed directly into the current SortedEffects spe()/ca() model interface. Suitable theory and inference would need to be established for that combination; no such analysis was run here. With only 593 complete-baseline patients, flexibility is a reason to validate carefully, not a guarantee of better results.
 :::
@@ -734,24 +784,19 @@ $$
 Conditional average effects are not realized individual effects. Complete-case selection and model assumptions matter even in a randomized trial. APE uses the full reference population, not just the displayed percentile range.
 :::
 
-## Backup · The full interaction model {.code-slide}
+## Backup · When is the heterogeneity causal?
 
-```r
-outcome ~ treatment + splines::ns(age, df = 3) + female +
-  age_z:female + log_nodes + poor_diff + extensive +
-  obstruct + adhere + surg_late +
-  I((treatment == "chemotherapy") * age_z) +
-  I((treatment == "chemotherapy") * female) +
-  I((treatment == "chemotherapy") * age_z * female) +
-  I((treatment == "chemotherapy") * log_nodes) +
-  I((treatment == "chemotherapy") * poor_diff) +
-  I((treatment == "chemotherapy") * extensive)
-```
-
-`age_z = (age - 60) / 10`; `log_nodes = log1p(nodes)`.
+- **Identification, both:** randomization or no unmeasured confounding; overlap; consistency/no interference; appropriate handling of selection and missing data.
+- **Regression → SPE/CA:** reliable conditional-risk estimates; suitable convergence and regularity of the effect distribution.
+- **Forests:** enough local data, regularity, suitable nuisance estimates and honest fitting.
+- **Inference:** pointwise forest intervals do not automatically cover sorted effects or selected tails.
 
 ::: {.source}
-Binomial logistic regression; 19 parameters. Comparison model omits the final six terms.
+Both concern conditional average effects. Fitted spread alone does not establish true heterogeneity. [@chernozhukov2018; @athey2019]
+:::
+
+::: notes
+Identification states which causal target the observed-data contrast represents; estimation and inference require additional conditions. Our fixed logistic specification needs correct or sufficiently reliable conditional-risk modeling to estimate that target. SPE is more general than this parametric illustration, but its theory still requires suitable convergence and regularity at the quantiles considered. Honest forests separate split selection from local estimation; honesty is only one ingredient in their consistency and asymptotic-normality results. These assumptions are not interchangeable with a validated individual treatment rule.
 :::
 
 ## Backup · Classification: demographics and nodes {.compact-table}
@@ -782,23 +827,24 @@ Difference = high − low, in percentage points.
 “Long surgery interval”: surgery-to-registration category. SEs and joint p-values: audited stabilized CA, adjusted across all twelve traits.
 :::
 
-## Backup · Calling classification analysis {.code-slide}
+## Backup · Calculate tail means {.code-slide}
 
-```r
-ca_result <- SortedEffects::ca(
-  fm = fm, data = dat, method = "logit",
-  var_type = "categorical", var = "treatment",
-  compare = c("chemotherapy", "observation"), u = .10,
-  interest = "moment", cl = "diff",
-  t = colon_characteristics()$variable,
-  b = 499, alpha = .05, bc = FALSE, seed = 420
+```{.r code-line-numbers="1-3|4-5|6-8"}
+cutoff <- Hmisc::wtd.quantile(
+  benefit, rep(1, nrow(dat)), c(.10, .90)
 )
+tails <- list(low = benefit <= cutoff[1],
+              high = benefit >= cutoff[2])
+traits <- colon_characteristics()$variable
+lapply(tails, function(i)
+  colMeans(dat[i, traits]))
 ```
 
-**This native call is numerically unstable for the colon model.**
+- Select tails by fitted benefit, then summarize baseline characteristics.
+- Both tails can contain patients from either randomized arm.
 
 ::: {.source}
-Raw output preserved separately. Endorsed CA inference is reconstructed by `scripts/verify-colon-inference.R stabilize` after the native audit.
+Descriptive calculation only. `R/colon-walkthrough.R` verifies these means against the saved classification table.
 :::
 
 ## Backup · What went wrong in native CA?

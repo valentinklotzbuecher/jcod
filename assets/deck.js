@@ -89,6 +89,25 @@
     }
     document.body.append(hint);
 
+    // Follow Quarto's native code fragments without adding another fragment
+    // sequence. The explanations stay visible, including in static handouts.
+    const updateCodeCallouts = () => {
+      const current = reveal.getCurrentSlide();
+      if (!current) return;
+      const callouts = current.querySelectorAll(".code-callout[data-code-lines]");
+      if (!callouts.length) return;
+      const codes = [...current.querySelectorAll("pre code[data-code-line-numbers]")];
+      const activeCode = codes.find((code) => code.classList.contains("current-fragment")) ||
+        codes.filter((code) => code.classList.contains("visible")).at(-1) || codes[0];
+      const lines = activeCode?.dataset.codeLineNumbers;
+      for (const callout of callouts) {
+        const active = callout.dataset.codeLines === lines;
+        callout.classList.toggle("is-active", active);
+        if (active) callout.setAttribute("aria-current", "step");
+        else callout.removeAttribute("aria-current");
+      }
+    };
+
     const update = () => {
       const {h, v = 0} = reveal.getIndices();
       const chapter = chapters.find((candidate) => candidate.h === h);
@@ -110,6 +129,7 @@
       ));
       document.body.classList.toggle("deck-overview-open", reveal.isOverview());
       overview.setAttribute("aria-pressed", String(reveal.isOverview()));
+      updateCodeCallouts();
     };
     // Reveal lazily loads images. Populate every thumbnail on first overview,
     // including figures from chapters the audience has not visited yet.
@@ -124,6 +144,8 @@
     reveal.on("overviewshown", preloadOverviewImages);
     reveal.on("overviewshown", update);
     reveal.on("overviewhidden", update);
+    reveal.on("fragmentshown", updateCodeCallouts);
+    reveal.on("fragmenthidden", updateCodeCallouts);
 
     const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
     const configured = reveal.getConfig();

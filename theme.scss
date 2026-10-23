@@ -135,6 +135,34 @@ $code-block-font-size: 0.7em;
 }
 .reveal .code-slide .prompt { font-size: 0.88em; }
 .reveal .code-slide .small { color: #697283; margin-top: 1em; }
+.reveal .code-slide code.has-line-highlights > span.highlight-line {
+  background: #dac8e580;
+  box-shadow: -3px 0 0 #cf7045;
+  border-radius: 2px;
+}
+.reveal .code-focus .columns { align-items: flex-start; gap: 1em; }
+.reveal .code-focus .columns > .column:first-child { flex: 68 1 0; }
+.reveal .code-focus .columns > .code-explanations {
+  flex: 32 1 0;
+  font-size: 0.62em;
+  padding-top: 0.65em;
+}
+.reveal .code-focus pre.sourceCode {
+  font-size: 0.60em;
+  line-height: 1.45;
+  margin: 0.7em 0;
+}
+.reveal .code-callout {
+  border-left: 3px solid transparent;
+  border-radius: 0 6px 6px 0;
+  padding: 0.35em 0.65em;
+  margin-bottom: 0.45em;
+}
+.reveal .code-callout p { margin: 0.15em 0; }
+.reveal .code-callout.is-active {
+  background: #e9def2;
+  border-left-color: #cf7045;
+}
 .reveal blockquote { background: #f0eaf4; box-shadow: none; border-left: 4px solid #5a317e; padding: 0.7em; font-style: normal; }
 .reveal a { text-decoration: underline; text-underline-offset: 0.15em; }
 
