@@ -1108,7 +1108,7 @@ Valentin Klotzbücher · Department of Clinical Research
 <p><strong>→</strong> chapters · <strong>↓</strong> slides within a chapter · <strong>Space</strong> next step · <strong>Esc</strong> overview</p>
 </div>
 <aside class="notes">
-<p>About 33 minutes, then open discussion: Question 7 · Sorted effects 12 · Trust 10 · Discussion opener 4. The framing follows Huntington-Klein, The Effect, section 22.3. Code, bootstrap details, the native classification failure and full tables are in the backup stack.</p>
+<p>About 33 minutes, then open discussion: Question 7 · Sorted effects 12 · Trust 10 · Discussion opener 4. The framing follows Huntington-Klein, The Effect, section 22.3. Code, bootstrap details, why the package’s tail bootstrap failed, and full tables are in the backup stack.</p>
 <style type="text/css">
 span.MJX_Assistive_MathML {
 position:absolute!important;
@@ -1312,8 +1312,8 @@ display:block!important;
 <h2>Step 1 · Let the effect differ</h2>
 <ul>
 <li>A logistic model for death within three years.</li>
-<li>Chemotherapy’s effect may change with <strong>age, sex, positive nodes, tumour grade and extent</strong>.</li>
-<li>Obstruction, adherence and time from surgery to registration adjust the baseline risk.</li>
+<li>Chemotherapy’s effect may change with <strong>age, sex, number of positive nodes, tumour grade and tumour extent</strong>.</li>
+<li>Bowel obstruction, tumour adherence to nearby organs and time from surgery to registration adjust the baseline risk.</li>
 <li>Randomization makes the comparison fair; the model describes how the effect varies.</li>
 </ul>
 <div class="source">
@@ -1449,10 +1449,10 @@ display:block!important;
 <p>This describes who sits at each end. It is not the effect of chemotherapy in women.</p>
 </div>
 <div class="source">
-<p>60 patients per tail. p adjusted across all 12 traits compared (audited stabilized bootstrap; backup).</p>
+<p>60 patients per tail. p-values are adjusted for comparing 12 traits. The package’s own bootstrap broke down for these data, so they come from our checked re-run with stable starting values (backup).</p>
 </div>
 <aside class="notes">
-<p>Across all twelve traits compared, only the sex-related differences stand out. In R this is SortedEffects::ca(); its native bootstrap failed numerically for these data, so the p-values come from the audited stabilized reconstruction. Tail membership depends jointly on age, sex and tumour characteristics, and was learned from this sample’s outcomes. Classification tests tail composition, not a treatment-by-sex interaction. The adjustment covers twelve traits, not dataset, model or tail-size choices; p-values near .04 remain sensitive to Monte Carlo variability with 499 draws.</p>
+<p>Across all twelve traits compared, only the sex-related differences stand out. In R this is SortedEffects::ca() (classification analysis). For these data many of its bootstrap refits did not converge, yet it still printed normal-looking p-values; we use a checked re-run of the same bootstrap with stable starting values instead. Tail membership depends jointly on age, sex and tumour characteristics, and was learned from this sample’s outcomes. Classification tests tail composition, not a treatment-by-sex interaction. The adjustment covers twelve traits, not dataset, model or tail-size choices; p-values near .04 remain sensitive to Monte Carlo variability with 499 draws.</p>
 <style type="text/css">
 span.MJX_Assistive_MathML {
 position:absolute!important;
@@ -1486,12 +1486,12 @@ display:block!important;
 </div><div class="column figure-notes" style="width:30%;">
 <ul>
 <li>Shaded: a 95% band for the <strong>whole curve</strong> at once.</li>
-<li>10th percentile: <strong>−9.8 pp</strong>, band <strong>−24.6 to +5.1</strong>: we cannot tell whether these patients benefit.</li>
+<li>Near the bottom (10th percentile): <strong>−9.8 pp</strong>, band <strong>−24.6 to +5.1</strong>: we cannot tell whether these patients benefit.</li>
 <li>Average: <strong>8.1 pp</strong>, 95% CI <strong>1.4 to 14.9</strong>.</li>
 </ul>
 </div></div>
 <div class="source">
-<p>Bootstrap band from SortedEffects, 10th–90th percentiles. How it is built: backup.</p>
+<p>Band from the package’s bootstrap (499 resamples), covering the 10th–90th percentiles. How it is built: backup.</p>
 </div>
 <aside class="notes">
 <p>A band for the whole curve is wider than pointwise intervals: its critical value is 2.79 rather than 1.96. It describes uncertainty about the curve, not a range for any individual patient.</p>
@@ -1516,7 +1516,7 @@ display:block!important;
 <ul>
 <li>Constant odds ratio: benefit varies only with baseline risk, a narrow spread.</li>
 <li>Six interactions: a much wider spread.</li>
-<li>Same average (<strong>8.0 vs 8.1 pp</strong>); the interactions fit better (p = .014).</li>
+<li>Same average (<strong>8.0 vs 8.1 pp</strong>); the six interactions improve the fit (p = .014).</li>
 <li>More spread is not proof: noise spreads too.</li>
 </ul>
 </div></div>
@@ -1545,12 +1545,12 @@ display:block!important;
 </div><div class="column figure-notes" style="width:30%;">
 <ul>
 <li>Fit on half the patients (296); rank the other half (297) blind to their outcomes.</li>
-<li>Higher-ranked patients did benefit more: slope <strong>1.1</strong> (0 = no signal, 1 = as predicted), adjusted p = .025.</li>
+<li>Higher-ranked patients did benefit more: slope <strong>1.1</strong> (0 = no signal, 1 = as predicted), p = .025, adjusted for checking two models.</li>
 <li>Lowest third: <strong>−8.5 pp</strong>, CI −25.9 to +9.0: again unclear.</li>
 </ul>
 </div></div>
 <div class="source">
-<p>One random split, stratified by treatment; three groups of 99; pointwise 95% intervals.</p>
+<p>One random split, balanced by treatment arm; three groups of 99; a 95% interval for each group.</p>
 </div>
 <aside class="notes">
 <p>The slope regresses held-out AIPW benefit pseudo-outcomes on centered predicted benefit (HC3 standard errors; Holm adjustment over the two planned rankings); tested against one, unadjusted p = .82. The top-minus-bottom tertile contrast is 28.3 pp (95% CI 2.1–54.4; Holm p = .068). These tertiles differ from the full-sample deciles, and one split is not independent replication.</p>
@@ -1570,7 +1570,7 @@ display:block!important;
 <h2>What could fool us?</h2>
 <ul>
 <li><strong>Noise looks like spread:</strong> 19 parameters for 179 deaths; 60 patients per tail.</li>
-<li><strong>Missing data:</strong> keeping all 618 patients moves the interaction p-value from <strong>.014 to .054</strong>.</li>
+<li><strong>Missing data:</strong> keeping all 618 patients moves the p-value for the interactions from <strong>.014 to .054</strong>.</li>
 <li><strong>One split, one trial:</strong> and colon was the third trial we tried, with no adjustment for that search.</li>
 </ul>
 <div class="prompt">
@@ -1644,7 +1644,7 @@ display:block!important;
 <p><em>The Effect</em>, §22.3.1 <span class="citation" data-cites="huntingtonklein2025">(<a href="#/references" role="doc-biblioref" onclick>Huntington-Klein 2025</a>)</span>; generalized random forests <span class="citation" data-cites="athey2019">(<a href="#/references" role="doc-biblioref" onclick>Athey, Tibshirani, and Wager 2019</a>)</span>. No forest is fitted in this session.</p>
 </div>
 <aside class="notes">
-<p>The flexibility gain is relative to our specified regression; sorted effects can summarize other effect estimators. Forest pointwise intervals do not automatically provide uniform bands or inference for selected tails. The native SortedEffects interface does not accept a fitted forest. More intuition in backup.</p>
+<p>The flexibility gain is relative to our specified regression; sorted effects can summarize other effect estimators. Forest pointwise intervals do not automatically provide uniform bands or inference for selected tails. SortedEffects itself does not accept a fitted forest. More intuition in backup.</p>
 <style type="text/css">
 span.MJX_Assistive_MathML {
 position:absolute!important;
@@ -1691,6 +1691,7 @@ display:block!important;
 <li><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>Y</mi><annotation encoding="application/x-tex">Y</annotation></semantics></math>: death within three years; <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>A</mi><mo>=</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">A=1</annotation></semantics></math>: levamisole + 5-FU, <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>A</mi><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">A=0</annotation></semantics></math>: observation; <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>x</mi><annotation encoding="application/x-tex">x</annotation></semantics></math>: the eight baseline characteristics in the model.</li>
 <li>With randomization, <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Δ</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>x</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mi>E</mi><mrow><mo stretchy="true" form="prefix">[</mo><mi>Y</mi><mrow><mo stretchy="true" form="prefix">(</mo><mn>0</mn><mo stretchy="true" form="postfix">)</mo></mrow><mo>−</mo><mi>Y</mi><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo stretchy="true" form="postfix">)</mo></mrow><mo>∣</mo><mi>X</mi><mo>=</mo><mi>x</mi><mo stretchy="true" form="postfix">]</mo></mrow></mrow><annotation encoding="application/x-tex">\Delta(x)=E[Y(0)-Y(1)\mid X=x]</annotation></semantics></math>: an average over patients with profile <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>x</mi><annotation encoding="application/x-tex">x</annotation></semantics></math>, not an individual effect.</li>
 <li>The distribution of <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>X</mi><annotation encoding="application/x-tex">X</annotation></semantics></math>, here the 593 observed profiles, defines the population summarized.</li>
+<li>SPE(u), the sorted partial effect, is the u-th percentile of the effects; APE is their average.</li>
 <li>A quantile of effects differs from a difference of outcome quantiles.</li>
 </ul>
 <aside class="notes">
@@ -1794,7 +1795,7 @@ display:block!important;
 </div>
 <div class="code-callout" data-code-lines="7-9">
 <p><strong>Quantify uncertainty</strong></p>
-<p>499 draws; 95% bounds; no bias correction.</p>
+<p>499 resamples; 95% band; no bias correction.</p>
 </div>
 </div></div>
 <div class="source">
@@ -1844,7 +1845,7 @@ display:block!important;
 </tbody>
 </table>
 <div class="source">
-<p>Native SortedEffects 1.7.0 IQR/max bootstrap, independently reconstructed; critical values recovered from the saved bands and scales. Rearrangement: <span class="citation" data-cites="chernozhukov2009">Chernozhukov, Fernández-Val, and Galichon (<a href="#/references" role="doc-biblioref" onclick>2009</a>)</span>.</p>
+<p>The package’s own bootstrap (SortedEffects 1.7.0), which we reproduced independently; critical values read off the saved bands. Rearrangement: <span class="citation" data-cites="chernozhukov2009">Chernozhukov, Fernández-Val, and Galichon (<a href="#/references" role="doc-biblioref" onclick>2009</a>)</span>.</p>
 </div>
 <aside class="notes">
 <p>The constant-odds-ratio curve moves almost as one piece across bootstrap draws, so its critical value stays near 1.96. For comparison only, ±1.96 scales at the interaction model’s 10th percentile would give −20.2 to +0.6 pp; the uniform band, −24.6 to +5.1 pp, covers all 81 percentiles at once.</p>
@@ -1861,7 +1862,7 @@ display:block!important;
 }</style></aside>
 </section>
 <section id="ca-call" class="slide level2 code-slide code-focus">
-<h2>Backup · Tail comparison with ca()</h2>
+<h2>Backup · Comparing the tails with ca()</h2>
 <div class="columns">
 <div class="column" style="width:68%;">
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4" data-code-line-numbers="2-5|6|7-8|9-10"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a></a>ca_result <span class="ot">&lt;-</span> SortedEffects<span class="sc">::</span><span class="fu">ca</span>(</span>
@@ -1890,11 +1891,11 @@ display:block!important;
 </div>
 <div class="code-callout" data-code-lines="9-10">
 <p><strong>Bootstrap inference</strong></p>
-<p>499 draws; SEs and joint p-values.</p>
+<p>499 resamples; SEs and p-values adjusted across the twelve traits.</p>
 </div>
 </div></div>
 <div class="source">
-<p>Colon CA inference uses the audited stabilization of failed native bootstrap fits (next slide).</p>
+<p><code>ca()</code> is classification analysis. For these data its own bootstrap breaks down; the p-values we show come from our checked re-run with stable starting values (next slide).</p>
 </div>
 <aside class="notes">
 <p>The tails can contain patients from either randomized arm. cl = “diff” compares high-minus-low characteristic means; binary means are proportions. The moment interface returns SEs and joint p-values, not moment confidence intervals.</p>
@@ -1911,21 +1912,21 @@ display:block!important;
 }</style></aside>
 </section>
 <section id="native-ca" class="slide level2">
-<h2>Backup · What went wrong in native CA?</h2>
+<h2>Backup · Why the package’s tail bootstrap failed here</h2>
 <ul>
-<li>CA rescales bootstrap fitting weights to total <strong>20,000</strong>.</li>
-<li><strong>141/499 fits did not converge</strong>; 137 draws had undefined tail moments.</li>
-<li>The routine still returned finite-looking inference, which we do not use.</li>
-<li>Stable starting coefficients recovered <strong>499 converged, finite draws</strong>, with none discarded.</li>
+<li>In each bootstrap resample, <code>ca()</code> refits the logistic model with weights scaled to sum to <strong>20,000</strong>.</li>
+<li>On these data, <strong>141 of 499</strong> refits did not converge, and <strong>137</strong> resamples gave undefined tail means.</li>
+<li>The function still printed normal-looking SEs and p-values. We do not use them.</li>
+<li>Our re-run starts each refit from stable values: <strong>all 499</strong> refits converge, and none are dropped.</li>
 </ul>
 <div class="prompt">
-<p>Check every bootstrap fit: finite-looking output is not necessarily valid.</p>
+<p>Check every bootstrap refit: output that looks normal can still be wrong.</p>
 </div>
 <div class="source">
-<p>Reconstruction preserves resamples, likelihood, threshold definitions and moment formulas.</p>
+<p>Same resamples, model, tail definitions and tail means; only the numerical starting point changed. Details in the colon report.</p>
 </div>
 <aside class="notes">
-<p>Weight scaling leaves the exact weighted-likelihood maximizer unchanged but can destabilize default GLM initialization. Empty tails produced undefined moments; native handling of invalid draws distorted joint p-values.</p>
+<p>Scaling the weights leaves the weighted maximum-likelihood solution unchanged, but it can derail R’s default starting values for glm. Empty tails produced undefined means, and the package’s handling of those invalid resamples distorted the joint p-values. The raw output is kept separately in classification-native.csv; the re-run is in classification-stabilized.csv.</p>
 <style type="text/css">
 span.MJX_Assistive_MathML {
 position:absolute!important;
@@ -2022,7 +2023,7 @@ display:block!important;
 </table>
 <p>Difference = high − low. Percentages differ in percentage points.</p>
 <div class="source">
-<p>60 patients per tail. SEs and joint p-values: audited stabilized CA, 499 draws. Adjustment covers all twelve traits, not just these six.</p>
+<p>60 patients per tail. SEs and p-values from our checked re-run of the tail bootstrap (stable starting values, 499 resamples); p-values adjusted across all twelve traits, not just these six.</p>
 </div>
 </section>
 <section id="backup-classification-clinical-characteristics" class="slide level2 compact-table">
@@ -2091,7 +2092,7 @@ display:block!important;
 </table>
 <p>Difference = high − low, in percentage points.</p>
 <div class="source">
-<p>“Long surgery interval”: surgery-to-registration category. SEs and joint p-values: audited stabilized CA, adjusted across all twelve traits.</p>
+<p>“Long surgery interval”: surgery-to-registration category. SEs and p-values from our checked re-run of the tail bootstrap, adjusted across all twelve traits.</p>
 </div>
 </section>
 <section id="backup-tail-profiles-age-sex-and-nodes" class="slide level2 figure-slide">
@@ -2144,9 +2145,9 @@ display:block!important;
 <section id="backup-what-is-resampled" class="slide level2">
 <h2>Backup · What is resampled?</h2>
 <ul>
-<li><strong><code>spe()</code> full sample:</strong> refits with bootstrap weights; effect quantiles retain original profile weights.</li>
-<li><strong><code>ca()</code> moments:</strong> refits and updates thresholds and characteristic means with resampled weights.</li>
-<li><strong>Held-out validation:</strong> fits on training data; evaluates the frozen ranking using test outcomes.</li>
+<li><strong><code>spe()</code>:</strong> refits the model in each resample, then sorts the predicted effects for the original 593 patients.</li>
+<li><strong><code>ca()</code>:</strong> refits the model in each resample, recomputes who falls in each tail, and recomputes the tail means.</li>
+<li><strong>Held-out check:</strong> fits on one half only, freezes the ranking, then looks at outcomes in the other half.</li>
 </ul>
 </section>
 <section id="backup-cohort-and-sensitivity-checks" class="slide level2">
@@ -2209,7 +2210,7 @@ display:block!important;
 <h2>Backup · When is the heterogeneity causal?</h2>
 <ul>
 <li><strong>Identification, both:</strong> randomization or no unmeasured confounding; overlap; consistency/no interference; appropriate handling of selection and missing data.</li>
-<li><strong>Regression → SPE/CA:</strong> reliable conditional-risk estimates; suitable convergence and regularity of the effect distribution.</li>
+<li><strong>Regression → sorted effects and tail comparison:</strong> reliable conditional-risk estimates; suitable convergence and regularity of the effect distribution.</li>
 <li><strong>Forests:</strong> enough local data, regularity, suitable nuisance estimates and honest fitting.</li>
 <li><strong>Inference:</strong> pointwise forest intervals do not automatically cover sorted effects or selected tails.</li>
 </ul>

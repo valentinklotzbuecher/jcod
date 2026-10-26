@@ -191,6 +191,10 @@ Third revision (intuitive redo), 26 October 2026:
   no external or failed requests and no JavaScript errors. The four
   session-map links and the backup code-callout sequences worked.
 - **Handout:** all 44 PDF pages were inspected.
+- **Clarity pass:** slide text now explains technical terms in plain words.
+  The package's tail bootstrap "broke down for these data", and the p-values
+  come from "our checked re-run with stable starting values". The adjusted
+  p-values state what they adjust for. Speaker notes keep the technical terms.
 
 - `bash scripts/render.sh`: passed full-site rendering, including the portable
   RevealJS HTML export and matching 44-page, 16:9 Beamer handout. The colon
