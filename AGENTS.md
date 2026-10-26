@@ -49,6 +49,7 @@ Generated artifacts: `_site/`, `*_cache/`, `*_files/` (do not edit by hand).
 - `Rscript scripts/plot-colon.R` - refresh the descriptive colon figures.
 - `Rscript R/colon-walkthrough.R` - fit the two colon models and verify the saved point estimates.
 - `Rscript scripts/plot-colon-slides.R` - refresh slide figures from saved results without fitting models or bootstraps.
+- `Rscript scripts/plot-colon-patients.R` - refit the interaction model for point predictions only, check them against the saved SPE/APE, and redraw the two per-patient figures.
 - `Rscript scripts/illustrate-warmup.R` - validate and redraw the constructed population warm-up.
 - `quarto publish quarto-pub` - publishes externally; run only when explicitly requested.
 
@@ -72,9 +73,9 @@ Colon SPE bands use native SortedEffects 1.7.0 and have been independently recon
 
 Colon is the sole empirical trial analysis in the deck. The preceding two-slide warm-up uses constructed population risks: three equally common profiles, control risk 40%, treated risks 30/30/30% or 50/30/10%. Both average benefits are 10 pp. Do not label these quantities as sampled or fitted outcomes, attach sampling intervals, or use this discrete illustration to claim inferential coverage. IST remains a separate report with its data and analysis intact. Retain the exploratory provenance: colon was the third trial pilot, with no across-dataset inference adjustment. The earlier simulated treated/control example is retained for teaching and backup; its model is `outcome ~ group * age_z * sex`, with `sex` coded 0 for male and 1 for female. Its original-package inference, resampling scope, separate teaching bootstrap and membership diagnostics remain documented in `docs/example-inference.md`.
 
-The trial abstracts identify the three-arm cohort as resected stage III (Dukes' C) colon cancer; see `docs/colon-data.md`. The discussion chapter maps the constant-odds-ratio model to risk-based heterogeneity and the interaction model to effect modeling. It attributes only those definitions to the PATH statement. Prior subgroup findings listed in `docs/evidence.md` are unverified search extracts; keep them off the slides until they are checked against the full texts.
+The trial abstracts identify the three-arm cohort as resected stage III (Dukes' C) colon cancer; see `docs/colon-data.md`. The PATH backup slide maps the constant-odds-ratio model to risk-based heterogeneity and the interaction model to effect modeling. It attributes only those definitions to the PATH statement. Prior subgroup findings listed in `docs/evidence.md` are unverified search extracts; keep them off the slides until they are checked against the full texts.
 
-The main slides show full `spe()` and `ca()` calls with meaningful argument highlighting. Preserve the CA numerical-stability disclosure when showing its call. The closing causal-forest teaser is for a future session: distinguish causal identification assumptions, effect estimation and sorted summaries. Do not imply that sorting creates causality, that SPE requires a parametric model, or that a forest was fitted in this session.
+The main slides follow the intuitive framing of Huntington-Klein's *The Effect* (§22.3): model, predict, sort, describe, then trust. The full `spe()` and `ca()` calls with argument highlighting, the band construction and the native CA failure are in the backup stack. Preserve the CA numerical-stability disclosure wherever CA inference or its call appears. The closing causal-forest teaser is for a future session: distinguish causal identification assumptions, effect estimation and sorted summaries. Do not imply that sorting creates causality, that SPE requires a parametric model, or that a forest was fitted in this session.
 
 ## Commit & Pull Request Guidelines
 Recent commit messages are short, lowercase summaries (e.g., `landing page`). Follow the same style.

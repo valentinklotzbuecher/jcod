@@ -1,6 +1,6 @@
 ---
 title: "Who benefits most?"
-subtitle: "Sorted partial effects · A colon cancer trial, R code and inference"
+subtitle: "Sorted effects, step by step · A colon cancer trial"
 author: "Valentin Klotzbücher · Department of Clinical Research"
 format:
   revealjs:
@@ -28,7 +28,7 @@ format:
     history: true
     html-math-method: mathml
     format-links: false
-    footer: "JCOD · Sorted partial effects"
+    footer: "JCOD · Sorted effects"
     include-after-body: assets/deck.html
   beamer:
     slide-level: 2
@@ -60,6 +60,9 @@ pp <- function(x) sprintf("%.1f", 100 * x)
 warmup <- read.csv("results/warmup/population-risks.csv")
 warmup_means <- read.csv("results/warmup/population-means.csv")
 stopifnot(all(abs(warmup_means$mean_benefit - .10) < 1e-12))
+patients <- read.csv("results/colon/patient-benefits.csv")
+stopifnot(nrow(patients) == 593L, abs(mean(patients$benefit) - ape$estimate) < 1e-10)
+near_average <- sprintf("%.0f%%", 100 * mean(abs(patients$benefit - ape$estimate) <= .03))
 ca_table <- function(variables) {
   d <- classification[match(variables, classification$variable), ]
   labels <- c(age = "Age (years)", female = "Female (%)",
@@ -84,32 +87,22 @@ ca_table <- function(variables) {
 ::: {.content-visible when-format="revealjs"}
 ::: {.session-map}
 ::: {.map-card}
-[01 · Method](#literature){.map-title}
+[01 · The question](#question){.map-title}
 
-Literature, effect scales and a constructed example.
+Is the effect the same for everybody?
 :::
 ::: {.map-card}
-[02 · Trial](#example){.map-title}
+[02 · Sorted effects](#steps){.map-title}
 
-Chemotherapy, three-year mortality and the estimand.
+Four steps, on a colon cancer trial.
 :::
 ::: {.map-card}
-[03 · Sorted effects](#distribution){.map-title}
+[03 · Trust](#trust){.map-title}
 
-From predicted risks to a distribution.
+How sure are we, and what could fool us?
 :::
 ::: {.map-card}
-[04 · Classification](#classification){.map-title}
-
-Twelve characteristics of the two tails.
-:::
-::: {.map-card}
-[05 · Inference](#uncertainty){.map-title}
-
-Uncertainty and a held-out check.
-:::
-::: {.map-card}
-[06 · Discussion](#discussion){.map-title}
+[04 · Discussion](#discussion){.map-title}
 
 What would convince us?
 :::
@@ -120,223 +113,412 @@ What would convince us?
 :::
 
 ::: {.content-visible when-format="beamer"}
-1. Method, software, effect scales and a constructed example.
-2. A public colon cancer trial.
-3. Sorted effects and characteristics of the tails.
-4. Inference, validation and discussion.
+1. Is the effect the same for everybody?
+2. Sorted effects, step by step: a colon cancer trial.
+3. Can we trust the pattern?
+4. Discussion.
 :::
 
 ::: notes
-35–40 minutes of presentation and 20–25 minutes for discussion. The constructed example introduces the estimand; colon is the empirical analysis. The forest teaser is intended for a future session.
-
-Suggested pacing (about 40 minutes): Method 7 · Trial 5 · Effects 8 · Classification 6 · Inference 10 · Discussion opener 4. If time runs short, summarize the band construction and the native-CA failure in one sentence each. Leave the discussion questions up during open discussion; close with the forest teaser.
+About 33 minutes, then open discussion: Question 7 · Sorted effects 12 · Trust 10 · Discussion opener 4. The framing follows Huntington-Klein, The Effect, section 22.3. Code, bootstrap details, the native classification failure and full tables are in the backup stack.
 :::
 
-# Method and motivation {#literature .chapter-slide data-chapter-label="Method"}
+# Is the effect the same for everybody? {#question .chapter-slide data-chapter-label="Question"}
 
 ::: {.chapter-number}
 01
 :::
 ::: {.chapter-lead}
-The average effect is useful. What else can we learn from the same model?
+A trial reports one average effect. Whom does it describe?
 :::
 ::: {.chapter-cue}
-↓ The method and its R implementation
+↓ Why one number can hide many stories
 :::
 
-## Two starting points
+## One average, many patients {#one-average}
 
-- **Applied tutorial:** *The R Journal* [@chen2020].
-- **Method:** *Econometrica* [@chernozhukov2018].
+- A trial answers: does the treatment work **on average**?
+- Patients differ, so the effect can differ too: large for some, small or none for others.
+- "Why not … just estimate the distribution of effects?"
+- Then we can ask: **who benefits most, and who least?**
 
-::: {.sorting-steps}
-::: {.fragment .fade-up}
-**Average effect**
-
-How large is the effect on average?
-:::
-::: {.fragment .fade-up}
-**Sorted effects**
-
-How much do the fitted effects vary?
-:::
-::: {.fragment .fade-up}
-**Classification**
-
-Who is in the low and high tails?
-:::
+::: {.source}
+Quote from *The Effect*, §22.3 [@huntingtonklein2025].
 :::
 
 ::: notes
-For treatment, the partial effect is a finite contrast in conditional outcome means. For a continuous exposure, it can instead be a derivative.
+The Effect: causal inference would be much easier if each effect were the same for everybody, but we live in a world of heterogeneous effects. Instead of treating heterogeneity as a nuisance, estimate the distribution of effects and look at who is affected most and least. Sorted effects [@chernozhukov2018] does this from a model that already allows the effect to differ.
 :::
 
-## What the R package provides
+## Same average, different stories {#warmup-average}
 
-::: columns
-::: {.column width="48%" .profile-card}
-### `spe()`
-
-An effect distribution and average effect, with **bootstrap confidence bounds**.
-:::
-::: {.column width="48%" .profile-card}
-### `ca()`
-
-Tail comparisons, with **bootstrap standard errors and joint p-values**.
-:::
-:::
-
-::: {.source}
-SortedEffects 1.7.0. Native SPE inference; audited numerical stabilization for colon CA (details in chapter 05).
-:::
-
-
-## Heterogeneity depends on the scale {#effect-scale .figure-slide}
-
-::: columns
-::: {.column width="70%"}
-![](results/figures/baseline-risk.png){.panel-figure width=100%}
-:::
-::: {.column width="30%" .figure-notes}
-- Odds ratio **0.60** at every baseline risk.
-- **10%** baseline risk → **3.8 pp**.
-- **40%** baseline risk → **11.4 pp**.
-- Constant odds ratio, yet heterogeneous absolute benefit.
-:::
-:::
-
-::: {.source}
-Algebraic illustration with known risks; no data or estimation.
-:::
-
-::: notes
-For odds ratio theta and control risk p, treated risk is theta*p/(1-p+theta*p). Absolute benefit is not globally monotone in baseline risk. Benefit throughout this session is on the absolute scale: control risk minus treated risk.
-:::
-
-## Same average, different effect patterns {#warmup-average}
-
-Constructed example: three equally common baseline profiles.
-
-Both populations have **40% control risk**, **30% marginal treated risk** and **10 pp average benefit**.
+Three equally common kinds of patients, A, B and C. Without treatment, 40% of each die.
 
 ::: {.fragment .fade-up}
 ```{r}
 #| label: warmup_effect_table
 #| results: asis
 profiles <- c("A", "B", "C")
+story <- c("Constant benefit" = "Everyone benefits equally",
+           "Heterogeneous benefit" = "Benefit differs")
 warmup_table <- do.call(rbind, lapply(warmup_means$scenario, function(name) {
   d <- warmup[warmup$scenario == name, ]
   values <- sprintf("%+.0f", 100 * d$benefit[match(profiles, d$profile)])
-  data.frame(Scenario = name, A = values[1], B = values[2], C = values[3])
+  data.frame(Scenario = unname(story[name]), A = values[1], B = values[2], C = values[3])
 }))
-knitr::kable(warmup_table, col.names = c("True benefit (pp)", "Profile A", "Profile B", "Profile C"),
+knitr::kable(warmup_table, col.names = c("Benefit (pp)", "A", "B", "C"),
              align = c("l", "r", "r", "r"), row.names = FALSE)
 ```
 
-Benefit = control risk − treated risk.
+Both stories: average benefit **10 pp**. The average cannot tell them apart.
 :::
 
 ::: {.source}
-Constructed conditional risks, not sampled trial outcomes. Control risk is 40% in each profile; treated risks are 30/30/30% or 50/30/10%.
+Constructed example with known risks, not data. Benefit = risk without treatment − risk with treatment.
 :::
 
 ::: notes
-The marginal risk contrast is identical, but the conditional contrasts differ. Profiles A–C are generic baseline groups with equal population weights. Negative benefit means higher risk under treatment. These are specified population quantities, so no estimation or confidence interval is involved.
+Treated risks are 30/30/30% or 50/30/10%, so both populations have 30% marginal treated risk. Negative benefit means higher risk under treatment. These are specified population quantities: no estimation or confidence interval is involved.
 :::
 
-## Sorting reveals the difference {#warmup-distribution .figure-slide}
+## Sorting tells them apart {#warmup-distribution .figure-slide}
 
 ::: columns
 ::: {.column width="70%"}
 ![](results/warmup/effect-distributions.png){.panel-figure width=100%}
 :::
 ::: {.column width="30%" .figure-notes}
-- The mean is **10 pp** in both populations.
-- Each step spans **one third** of the heterogeneous population.
-- The lower third has **negative benefit**, despite a positive average.
+- Line patients up from least to most benefit.
+- Equal benefit: a flat line at **10 pp**.
+- Different benefit: a staircase from **−10 to +30 pp**.
+- One third are worse off, despite a positive average.
 :::
 :::
 
 ::: {.prompt}
-In the trial, the effect distribution and its uncertainty must be estimated.
+In a trial we must estimate this curve. That is what sorted effects do.
 :::
 
 ::: {.source}
-Exact population quantiles of constructed conditional-average effects; no fitted model or sampling uncertainty.
+Exact quantiles of the constructed example; no estimation.
 :::
 
 ::: notes
-The quantile function uses the inverse-CDF convention: at a jump, the filled point belongs to the lower step. The discrete profiles illustrate what sorting summarizes, not the regularity conditions or coverage of the inferential method. Colon provides the empirical analysis.
+The quantile function uses the inverse-CDF convention: at a jump, the filled point belongs to the lower step. The discrete example shows what sorting summarizes, not the regularity conditions or coverage of the inferential method.
 :::
 
-# The trial {#example .chapter-slide data-chapter-label="Trial"}
+## Even a constant odds ratio gives different benefits {#effect-scale .figure-slide}
+
+::: columns
+::: {.column width="70%"}
+![](results/figures/baseline-risk.png){.panel-figure width=100%}
+:::
+::: {.column width="30%" .figure-notes}
+- Same odds ratio (**0.60**) for every patient.
+- **10%** baseline risk → **3.8 pp**.
+- **40%** baseline risk → **11.4 pp**.
+- A logistic model already lets benefits differ; interactions let them differ more.
+:::
+:::
+
+::: {.source}
+Algebraic illustration with known risks.
+:::
+
+::: notes
+For odds ratio theta and control risk p, treated risk is theta*p/(1-p+theta*p). Absolute benefit is not globally monotone in baseline risk. The Effect makes the same point: logit and probit models naturally produce heterogeneous effects on the probability scale. Benefit throughout is on the absolute scale: risk without minus risk with treatment.
+:::
+
+# Sorted effects, step by step {#steps .chapter-slide data-chapter-label="Sorted effects"}
 
 ::: {.chapter-number}
 02
 :::
 ::: {.chapter-lead}
-Does chemotherapy reduce mortality by the same amount for every patient profile?
+A colon cancer trial: who benefits from chemotherapy?
 :::
 ::: {.chapter-cue}
-↓ A public randomized trial and a defined outcome
+↓ Model, predict, sort, describe
 :::
 
-## A public colon cancer trial {#trial-data}
+## The trial {#trial-data}
 
-- Patients with resected **stage III colon cancer**, randomized to three arms.
-- We compare **levamisole + 5-FU** with **observation**: 619 patients.
-- Outcome: **death within three years**; known for 618 patients.
-- Primary analysis: **593 patients** with complete baseline variables.
+- 619 patients with resected **stage III colon cancer**, randomized to observation or **levamisole + 5-FU**.
+- Outcome: **death within three years**.
+- Died: **34.7%** with observation (109/314), **25.7%** with chemotherapy (78/304).
+- On average, about **9 fewer deaths per 100** treated patients. The same for everybody?
 
 ::: {.source}
-`survival::colon`, death records; levamisole-only arm excluded. Trial reports [@moertel1990; @moertel1995].
+`survival::colon`, from the trial reports [@moertel1990; @moertel1995]. The third arm, levamisole alone, is not used. Analyses use the 593 patients with complete baseline data.
 :::
 
 ::: notes
-Death records only. One participant was censored before three years; 25 further participants lacked node count or differentiation. Complete-case estimates target the retained cohort rather than the full randomized population.
+Death records only. One participant was censored before three years; 25 further participants lacked node count or differentiation. Complete-case estimates target the retained cohort rather than the full randomized population. The crude difference is 9.1 pp; assigning the unknown outcome either way gives 8.95–9.26 pp, not a confidence interval. The model-standardized average over the 593 patients is 8.1 pp (95% CI 1.4 to 14.9).
 
 The final report covers 929 eligible stage III (Dukes' C) patients: levamisole plus fluorouracil reduced the recurrence rate by 40% and the death rate by 33% (median follow-up 6.5 years). Levamisole alone had little effect.
 :::
 
-## The average effect {#trial-average}
+## Step 1 · Let the effect differ {#step-model}
 
-- Observation: **34.7%** died within three years (109/314).
-- Levamisole + 5-FU: **25.7%** (78/304).
-- Crude risk difference: **9.1 pp**, in the 618 patients with known outcome.
-- Model-standardized over the 593 complete cases: **8.1 pp** (95% CI 1.4 to 14.9).
+- A logistic model for death within three years.
+- Chemotherapy's effect may change with **age, sex, positive nodes, tumour grade and extent**.
+- Obstruction, adherence and time from surgery to registration adjust the baseline risk.
+- Randomization makes the comparison fair; the model describes how the effect varies.
 
-::: notes
-The crude contrast and the standardized estimate differ in both cohort and estimation method. Assigning the single unknown outcome either way gives a crude range of 8.95–9.26 pp, not a confidence interval. The standardized value is the six-interaction model's average (chapter 03); the constant-odds-ratio model gives 8.0 pp (1.3 to 14.7).
+::: {.source}
+Six treatment interactions, fixed before fitting; 19 parameters. Model code in backup.
 :::
 
-## Benefit for a patient profile {#benefit-definition}
-
-$$
-\Delta(x)=\Pr(Y=1\mid A=0,X=x)-\Pr(Y=1\mid A=1,X=x)
-$$
-
-- $Y$: death within three years; $A=1$: levamisole + 5-FU, $A=0$: observation.
-- $x$: age, sex, positive nodes, differentiation, extent, obstruction, adherence and surgery-to-registration interval.
-- With randomization, $\Delta(x)=E[Y(0)-Y(1)\mid X=x]$: an average over patients with profile $x$, not an individual effect.
-- $\Delta(x)>0$: lower mortality with chemotherapy; $\Delta(x)<0$: higher.
-
 ::: notes
-Standardization uses the 593 observed baseline profiles. Changing the reference population can change both the average and the sorted-effect distribution.
+Age enters the baseline risk as a three-degree-of-freedom spline and the interactions linearly, with an age-by-sex term. The Effect: a model with many interactions is hard to read coefficient by coefficient; sorted effects summarizes it in one dimension, the effect itself. Sorting does not identify the effect: that comes from the randomized design.
 :::
 
-# Estimated effects {#distribution .chapter-slide data-chapter-label="Effects"}
+## Step 2 · Predict both futures for every patient {#step-predict .figure-slide}
+
+::: columns
+::: {.column width="70%"}
+![](results/colon/slides/patient-predictions.png){.panel-figure width=100%}
+:::
+::: {.column width="30%" .figure-notes}
+- For each patient: predicted risk **without** and **with** chemotherapy.
+- The gap is the **estimated benefit**.
+- It is an average for patients like them, not a personal effect.
+:::
+:::
+
+::: {.source}
+Eight of 593 patients, chosen to span the range and shown unsorted. Point estimates from the Step 1 model.
+:::
+
+::: notes
+Each prediction keeps the patient's baseline characteristics and changes only treatment. Under randomization the gap estimates the conditional average effect for that covariate profile, E[Y(0) − Y(1) | X = x]. It does not reveal what would happen to this particular patient.
+:::
+
+## Step 3 · Sort them {#step-sort .figure-slide}
+
+::: columns
+::: {.column width="70%"}
+![](results/colon/slides/sorted-patients.png){.panel-figure width=100%}
+:::
+::: {.column width="30%" .figure-notes}
+- All 593 patients, from least to most estimated benefit.
+- Average: **`r pp(ape$estimate)` pp**. Middle 80%: **−10 to +27 pp**.
+- Only **`r near_average`** of patients are within 3 pp of the average.
+- The extremes are the least certain estimates.
+:::
+:::
+
+::: {.source}
+Point estimates; uncertainty follows in chapter 03. In R: `SortedEffects::spe()` (call in backup).
+:::
+
+::: notes
+The 10th and 90th percentiles are −9.8 and 27.3 pp. Percentiles of the sorted benefits are the sorted partial effects; the band in chapter 03 covers the 10th to 90th percentiles, where estimation is more stable than at the extremes.
+:::
+
+## Step 4 · Who is at each end? {#step-describe}
+
+```{r}
+#| label: tail_table
+#| results: asis
+rows <- c(female = "Women", younger_women = "Women under 55", age = "Mean age (years)",
+          nodes_over4 = "More than 4 positive nodes", poor_diff = "Poor differentiation")
+d <- classification[match(names(rows), classification$variable), ]
+share <- function(x, multiplier) ifelse(multiplier == 100, sprintf("%.0f%%", 100 * x), sprintf("%.0f", x))
+knitr::kable(data.frame(
+  Characteristic = unname(rows),
+  `10% least benefit` = share(d$low_mean, d$multiplier),
+  `10% most benefit` = share(d$high_mean, d$multiplier),
+  `Adjusted p` = sub("^0", "", sprintf("%.2f", d$joint_p)), check.names = FALSE),
+  align = c("l", "r", "r", "r"))
+```
+
+- Least benefit: younger women with few positive nodes. Most: mostly men with many nodes.
+
+::: {.prompt}
+This describes who sits at each end. It is not the effect of chemotherapy in women.
+:::
+
+::: {.source}
+60 patients per tail. p adjusted across all 12 traits compared (audited stabilized bootstrap; backup).
+:::
+
+::: notes
+Across all twelve traits compared, only the sex-related differences stand out. In R this is SortedEffects::ca(); its native bootstrap failed numerically for these data, so the p-values come from the audited stabilized reconstruction. Tail membership depends jointly on age, sex and tumour characteristics, and was learned from this sample's outcomes. Classification tests tail composition, not a treatment-by-sex interaction. The adjustment covers twelve traits, not dataset, model or tail-size choices; p-values near .04 remain sensitive to Monte Carlo variability with 499 draws.
+:::
+
+# Can we trust the pattern? {#trust .chapter-slide data-chapter-label="Trust"}
 
 ::: {.chapter-number}
 03
 :::
 ::: {.chapter-lead}
-Fit the model, predict both conditions, then sort the risk differences.
+Is the spread real, or noise from one model and one trial?
 :::
 ::: {.chapter-cue}
-↓ R code and the sorted-effects curve
+↓ Uncertainty, model choice and new patients
 :::
 
-## Specify where effects may differ {#outcome-model .code-slide}
+## How sure are we? {#sorted-band .figure-slide}
+
+::: columns
+::: {.column width="70%"}
+![](results/colon/slides/sorted-effects-band.png){.panel-figure width=100%}
+:::
+::: {.column width="30%" .figure-notes}
+- Shaded: a 95% band for the **whole curve** at once.
+- 10th percentile: **−9.8 pp**, band **−24.6 to +5.1**: we cannot tell whether these patients benefit.
+- Average: **8.1 pp**, 95% CI **1.4 to 14.9**.
+:::
+:::
+
+::: {.source}
+Bootstrap band from SortedEffects, 10th–90th percentiles. How it is built: backup.
+:::
+
+::: notes
+A band for the whole curve is wider than pointwise intervals: its critical value is 2.79 rather than 1.96. It describes uncertainty about the curve, not a range for any individual patient.
+:::
+
+## You find what your model allows {#model-comparison .figure-slide}
+
+::: columns
+::: {.column width="70%"}
+![](results/colon/slides/model-comparison.png){.panel-figure width=100%}
+:::
+::: {.column width="30%" .figure-notes}
+- Constant odds ratio: benefit varies only with baseline risk, a narrow spread.
+- Six interactions: a much wider spread.
+- Same average (**8.0 vs 8.1 pp**); the interactions fit better (p = .014).
+- More spread is not proof: noise spreads too.
+:::
+:::
+
+::: {.source}
+95% bands for the whole curve, one per model.
+:::
+
+::: notes
+The likelihood-ratio test assesses six treatment interactions on the log-odds scale; it is not a test of constant risk differences. The constant-odds-ratio model is risk-based heterogeneity; the six interactions are effect modeling (backup: PATH comparison).
+:::
+
+## Does it hold up in new patients? {#held-out .figure-slide}
+
+::: columns
+::: {.column width="70%"}
+![](results/colon/slides/validation-tertiles.png){.panel-figure width=100%}
+:::
+::: {.column width="30%" .figure-notes}
+- Fit on half the patients (296); rank the other half (297) blind to their outcomes.
+- Higher-ranked patients did benefit more: slope **1.1** (0 = no signal, 1 = as predicted), adjusted p = .025.
+- Lowest third: **−8.5 pp**, CI −25.9 to +9.0: again unclear.
+:::
+:::
+
+::: {.source}
+One random split, stratified by treatment; three groups of 99; pointwise 95% intervals.
+:::
+
+::: notes
+The slope regresses held-out AIPW benefit pseudo-outcomes on centered predicted benefit (HC3 standard errors; Holm adjustment over the two planned rankings); tested against one, unadjusted p = .82. The top-minus-bottom tertile contrast is 28.3 pp (95% CI 2.1–54.4; Holm p = .068). These tertiles differ from the full-sample deciles, and one split is not independent replication.
+:::
+
+## What could fool us? {#robustness}
+
+- **Noise looks like spread:** 19 parameters for 179 deaths; 60 patients per tail.
+- **Missing data:** keeping all 618 patients moves the interaction p-value from **.014 to .054**.
+- **One split, one trial:** and colon was the third trial we tried, with no adjustment for that search.
+
+::: {.prompt}
+A promising ranking to test in other trials, not a treatment rule.
+:::
+
+::: notes
+The all-618 sensitivity uses a fixed node fill of two and missingness indicators; its average benefit is 8.4 pp. Both the model and the reference population differ from the complete-case analysis. Full sensitivity table in backup.
+:::
+
+# Discussion {#discussion .chapter-slide data-chapter-label="Discussion"}
+
+::: {.chapter-number}
+04
+:::
+::: {.chapter-lead}
+What would make sorted effects useful in our own trials?
+:::
+::: {.chapter-cue}
+↓ Lessons, questions and next time
+:::
+
+## What did we learn? {#learned}
+
+- The average (**8 pp**) hid a wide range of estimated benefits.
+- Sorting turned a 19-parameter model into one curve and a table of who sits at each end.
+- The pattern is uncertain and depends on the model; it needs other trials.
+
+## Questions for discussion {#discussion-questions}
+
+- **Spread or noise?** 29% of patients get a negative estimated benefit. Would you shrink the interactions first?
+- **Planning:** would you prespecify sorted effects in a trial's analysis plan?
+- **Risk or interactions:** start from baseline risk, or let the effect depend on traits?
+- **Scale:** absolute or relative benefit?
+
+::: notes
+The 29% is a property of the fitted model, not an estimate of harm: the band at the 10th percentile still reaches +5.1 pp. Shrinkage options include penalized or Bayesian interaction models; their sorted summaries would need their own inference. Risk-based versus effect modeling: PATH comparison in backup. Treatment decisions would additionally require harms, preferences and policy-value assessment.
+:::
+
+## Next time: causal forests {#causal-forests}
+
+- **Here:** we chose which interactions to allow.
+- **Causal forests:** let the data choose. A tree splits patients where the effect differs most, say under and over 65; a forest averages many trees.
+- **Same caveat:** neither method creates causality. Both need a design, here randomization.
+
+::: {.source}
+*The Effect*, §22.3.1 [@huntingtonklein2025]; generalized random forests [@athey2019]. No forest is fitted in this session.
+:::
+
+::: notes
+The flexibility gain is relative to our specified regression; sorted effects can summarize other effect estimators. Forest pointwise intervals do not automatically provide uniform bands or inference for selected tails. The native SortedEffects interface does not accept a fitted forest. More intuition in backup.
+:::
+
+## Reading and materials {#reading}
+
+- **Intuition:** *The Effect*, chapter 10 (treatment effects) and §22.3 (heterogeneous effects), free online.
+- **Tutorial:** the SortedEffects R package [@chen2020].
+- **Method:** the sorted effects paper [@chernozhukov2018].
+- **Code, report and slides:** [github.com/valentinklotzbuecher/jcod](https://github.com/valentinklotzbuecher/jcod).
+
+# Additional material {#backup .chapter-slide .backup-chapter data-chapter-label="Backup"}
+
+::: {.chapter-number}
+\+
+:::
+::: {.chapter-lead}
+Code, bootstrap details, full tables and assumptions.
+:::
+::: {.chapter-cue}
+↓ Optional slides for questions
+:::
+
+## Backup · The estimand {#estimand}
+
+$$
+\Delta(x)=\Pr(Y=1\mid A=0,X=x)-\Pr(Y=1\mid A=1,X=x)
+$$
+
+$$
+\mathrm{SPE}(u)=Q_{\Delta(X)}(u), \qquad \mathrm{APE}=E[\Delta(X)]
+$$
+
+- $Y$: death within three years; $A=1$: levamisole + 5-FU, $A=0$: observation; $x$: the eight baseline characteristics in the model.
+- With randomization, $\Delta(x)=E[Y(0)-Y(1)\mid X=x]$: an average over patients with profile $x$, not an individual effect.
+- The distribution of $X$, here the 593 observed profiles, defines the population summarized.
+- A quantile of effects differs from a difference of outcome quantiles.
+
+::: notes
+Changing the reference population can change both the average and the sorted-effect distribution. Randomization supports identification; sorting does not replace it.
+:::
+
+## Backup · The model in R {#outcome-model .code-slide}
 
 ```{.r code-line-numbers="1-3|4-9|11"}
 fm <- outcome ~ treatment + splines::ns(age, df = 3) + female +
@@ -362,7 +544,7 @@ Comparison model: omit lines 4–9. `age_z = (age - 60) / 10`; `log_nodes = log1
 The models have 13 and 19 parameters. Both use a three-degree-of-freedom age spline; treatment modification by age is linear. The six interactions were specified before fitting this pilot.
 :::
 
-## Predict both treatment conditions {.code-slide}
+## Backup · Predict both conditions in R {.code-slide}
 
 ```{.r code-line-numbers="1-3|5-6"}
 control <- treated <- dat
@@ -381,192 +563,7 @@ benefit <- predict(fit, control, type = "response") -
 Both predictions use the same baseline profile. The contrast is standardized over the observed covariate distribution.
 :::
 
-## What is being sorted? {#what-is-sorted}
-
-$$
-\mathrm{SPE}(u)=Q_{\Delta(X)}(u), \qquad
-\mathrm{APE}=E[\Delta(X)].
-$$
-
-- The distribution of $X$ defines the population summarized: here, 593 observed profiles.
-- Classification describes covariates in selected tails of $\Delta(X)$.
-- A quantile of effects differs from a difference of outcome quantiles.
-- Randomization supports identification; sorting does not replace it.
-
-::: notes
-Sorting the 593 fitted benefits gives the curve on the next slide, for u from .10 to .90; the APE is their mean.
-:::
-
-## The sorted-effects curve {#sorted-curve .figure-slide data-auto-animate="true"}
-
-::: columns
-::: {.column width="70%"}
-![](results/colon/slides/sorted-effects.png){.panel-figure width=100%}
-:::
-::: {.column width="30%" .figure-notes}
-- Mean benefit: **`r pp(ape$estimate)` pp**.
-- 10th percentile: **−9.8 pp**.
-- 90th percentile: **27.3 pp**.
-- Each point is a **percentile of fitted benefits**.
-:::
-:::
-
-::: notes
-The 90th percentile is a cutoff: approximately 90% of fitted benefits lie at or below 27.3 pp. Quantiles are not tail averages. The mean uses all profiles, not just the displayed percentile grid.
-:::
-
-## Similar averages, different distributions {.figure-slide}
-
-::: columns
-::: {.column width="70%"}
-![](results/colon/slides/model-comparison.png){.panel-figure width=100%}
-:::
-::: {.column width="30%" .figure-notes}
-- Mean benefit: **8.0 vs 8.1 pp**.
-- Interactions widen the fitted distribution.
-- Six-term interaction test: **p = .014**.
-- More spread alone does not validate a ranking.
-:::
-:::
-
-::: {.source}
-Native 95% uniform bands over the 10th–90th percentiles, calibrated separately by model.
-:::
-
-::: notes
-The likelihood-ratio test assesses six treatment interactions on the log-odds scale. It is not a test of constant risk differences. With a single treatment coefficient, absolute benefit varies only through baseline risk, the logic of risk-based analysis; the six interactions are effect modeling (see discussion).
-:::
-
-# Classification {#classification .chapter-slide data-chapter-label="Classification"}
-
-::: {.chapter-number}
-04
-:::
-::: {.chapter-lead}
-Which patient profiles sit in the two tails?
-:::
-::: {.chapter-cue}
-↓ Twelve characteristics, in their original units
-:::
-
-## Compare the tails with ca() {#ca-call .code-slide .code-focus}
-
-::: columns
-::: {.column width="68%"}
-```{.r code-line-numbers="2-5|6|7-8|9-10"}
-ca_result <- SortedEffects::ca(
-  fm = fm, data = dat,
-  method = "logit",
-  var_type = "categorical", var = "treatment",
-  compare = c("chemotherapy", "observation"),
-  u = .10,
-  interest = "moment", cl = "diff",
-  t = colon_characteristics()$variable,
-  b = 499, alpha = .05,
-  bc = FALSE, seed = 420
-)
-```
-:::
-::: {.column width="32%" .code-explanations}
-::: {.code-callout data-code-lines="2-5"}
-**Model and contrast**
-
-Same mortality model; benefit = observation − chemotherapy.
-:::
-::: {.code-callout data-code-lines="6"}
-**Choose the tails**
-
-Bottom and top 10%: 60 patients each here.
-:::
-::: {.code-callout data-code-lines="7-8"}
-**Compare characteristics**
-
-High − low means, across all twelve traits.
-:::
-::: {.code-callout data-code-lines="9-10"}
-**Bootstrap inference**
-
-499 draws; SEs and joint p-values.
-:::
-:::
-:::
-
-::: {.source}
-Colon CA inference uses the audited stabilization of failed native bootstrap fits (chapter 05).
-:::
-
-::: notes
-The tails can contain patients from either randomized arm. cl = "diff" compares high-minus-low characteristic means; binary means are proportions. The moment interface returns SEs and joint p-values, not moment confidence intervals.
-:::
-
-## Age, sex and positive nodes {.figure-slide}
-
-::: columns
-::: {.column width="70%"}
-![](results/colon/slides/classification-demographics.png){.panel-figure width=100%}
-:::
-::: {.column width="30%" .figure-notes}
-- Low tail: **all women**, mean age **43**.
-- High tail: **92% men**, mean age **53**.
-- More than four nodes: **13% vs 88%**.
-- Men aged 65+: **7% of the high tail**.
-:::
-:::
-
-::: {.source}
-Descriptive means; 60 patients per tail. Connecting segments are not confidence intervals.
-:::
-
-::: notes
-Only 4 of the 60 high-tail patients are men aged at least 65. The demographic indicators overlap and should not be interpreted as independent findings.
-:::
-
-## Other tumour and clinical characteristics {.figure-slide}
-
-::: columns
-::: {.column width="70%"}
-![](results/colon/slides/classification-clinical.png){.panel-figure width=100%}
-:::
-::: {.column width="30%" .figure-notes}
-- Poor differentiation: **10% vs 42%**.
-- Bowel obstruction: **35% vs 20%**.
-- Perforation: **3% in both tails**.
-- Inference for these differences follows.
-:::
-:::
-
-::: {.source}
-“Adherence” denotes tumour adherence to nearby organs.
-:::
-
-
-## Tail composition is not a subgroup treatment effect
-
-- Tail membership depends jointly on **age, sex and tumour characteristics**.
-- Younger women dominate the fitted bottom tenth.
-- Their representation does not estimate the treatment effect in all women.
-
-::: {.prompt}
-Assessing harm requires a treatment contrast and its uncertainty for a defined population.
-:::
-
-::: notes
-Classification tests tail composition, not a treatment-by-sex interaction. Tail membership was learned using the outcomes in this sample.
-:::
-
-# Inference and validation {#uncertainty .chapter-slide data-chapter-label="Inference"}
-
-::: {.chapter-number}
-05
-:::
-::: {.chapter-lead}
-How much of the pattern could be sampling variation or model choice?
-:::
-::: {.chapter-cue}
-↓ Bands, classification inference and a held-out check
-:::
-
-## Estimate the curve and its uncertainty {#spe-call .code-slide .code-focus}
+## Backup · Sorted effects with spe() {#spe-call .code-slide .code-focus}
 
 ::: columns
 ::: {.column width="68%"}
@@ -615,7 +612,7 @@ Uniform coverage concerns the chosen percentile grid and requires valid effect e
 spe() refits from the formula. The compare order yields the second prediction minus the first. In the full-sample path, refitting uses bootstrap weights while effect quantiles retain the original profile weights.
 :::
 
-## How is the uniform band built? {#band-construction}
+## Backup · How is the uniform band built? {#band-construction}
 
 1. Refit in each of **499** bootstrap draws and re-sort the fitted benefits at 81 percentiles, 10th–90th.
 2. Scale each percentile by its bootstrap interquartile range ÷ 1.349.
@@ -635,50 +632,57 @@ Native SortedEffects 1.7.0 IQR/max bootstrap, independently reconstructed; criti
 The constant-odds-ratio curve moves almost as one piece across bootstrap draws, so its critical value stays near 1.96. For comparison only, ±1.96 scales at the interaction model's 10th percentile would give −20.2 to +0.6 pp; the uniform band, −24.6 to +5.1 pp, covers all 81 percentiles at once.
 :::
 
-## Uncertainty in the lower tail {#sorted-band .figure-slide data-auto-animate="true"}
+## Backup · Tail comparison with ca() {#ca-call .code-slide .code-focus}
 
 ::: columns
-::: {.column width="70%"}
-![](results/colon/slides/sorted-effects-band.png){.panel-figure width=100%}
+::: {.column width="68%"}
+```{.r code-line-numbers="2-5|6|7-8|9-10"}
+ca_result <- SortedEffects::ca(
+  fm = fm, data = dat,
+  method = "logit",
+  var_type = "categorical", var = "treatment",
+  compare = c("chemotherapy", "observation"),
+  u = .10,
+  interest = "moment", cl = "diff",
+  t = colon_characteristics()$variable,
+  b = 499, alpha = .05,
+  bc = FALSE, seed = 420
+)
+```
 :::
-::: {.column width="30%" .figure-notes}
-- 10th percentile: **−9.8 pp**.
-- Band at that point: **−24.6 to +5.1 pp**.
-- The sign is uncertain at the lower end.
-- Mean benefit: **8.1 pp**, CI **1.4 to 14.9**.
+::: {.column width="32%" .code-explanations}
+::: {.code-callout data-code-lines="2-5"}
+**Model and contrast**
+
+Same mortality model; benefit = observation − chemotherapy.
+:::
+::: {.code-callout data-code-lines="6"}
+**Choose the tails**
+
+Bottom and top 10%: 60 patients each here.
+:::
+::: {.code-callout data-code-lines="7-8"}
+**Compare characteristics**
+
+High − low means, across all twelve traits.
+:::
+::: {.code-callout data-code-lines="9-10"}
+**Bootstrap inference**
+
+499 draws; SEs and joint p-values.
+:::
 :::
 :::
 
 ::: {.source}
-Native 95% uniform SPE band; separate 95% interval for the average benefit.
+Colon CA inference uses the audited stabilization of failed native bootstrap fits (next slide).
 :::
 
 ::: notes
-The band holds for all 81 percentiles at once: its critical value is 2.79 rather than 1.96 (previous slide). It is calibrated over the 10th–90th percentile grid only.
+The tails can contain patients from either randomized arm. cl = "diff" compares high-minus-low characteristic means; binary means are proportions. The moment interface returns SEs and joint p-values, not moment confidence intervals.
 :::
 
-
-## Are the tail characteristics different?
-
-| Characteristic | Low tail | High tail | Joint p |
-|:--|--:|--:|--:|
-| Female | 100% | 8% | .042 |
-| Women under 55 | 92% | 0% | .040 |
-| More than four nodes | 13% | 88% | .132 |
-| Poor differentiation | 10% | 42% | .948 |
-
-- Joint comparisons account for **all twelve specified characteristics**.
-- The two small p-values concern closely related traits.
-
-::: {.source}
-Audited stabilized CA, 499 draws. Full twelve-trait table in backup.
-:::
-
-::: notes
-The adjustment covers twelve traits, not dataset, model or tail-size selection. P-values near .04 remain sensitive to Monte Carlo variability with 499 draws.
-:::
-
-## What went wrong in native CA? {#native-ca}
+## Backup · What went wrong in native CA? {#native-ca}
 
 - CA rescales bootstrap fitting weights to total **20,000**.
 - **141/499 fits did not converge**; 137 draws had undefined tail moments.
@@ -697,70 +701,132 @@ Reconstruction preserves resamples, likelihood, threshold definitions and moment
 Weight scaling leaves the exact weighted-likelihood maximizer unchanged but can destabilize default GLM initialization. Empty tails produced undefined moments; native handling of invalid draws distorted joint p-values.
 :::
 
-## Does the ranking work in held-out patients? {.figure-slide}
+## Backup · Calculate tail means {.code-slide}
+
+```{.r code-line-numbers="1-3|4-5|6-8"}
+cutoff <- Hmisc::wtd.quantile(
+  benefit, rep(1, nrow(dat)), c(.10, .90)
+)
+tails <- list(low = benefit <= cutoff[1],
+              high = benefit >= cutoff[2])
+traits <- colon_characteristics()$variable
+lapply(tails, function(i)
+  colMeans(dat[i, traits]))
+```
+
+- Select tails by fitted benefit, then summarize baseline characteristics.
+- Both tails can contain patients from either randomized arm.
+
+::: {.source}
+Descriptive calculation only. `R/colon-walkthrough.R` verifies these means against the saved classification table.
+:::
+
+## Backup · Classification: demographics and nodes {.compact-table}
+
+```{r}
+#| label: demographic_table
+#| results: asis
+ca_table(c("age", "female", "old_men", "younger_women", "nodes", "nodes_over4"))
+```
+
+Difference = high − low. Percentages differ in percentage points.
+
+::: {.source}
+60 patients per tail. SEs and joint p-values: audited stabilized CA, 499 draws. Adjustment covers all twelve traits, not just these six.
+:::
+
+## Backup · Classification: clinical characteristics {.compact-table}
+
+```{r}
+#| label: clinical_table
+#| results: asis
+ca_table(c("poor_diff", "extensive", "obstruct", "perfor", "adhere", "surg_late"))
+```
+
+Difference = high − low, in percentage points.
+
+::: {.source}
+“Long surgery interval”: surgery-to-registration category. SEs and joint p-values: audited stabilized CA, adjusted across all twelve traits.
+:::
+
+## Backup · Tail profiles: age, sex and nodes {.figure-slide}
 
 ::: columns
 ::: {.column width="70%"}
-![](results/colon/slides/validation-tertiles.png){.panel-figure width=100%}
+![](results/colon/slides/classification-demographics.png){.panel-figure width=100%}
 :::
 ::: {.column width="30%" .figure-notes}
-- Fit on **296**; freeze predictions for **297**.
-- One split; three groups of **99**.
-- Ranking slope **1.10** (0 = no signal, 1 = calibrated); CI **0.24–1.97**, adjusted **p = .025**.
-- Low-third benefit: **−8.5 pp**, CI **−25.9 to +9.0**.
+- Low tail: **all women**, mean age **43**.
+- High tail: **92% men**, mean age **53**.
+- More than four nodes: **13% vs 88%**.
+- Men aged 65+: **7% of the high tail**.
 :::
 :::
 
 ::: {.source}
-Pointwise, unadjusted 95% intervals in the plot. Slope p-value: Holm adjustment over the two planned rankings.
+Descriptive means; 60 patients per tail. Connecting segments are not confidence intervals.
 :::
 
 ::: notes
-The slope regresses held-out AIPW benefit pseudo-outcomes on centered predicted benefit; tested against one, unadjusted p = .82. The split is stratified by treatment. Validation uses AIPW with nominal propensity 0.5 and HC3 standard errors. The top-minus-bottom tertile contrast is 28.3 pp (95% CI 2.1–54.4; Holm p = .068). These tertiles differ from the full-sample deciles; the split analysis is not independent replication.
+Only 4 of the 60 high-tail patients are men aged at least 65. The demographic indicators overlap and should not be interpreted as independent findings.
 :::
 
-## Robustness and scope
+## Backup · Tail profiles: clinical characteristics {.figure-slide}
 
-- **Missing-data sensitivity:** a simple fill-and-indicator analysis of all 618 known outcomes changes interaction p from **.014 to .054**.
-- **One held-out split:** useful, but not external validation.
-- **Small tails and flexible modeling:** 60 patients per tail; 19 parameters for 179 deaths.
-- **Exploratory search:** our third trial pilot; no adjustment across datasets.
+::: columns
+::: {.column width="70%"}
+![](results/colon/slides/classification-clinical.png){.panel-figure width=100%}
+:::
+::: {.column width="30%" .figure-notes}
+- Poor differentiation: **10% vs 42%**.
+- Bowel obstruction: **35% vs 20%**.
+- Perforation: **3% in both tails**.
+- Adjusted p-values: classification tables.
+:::
+:::
 
-::: {.prompt}
-Exploratory evidence for a ranking; further validation is needed before treatment decisions.
+::: {.source}
+“Adherence” denotes tumour adherence to nearby organs.
+:::
+
+## Backup · What is resampled?
+
+- **`spe()` full sample:** refits with bootstrap weights; effect quantiles retain original profile weights.
+- **`ca()` moments:** refits and updates thresholds and characteristic means with resampled weights.
+- **Held-out validation:** fits on training data; evaluates the frozen ranking using test outcomes.
+
+## Backup · Cohort and sensitivity checks
+
+| Analysis | Patients | Average benefit | Interaction p |
+|:--|--:|--:|--:|
+| Complete baseline and endpoint | 593 | 8.1 pp | .014 |
+| Missing baseline values with indicators | 618 | 8.4 pp | .054 |
+| Early-censored outcome assigned 0 | 594 | 8.0 pp | .017 |
+| Early-censored outcome assigned 1 | 594 | 8.4 pp | .010 |
+
+- The latter two retain complete baseline variables.
+- Eight records disagree on the supplied vs count-derived four-node indicator; the report includes a coding check.
+
+::: notes
+The primary model uses continuous log node count. The separate coding check compares two binary-node models; it does not replace the primary specification.
+:::
+
+## Backup · When is the heterogeneity causal?
+
+- **Identification, both:** randomization or no unmeasured confounding; overlap; consistency/no interference; appropriate handling of selection and missing data.
+- **Regression → SPE/CA:** reliable conditional-risk estimates; suitable convergence and regularity of the effect distribution.
+- **Forests:** enough local data, regularity, suitable nuisance estimates and honest fitting.
+- **Inference:** pointwise forest intervals do not automatically cover sorted effects or selected tails.
+
+::: {.source}
+Both concern conditional average effects. Fitted spread alone does not establish true heterogeneity. [@chernozhukov2018; @athey2019]
 :::
 
 ::: notes
-The all-618 sensitivity uses a fixed node fill of two and missingness indicators; its average benefit is 8.4 pp. Both the model and reference population differ from the complete-case analysis.
+Effect-quantile inference requires suitable estimator convergence and regularity at the requested quantiles. The discrete warm-up illustrates the estimand, not a coverage result. Randomization does not automatically justify complete-case selection.
 :::
 
-# Discussion {#discussion .chapter-slide data-chapter-label="Discussion"}
-
-::: {.chapter-number}
-06
-:::
-::: {.chapter-lead}
-What would make a sorted-effects analysis useful in our own work?
-:::
-::: {.chapter-cue}
-↓ Interpretation, credibility and next steps
-:::
-
-## What did sorting add?
-
-- Two models gave almost the **same average benefit**, but different effect distributions.
-- Classification made the tails concrete: age, sex and tumour features together.
-- Uncertainty and held-out results changed how strongly we could describe the pattern.
-
-::: {.prompt}
-Which result would you want to see before taking this pattern seriously?
-:::
-
-::: notes
-Discussion: model complexity with 179 deaths, missing-data handling, and the data needed for external validation. Treatment decisions would additionally require harms, preferences and policy-value assessment.
-:::
-
-## Where do sorted effects fit? {#hte-tools}
+## Backup · Where do sorted effects fit? {#hte-tools}
 
 | Approach | Question | Watch for |
 |:--|:--|:--|
@@ -781,38 +847,7 @@ Risk and effect modeling as defined in the PATH statement [@kent2020].
 PATH defines risk modeling (a multivariable risk model disaggregates trial patients by predicted risk) and effect modeling (treatment-by-covariate interactions); both predict absolute effects, which it calls the most relevant scale for clinical decisions. It encourages reporting results stratified by a risk model when the overall trial result is positive, as here. Our held-out slope is a calibration-for-benefit check; the c-for-benefit is a related discrimination measure [@vanklaveren2018].
 :::
 
-## Questions for discussion {#discussion-questions}
-
-- **Spread or noise?** The interaction model gives 29% of patients a negative fitted benefit, with 19 parameters for 179 deaths. Shrink before sorting?
-- **Prespecification:** Where would sorted effects belong in a trial's analysis plan: secondary or exploratory?
-- **Robustness:** Keeping all 618 patients moves the interaction p-value from .014 to .054. Which analysis should lead?
-- **Scale:** Absolute benefit varies even with a constant odds ratio. On which scale should heterogeneity be claimed?
-
-::: notes
-The 29% is a property of the fitted model, not an estimate of harm: the uniform band at the 10th percentile still reaches +5.1 pp. Shrinkage options include penalized or Bayesian interaction models; their sorted summaries would need their own inference. Treatment decisions would additionally require harms, preferences and policy-value assessment.
-:::
-
-## Next time: causal forests {#causal-forests}
-
-Could the data learn the age–sex–tumour pattern?
-
-- **Our regression:** we choose which interactions to include.
-- **Causal forests:** many trees learn nonlinearities and interactions.
-- **SPE + classification:** could summarize either set of effect estimates and describe the tails.
-
-::: {.prompt}
-**Causal in either case:** randomization—or no unmeasured confounding given baseline variables—plus overlap and well-defined treatment.
-:::
-
-::: {.source}
-Flexibility changes estimation; causal identification comes from design and assumptions. Generalized random forests [@athey2019].
-:::
-
-::: notes
-The flexibility gain is relative to our specified regression; SPE can summarize other effect estimators. Forest pointwise intervals do not automatically provide uniform SPE bands or inference for selected tails. The native SortedEffects interface does not accept a fitted forest.
-:::
-
-## How a forest builds a comparison {#forest-intuition}
+## Backup · How a forest builds a comparison {#forest-intuition}
 
 For a patient profile, which treated and control patients are comparable?
 
@@ -844,112 +879,6 @@ Many trees reduce dependence on any one noisy split.
 
 ::: notes
 Shared leaves define adaptive-neighbor weights, normalized for leaf size. GRF uses them in a local estimating equation, rather than simply averaging raw leaf risk differences. Honesty separates split selection from within-tree estimation. grf's treated-minus-control convention would need reversing for mortality benefit.
-:::
-
-## Reading and reproducible materials
-
-- **Send ahead:** the R tutorial, introduction and applied example [@chen2020].
-- **Optional theory:** the original method paper [@chernozhukov2018].
-- **Analysis report:** full classification table, validation, sensitivities and data provenance.
-- **Code and slides:** [github.com/valentinklotzbuecher/jcod](https://github.com/valentinklotzbuecher/jcod).
-
-
-# Additional material {#backup .chapter-slide .backup-chapter data-chapter-label="Backup"}
-
-::: {.chapter-number}
-\+
-:::
-::: {.chapter-lead}
-Full tables, causal assumptions and resampling details.
-:::
-::: {.chapter-cue}
-↓ Optional slides for questions
-:::
-
-## Backup · When is the heterogeneity causal?
-
-- **Identification, both:** randomization or no unmeasured confounding; overlap; consistency/no interference; appropriate handling of selection and missing data.
-- **Regression → SPE/CA:** reliable conditional-risk estimates; suitable convergence and regularity of the effect distribution.
-- **Forests:** enough local data, regularity, suitable nuisance estimates and honest fitting.
-- **Inference:** pointwise forest intervals do not automatically cover sorted effects or selected tails.
-
-::: {.source}
-Both concern conditional average effects. Fitted spread alone does not establish true heterogeneity. [@chernozhukov2018; @athey2019]
-:::
-
-::: notes
-Effect-quantile inference requires suitable estimator convergence and regularity at the requested quantiles. The discrete warm-up illustrates the estimand, not a coverage result. Randomization does not automatically justify complete-case selection.
-:::
-
-## Backup · Classification: demographics and nodes {.compact-table}
-
-```{r}
-#| label: demographic_table
-#| results: asis
-ca_table(c("age", "female", "old_men", "younger_women", "nodes", "nodes_over4"))
-```
-
-Difference = high − low. Percentages differ in percentage points.
-
-::: {.source}
-60 patients per tail. SEs and joint p-values: audited stabilized CA, 499 draws. Adjustment covers all twelve traits, not just these six.
-:::
-
-## Backup · Classification: clinical characteristics {.compact-table}
-
-```{r}
-#| label: clinical_table
-#| results: asis
-ca_table(c("poor_diff", "extensive", "obstruct", "perfor", "adhere", "surg_late"))
-```
-
-Difference = high − low, in percentage points.
-
-::: {.source}
-“Long surgery interval”: surgery-to-registration category. SEs and joint p-values: audited stabilized CA, adjusted across all twelve traits.
-:::
-
-## Backup · Calculate tail means {.code-slide}
-
-```{.r code-line-numbers="1-3|4-5|6-8"}
-cutoff <- Hmisc::wtd.quantile(
-  benefit, rep(1, nrow(dat)), c(.10, .90)
-)
-tails <- list(low = benefit <= cutoff[1],
-              high = benefit >= cutoff[2])
-traits <- colon_characteristics()$variable
-lapply(tails, function(i)
-  colMeans(dat[i, traits]))
-```
-
-- Select tails by fitted benefit, then summarize baseline characteristics.
-- Both tails can contain patients from either randomized arm.
-
-::: {.source}
-Descriptive calculation only. `R/colon-walkthrough.R` verifies these means against the saved classification table.
-:::
-
-## Backup · What is resampled?
-
-- **`spe()` full sample:** refits with bootstrap weights; effect quantiles retain original profile weights.
-- **`ca()` moments:** refits and updates thresholds and characteristic means with resampled weights.
-- **Held-out validation:** fits on training data; evaluates the frozen ranking using test outcomes.
-
-
-## Backup · Cohort and sensitivity checks
-
-| Analysis | Patients | Average benefit | Interaction p |
-|:--|--:|--:|--:|
-| Complete baseline and endpoint | 593 | 8.1 pp | .014 |
-| Missing baseline values with indicators | 618 | 8.4 pp | .054 |
-| Early-censored outcome assigned 0 | 594 | 8.0 pp | .017 |
-| Early-censored outcome assigned 1 | 594 | 8.4 pp | .010 |
-
-- The latter two retain complete baseline variables.
-- Eight records disagree on the supplied vs count-derived four-node indicator; the report includes a coding check.
-
-::: notes
-The primary model uses continuous log node count. The separate coding check compares two binary-node models; it does not replace the primary specification.
 :::
 
 ## Backup · Original published example

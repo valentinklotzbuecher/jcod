@@ -31,6 +31,7 @@ To check the slide calculations or refresh the slide figures from saved results:
 ```sh
 Rscript R/colon-walkthrough.R
 Rscript scripts/plot-colon-slides.R
+Rscript scripts/plot-colon-patients.R
 Rscript scripts/illustrate-warmup.R
 ```
 
@@ -41,8 +42,8 @@ The HTML embeds its figures, styles and scripts and uses no external assets.
 [`presentation.pdf`](presentation.pdf) is the matching handout.
 `bash scripts/render.sh` rebuilds the website and refreshes both portable exports.
 
-The presentation uses two dimensions: six main chapters run horizontally, and
-their examples run vertically. An optional seventh stack holds technical backup.
+The presentation uses two dimensions: four main chapters run horizontally, and
+their slides run vertically. An optional fifth stack holds technical backup.
 Use the clickable session map or chapter dock to jump to a topic. The dock shows
 on the title and chapter covers; on content slides it tucks away so it never
 covers a heading on 16:9 screens, and returns when the pointer reaches the top
@@ -57,32 +58,37 @@ edge or keyboard focus enters it. Touch devices keep it visible.
 Transitions and auto-animation respect reduced-motion preferences. The PDF shows
 the completed slides in reading order, with fragment states consolidated.
 
-The six main chapters cover method and motivation, trial data, effects, classification,
-inference and discussion. Title and chapter covers use a light layout with a
-slim accent rule. R examples show the model, predictions and full
-`spe()` and `ca()` calls, with stepwise highlighting of the important arguments.
-The main chapters also define the estimand formally, show how the uniform band
-is built (critical value 2.79 rather than 1.96 for the interaction model) and
-explain the native classification bootstrap failure.
-The classification table and dumbbell plots describe the lowest- and
-highest-benefit tails; one fixed held-out split checks whether the estimated
-ranking predicts differences in observed benefit. The discussion chapter
-relates sorted effects to subgroup forest plots and to PATH risk and effect
-modeling, then poses four discussion questions. Two short closing slides for
-the next session introduce causal forests: what flexible effect estimation adds,
-how repeated tree groupings define weighted comparisons between similar profiles,
-how this relates to sorted summaries, and which assumptions support a causal reading.
-No forest is fitted in this session.
+The deck follows the intuition of Huntington-Klein's *The Effect* (§22.3). A
+model that lets the effect differ gives an estimated benefit for every patient.
+Sorting those benefits shows their spread, and the patients at each end can then
+be described. The four chapters work through this in turn:
+
+- **Is the effect the same for everybody?** Two constructed warm-up slides and
+  an effect-scale illustration.
+- **Sorted effects, step by step:** model, predict, sort and describe, applied
+  to the colon trial.
+- **How far can the pattern be trusted?** The uniform band, model choice, one
+  held-out split and the sensitivity analysis.
+- **Discussion:** questions, plus a causal-forest teaser for the next session.
+  No forest is fitted in this session.
+
+Two figures show per-patient predictions. They come from
+`scripts/plot-colon-patients.R`, which refits the specified interaction model
+(point estimates only) and reproduces the saved sorted effects before plotting.
+The backup stack holds the technical material: the R code, the bootstrap
+construction of the band, the native classification failure, full twelve-trait
+tables, the PATH comparison and the causal assumptions. Title and chapter
+covers use a light layout with a slim accent rule.
 
 The warm-up uses known population risks for three equally common profiles.
 Constant benefits of 10/10/10 pp and heterogeneous benefits of −10/10/30 pp
 both average 10 pp. Its quantile curves are exact and discrete; no outcomes,
 models or confidence intervals are simulated. The script validates the risks,
 population means and quantile steps before writing `results/warmup/`.
-The deck has 47 slides: 38 through the discussion, including the title,
-session map and chapter covers, and 9 in the optional backup stack. Speaker
-notes retain statistical details rather than repeating slide content, and the
-session-map notes suggest a pacing per chapter (about 40 minutes).
+The deck has 43 slides: 23 in the main flow, including the title, session map
+and chapter covers, and 20 in the backup stack, including references. Speaker
+notes keep the statistical qualifications, and the session-map notes suggest a
+pacing per chapter (about 33 minutes).
 
 `R/colon-walkthrough.R` contains executable versions of the slide calculations.
 It fits the two specified models and verifies the saved point estimates.
@@ -189,6 +195,7 @@ and the saved analysis outputs were not replaced by this contribution.
 - `index.qmd`: session landing page and reading links.
 - `R/colon-walkthrough.R`: executable R calculations for the main trial example.
 - `scripts/plot-colon-slides.R`: slide figures from the saved colon results.
+- `scripts/plot-colon-patients.R`: per-patient prediction figures, from a point-estimate refit checked against the saved results.
 - `scripts/illustrate-warmup.R`: validated population-risk construction and exact quantile figures for the warm-up.
 - `colon-pilot.qmd` and `ist-pilot.qmd`: complete trial reports and their limitations.
 - `R/demo.R`: simulated data, figures and teaching bootstrap.

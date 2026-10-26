@@ -23,14 +23,18 @@ Colon is the sole empirical trial
 in the deck; IST remains a separate report. Preserve the exploratory context:
 colon was the third trial pilot, without adjustment across datasets.
 
-The main slides use full `spe()` and `ca()` calls with stepwise argument
-highlighting. A closing teaser introduces causal forests for a future session,
+The main slides follow the intuition of Huntington-Klein's *The Effect* (§22.3):
+model, predict, sort, describe, then how far to trust the pattern. Keep them
+intuitive. Code, bootstrap mechanics, the native CA failure and full tables
+belong in the backup stack, where the full `spe()` and `ca()` calls keep their
+stepwise argument highlighting. A closing teaser introduces causal forests for a future session,
 distinguishing flexible effect estimation from sorted summaries and the
 assumptions needed for causal interpretation. No forest is fitted here.
 
 `R/colon-walkthrough.R` fits both colon models and checks the saved point
 estimates. `scripts/plot-colon-slides.R` draws slide figures from saved results;
-rendering does not rerun bootstraps. SPE uses native SortedEffects 1.7.0.
+`scripts/plot-colon-patients.R` refits the interaction model for point predictions
+only and checks them against the saved results. Rendering does not rerun bootstraps. SPE uses native SortedEffects 1.7.0.
 Classification inference uses an explicitly labelled audited stabilized
 reconstruction; the failed native CA output is retained separately.
 

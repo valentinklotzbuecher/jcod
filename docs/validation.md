@@ -171,10 +171,32 @@ Second revision, 26 October 2026:
   pages. The two trial reports differed only in unused slide CSS, so their
   committed exports were kept.
 
+Third revision (intuitive redo), 26 October 2026:
+
+- **Structure:** the main flow follows *The Effect* §22.3 in four chapters:
+  question, sorted effects step by step, trust, discussion. Technical slides
+  moved intact to the backup stack, renamed "Backup · …".
+- **New script:** `scripts/plot-colon-patients.R` refits the specified
+  interaction model, point estimates only. Before writing
+  `results/colon/patient-benefits.csv` and two figures, it reproduces:
+  - the saved native SPE grid and APE, within 1e-10;
+  - the 60/60 tail sizes.
+- **Inline numbers:** the share of patients within 3 pp of the average (15%) is
+  computed from that file during rendering.
+- **Step 4 table:** built from `classification-stabilized.csv`. The
+  stabilized-bootstrap label is kept with its p-values.
+- **Dock and overlap checks:** all 21 passed, with no heading overlaps on 43
+  slides at four 16:9 sizes.
+- **Portable export:** loaded offline. All 43 slides and 10 images loaded, with
+  no external or failed requests and no JavaScript errors. The four
+  session-map links and the backup code-callout sequences worked.
+- **Handout:** all 44 PDF pages were inspected.
+
 - `bash scripts/render.sh`: passed full-site rendering, including the portable
-  RevealJS HTML export and matching 48-page, 16:9 Beamer handout. The colon
-  trial is the sole empirical analysis: 38 slides through discussion (including
-  title, session map and chapter covers), followed by 9 optional backup slides.
+  RevealJS HTML export and matching 44-page, 16:9 Beamer handout. The colon
+  trial is the sole empirical analysis: 23 main-flow slides (including title,
+  session map and chapter covers), followed by 20 backup slides including
+  references.
 - Two warm-up slides precede the trial and replace two basic percentile slides.
   The overall slide count is unchanged. Speaker notes were reduced from roughly
   2,000 to 750 words, retaining estimand, inference and interpretation details.
@@ -195,7 +217,7 @@ Second revision, 26 October 2026:
   explanations. Four groups per call passed 14 forward/backward states and six
   direct-jump/re-entry checks, including reduced motion. All explanations remain
   visible; static PDFs show complete code and explanations together.
-- Headless Chromium exercised all HTML slides (44 then, 47 now), verified image loading,
+- Headless Chromium exercised all HTML slides (44, then 47, now 43), verified image loading,
   checked slide boundaries and JavaScript errors, and confirmed native MathML
   rendering. Math and fonts do not require external services.
 - Six main chapter stacks and one backup stack form the two-dimensional deck.

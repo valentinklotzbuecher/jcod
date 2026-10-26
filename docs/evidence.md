@@ -52,6 +52,33 @@ Teaching implications grounded in the tutorial:
   tail-characteristics table is a descriptive illustration unless the matching
   inference has actually been performed.
 
+### Framing: *The Effect*, section 22.3
+
+Huntington-Klein, *The Effect: An Introduction to Research Design and Causality*,
+second edition, online at [theeffectbook.net](https://theeffectbook.net); the
+page was built 17 October 2025. The site was unreachable from the cloud
+environment. The user supplied the text of chapter 22 on 26 October 2026, and
+the table of contents confirms chapter 10 (Treatment Effects).
+
+- **Slide quote:** "Why not … just estimate the distribution of effects?" This
+  abridges the §22.3 sentence that contrasts treating heterogeneity as a
+  nuisance with estimating the distribution of effects.
+- **§22.3.2, sorted effects:** described as "pretty darn simple". The steps are:
+  - estimate each person's effect from a model that already allows
+    heterogeneity, such as interactions, logit or probit;
+  - sort the estimates;
+  - compare who is in the least and most affected 10%.
+  - The worked example (Oster's vitamin E data) shows the sorted curve against
+    the average and a table of tail characteristics. The intuitive deck follows
+    this arc.
+- **§22.3.1, causal forests:** split the sample where the estimated effect
+  differs most, then average over many trees (honest forests in `grf`). The
+  book stresses that these methods assume an existing identification design.
+- **The book's wording:** it calls these estimates each person's treatment
+  effect.
+- **The deck's wording:** it keeps the narrower reading, an average for
+  patients with the same covariate profile, not an individual effect.
+
 ### Next-session teaser: causal forests
 
 Athey, Tibshirani and Wager (2019), *Generalized Random Forests*,

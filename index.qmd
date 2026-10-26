@@ -26,30 +26,34 @@ One hour together: around 35–40 minutes of examples and interpretation, with t
 
 ## What we will cover
 
-A short introduction to the method and papers, followed by two constructed
-populations with identical average benefit but different effect distributions.
-We then analyze a public randomized **colon chemotherapy trial** in resected stage
-III disease: does the average reduction in three-year mortality hide differences
-between patient profiles?
+Trials report one average effect, but patients differ. Following the intuition
+of Nick Huntington-Klein's *The Effect*, we ask what the average hides. Two
+constructed populations with the same average benefit show why the whole
+distribution of effects matters.
 
-R examples show how to predict each profile under observation and chemotherapy,
-then use the full `spe()` and `ca()` calls with highlighted arguments. We sort
-the estimated risk reductions, compare twelve characteristics in the bottom and
-top 10%, and check the ranking in held-out patients. Colon is the empirical
-analysis; the warm-up uses explicitly specified population risks.
+We then work through sorted effects step by step on a public randomized
+**colon chemotherapy trial** in resected stage III disease. We let the effect of
+chemotherapy differ in a model, predict each patient's risk with and without
+treatment, sort the estimated benefits and describe the patients at each end.
+Then we ask how far to trust the pattern:
 
-The discussion relates sorted effects to subgroup forest plots and to PATH risk
-and effect modeling, then turns to open questions: overfitting, prespecification,
-robustness and the effect scale.
+- uncertainty for the whole curve;
+- the role of the model;
+- a check in held-out patients;
+- sensitivity to missing data.
 
-We close with a teaser for next time: what causal forests add to effect
-estimation, how they relate to sorted effects, and what makes an effect estimate
-causal.
+Colon is the empirical analysis; the warm-up uses explicitly specified
+population risks.
 
-The HTML presentation has a chapter map and a two-dimensional overview: use **→** to move between chapters, **↓** to explore their examples, **Space** to follow the full story, and **Esc** to see the whole deck.
+The discussion turns to open questions: overfitting, prespecification,
+risk-based versus interaction models, and the effect scale. We close with a
+teaser for next time on causal forests.
+
+The HTML presentation has a chapter map and a two-dimensional overview: use **→** to move between chapters, **↓** to step through each chapter, **Space** to follow the full story, and **Esc** to see the whole deck.
 
 ## Before the session
 
+- **Intuition first:** Huntington-Klein, [*The Effect*](https://theeffectbook.net), chapter 10 (Treatment Effects) and §22.3 (Modeling Heterogeneous Effects), free online.
 - **Suggested reading:** Chen, Chernozhukov, Fernández-Val and Luo (2020), [*SortedEffects: Sorted Causal Effects in R*](https://doi.org/10.32614/RJ-2020-006). Start with the introduction and mortgage example.
 - **Optional theory:** Chernozhukov, Fernández-Val and Luo (2018), [*The Sorted Effects Method*](https://doi.org/10.3982/ECTA14415).
 - **Optional application (suggested):** Bilancini et al. (2022), [*Prosocial behavior in emergencies: Evidence from blood donors recruitment and retention during the COVID-19 pandemic*](https://pubmed.ncbi.nlm.nih.gov/36327632/). An observational health application: sorted effects of the COVID-19 pandemic on blood donations by new donors. Full-text verification is still pending; see the [evidence notes](docs/evidence.md).
