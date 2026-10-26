@@ -66,13 +66,15 @@ figure <- ggplot(segments) +
              shape = 21, fill = "white", colour = "#5A317E", stroke = 1.2, size = 3.7) +
   geom_point(data = jump_end, aes(upper_percentile, benefit_pp),
              colour = "#5A317E", size = 3.7) +
-  facet_wrap(~ scenario, nrow = 1) +
+  facet_wrap(~ scenario, nrow = 1, labeller = as_labeller(c(
+    "Constant benefit" = "Everyone benefits equally",
+    "Heterogeneous benefit" = "Benefit differs"))) +
   scale_x_continuous(breaks = c(0, 100 / 3, 200 / 3, 100),
                      labels = c("0", "33⅓", "66⅔", "100"),
                      limits = c(0, 100), expand = expansion(mult = .04)) +
   scale_y_continuous(breaks = seq(-10, 30, by = 10), limits = c(-16, 36),
                      expand = expansion(mult = 0)) +
-  labs(x = "Percentile of true benefit", y = "Risk reduction (percentage points)") +
+  labs(x = "Patients, sorted by benefit (%)", y = "Benefit (pp)") +
   theme_minimal(base_size = 20, base_family = "DejaVu Sans") +
   theme(
     text = element_text(colour = "#252438"),

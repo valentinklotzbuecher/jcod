@@ -215,7 +215,7 @@ $code-block-font-size: 0.7em;
 .reveal .session-map .map-card {
   position: relative;
   display: block;
-  min-height: 135px;
+  min-height: 120px;
   padding: 0.65em 0.8em;
   background: #fffefb;
   border: 1px solid #ded4e5;
@@ -235,7 +235,7 @@ $code-block-font-size: 0.7em;
 }
 .reveal .map-number { font-size: 0.5em; letter-spacing: 0.1em; color: #a55b39; font-weight: 700; }
 .reveal .map-title { display: block; font-size: 0.92em; font-weight: 700; margin: 0.2em 0; }
-.reveal .map-card p { font-size: 0.54em; line-height: 1.4; color: #697283; margin: 0.45em 0; }
+.reveal .map-card p { font-size: 0.7em; line-height: 1.4; color: #697283; margin: 0.45em 0; }
 .reveal .map-card p:has(.map-title) { font-size: 1em; margin: 0 0 0.3em; }
 .reveal .map-card .map-title { text-decoration: none; }
 .reveal .map-card .map-title::after { content: ""; position: absolute; inset: 0; border-radius: 12px; }

@@ -50,7 +50,7 @@ Generated artifacts: `_site/`, `*_cache/`, `*_files/` (do not edit by hand).
 - `Rscript R/colon-walkthrough.R` - fit the two colon models and verify the saved point estimates.
 - `Rscript scripts/plot-colon-slides.R` - refresh slide figures from saved results without fitting models or bootstraps.
 - `Rscript scripts/plot-colon-patients.R` - refit the interaction model for point predictions only, check them against the saved SPE/APE, and redraw the two per-patient figures.
-- `Rscript scripts/illustrate-warmup.R` - validate and redraw the constructed population warm-up.
+- `Rscript scripts/illustrate-warmup.R` - validate and redraw the constructed population warm-up. Run R under a UTF-8 locale (e.g. `LC_ALL=C.UTF-8` in a C-locale container) so its ⅓/⅔ tick labels render.
 - `quarto publish quarto-pub` - publishes externally; run only when explicitly requested.
 
 In the prepared cloud environment, first run `source /workspace/.tools/activate`.

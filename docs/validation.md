@@ -191,6 +191,12 @@ Third revision (intuitive redo), 26 October 2026:
   no external or failed requests and no JavaScript errors. The four
   session-map links and the backup code-callout sequences worked.
 - **Handout:** all 44 PDF pages were inspected.
+- **Slide-by-slide review:** figures now use the slides' wording: "estimated
+  benefit", "patients, sorted by …", and warm-up panels named like the table
+  rows. They were regenerated from saved results with `plot-colon-slides.R`
+  and `illustrate-warmup.R` (under UTF-8); the warm-up CSVs are
+  byte-identical. Callouts now carry the quote and the key message of Step 1
+  and the band slide.
 - **Clarity pass:** slide text now explains technical terms in plain words.
   The package's tail bootstrap "broke down for these data", and the p-values
   come from "our checked re-run with stable starting values". The adjusted

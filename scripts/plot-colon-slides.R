@@ -69,7 +69,7 @@ spe_axes <- function(x_expand = .025) {
                        expand = expansion(mult = x_expand)),
     scale_y_continuous(limits = c(-30, 50), breaks = seq(-20, 40, 20),
                        expand = expansion(mult = 0)),
-    labs(x = "Percentile of fitted benefit", y = "Mortality risk reduction (pp)")
+    labs(x = "Patients, sorted by estimated benefit", y = "Estimated benefit (pp)")
   )
 }
 interaction_plot <- function(show_band = FALSE) {
@@ -207,7 +207,7 @@ validation_plot <- ggplot(validation, aes(tertile)) +
                      expand = expansion(mult = .22)) +
   scale_y_continuous(limits = c(-30, 45), breaks = seq(-20, 40, 20),
                      expand = expansion(mult = 0)) +
-  labs(x = "Groups ranked by predicted benefit", y = "Mortality risk reduction (pp)") +
+  labs(x = "Groups ranked by predicted benefit", y = "Benefit (pp)") +
   slide_theme() + theme(panel.grid.major.x = element_blank())
 save_figure(validation_plot, "validation-tertiles")
 

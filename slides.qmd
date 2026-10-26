@@ -139,11 +139,10 @@ A trial reports one average effect. Whom does it describe?
 
 - A trial answers: does the treatment work **on average**?
 - Patients differ, so the effect can differ too: large for some, small or none for others.
-- "Why not … just estimate the distribution of effects?"
-- Then we can ask: **who benefits most, and who least?**
+- So we also want to know: **who benefits most, and who least?**
 
-::: {.source}
-Quote from *The Effect*, §22.3 [@huntingtonklein2025].
+::: {.prompt}
+"Why not … just estimate the distribution of effects?" *The Effect*, §22.3 [@huntingtonklein2025]
 :::
 
 ::: notes
@@ -189,8 +188,8 @@ Treated risks are 30/30/30% or 50/30/10%, so both populations have 30% marginal 
 :::
 ::: {.column width="30%" .figure-notes}
 - Line patients up from least to most benefit.
-- Equal benefit: a flat line at **10 pp**.
-- Different benefit: a staircase from **−10 to +30 pp**.
+- Everyone benefits equally: a flat line at **10 pp**.
+- Benefit differs: a staircase from **−10 to +30 pp**.
 - One third are worse off, despite a positive average.
 :::
 :::
@@ -263,7 +262,10 @@ The final report covers 929 eligible stage III (Dukes' C) patients: levamisole p
 - A logistic model for death within three years.
 - Chemotherapy's effect may change with **age, sex, number of positive nodes, tumour grade and tumour extent**.
 - Bowel obstruction, tumour adherence to nearby organs and time from surgery to registration adjust the baseline risk.
-- Randomization makes the comparison fair; the model describes how the effect varies.
+
+::: {.prompt}
+Randomization makes the comparison fair; the model only describes how the effect varies.
+:::
 
 ::: {.source}
 Six treatment interactions, fixed before fitting; 19 parameters. Model code in backup.
@@ -366,18 +368,18 @@ Is the spread real, or noise from one model and one trial?
 ![](results/colon/slides/sorted-effects-band.png){.panel-figure width=100%}
 :::
 ::: {.column width="30%" .figure-notes}
-- Shaded: a 95% band for the **whole curve** at once.
+- Shaded: a 95% band for the **whole curve**, not one point at a time.
 - Near the bottom (10th percentile): **−9.8 pp**, band **−24.6 to +5.1**: we cannot tell whether these patients benefit.
-- Average: **8.1 pp**, 95% CI **1.4 to 14.9**.
+- Average: **8.1 pp**, 95% CI **1.4 to 14.9**: clearly positive.
 :::
 :::
 
-::: {.source}
-Band from the package's bootstrap (499 resamples), covering the 10th–90th percentiles. How it is built: backup.
+::: {.prompt}
+The average benefit is clear; the shape of the spread is much less certain.
 :::
 
 ::: notes
-A band for the whole curve is wider than pointwise intervals: its critical value is 2.79 rather than 1.96. It describes uncertainty about the curve, not a range for any individual patient.
+The band comes from the package's bootstrap (499 resamples) and covers the 10th–90th percentiles; how it is built is in backup. A band for the whole curve is wider than pointwise intervals: its critical value is 2.79 rather than 1.96. It describes uncertainty about the curve, not a range for any individual patient.
 :::
 
 ## You find what your model allows {#model-comparison .figure-slide}
@@ -410,13 +412,13 @@ The likelihood-ratio test assesses six treatment interactions on the log-odds sc
 :::
 ::: {.column width="30%" .figure-notes}
 - Fit on half the patients (296); rank the other half (297) blind to their outcomes.
-- Higher-ranked patients did benefit more: slope **1.1** (0 = no signal, 1 = as predicted), p = .025, adjusted for checking two models.
+- Higher-ranked patients did benefit more: slope **1.1** (1 = as predicted, 0 = no signal), p = .025.
 - Lowest third: **−8.5 pp**, CI −25.9 to +9.0: again unclear.
 :::
 :::
 
 ::: {.source}
-One random split, balanced by treatment arm; three groups of 99; a 95% interval for each group.
+One random split, balanced by treatment arm; three groups of 99; a 95% interval for each group. p adjusted for checking two models.
 :::
 
 ::: notes
@@ -454,6 +456,10 @@ What would make sorted effects useful in our own trials?
 - The average (**8 pp**) hid a wide range of estimated benefits.
 - Sorting turned a 19-parameter model into one curve and a table of who sits at each end.
 - The pattern is uncertain and depends on the model; it needs other trials.
+
+::: {.prompt}
+Which result would convince you that the pattern is real?
+:::
 
 ## Questions for discussion {#discussion-questions}
 
