@@ -56,9 +56,10 @@ inference and discussion. R examples show the model, predictions and full
 `spe()` and `ca()` calls, with stepwise highlighting of the important arguments.
 The classification table and dumbbell plots describe the lowest- and
 highest-benefit tails; one fixed held-out split checks whether the estimated
-ranking predicts differences in observed benefit. A closing teaser for the next
-session introduces causal forests: what flexible effect estimation adds, how
-it relates to sorted summaries, and which assumptions support a causal reading.
+ranking predicts differences in observed benefit. Two short closing slides for
+the next session introduce causal forests: what flexible effect estimation adds,
+how repeated tree groupings define weighted comparisons between similar profiles,
+how this relates to sorted summaries, and which assumptions support a causal reading.
 No forest is fitted in this session.
 
 `R/colon-walkthrough.R` contains executable versions of the slide calculations.

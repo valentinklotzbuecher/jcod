@@ -1116,7 +1116,7 @@ Valentin Klotzbücher · Department of Clinical Research
 <p><strong>→</strong> chapters · <strong>↓</strong> slides within a chapter · <strong>Space</strong> next step · <strong>Esc</strong> overview</p>
 </div>
 <aside class="notes">
-<p>One hour including discussion; allow 35–40 minutes for prepared material. Six main chapters plus optional backup. Colon is the sole worked trial. This is exploratory secondary analysis, not a clinical recommendation. Chapters take roughly 4, 5, 8, 7, 10 and 4 minutes. Move quickly through covers and skip backup unless asked. End with causal forests as a teaser for a future session.</p>
+<p>One hour including discussion; allow 35–40 minutes for prepared material. Six main chapters plus optional backup. Colon is the sole worked trial. This is exploratory secondary analysis, not a clinical recommendation. Chapters take roughly 4, 5, 8, 7, 10 and 5 minutes. Move quickly through covers and skip backup unless asked. End with two short causal-forest slides as a teaser for a future session.</p>
 <style type="text/css">
 span.MJX_Assistive_MathML {
 position:absolute!important;
@@ -1926,6 +1926,45 @@ display:block!important;
 <p>With a binary treatment, a causal forest estimates a conditional average treatment effect: the average treatment contrast among people with a given covariate profile, not an individual’s realized effect. It combines many trees whose splits target treatment-effect variation. In the generalized-random-forest formulation, trees define adaptive neighborhoods and the effect is estimated using their weights.</p>
 <p>Honesty separates observations used to choose splits from those used to estimate within-tree effects; it does not replace causal identification or external validation. Overlap means comparable profiles can receive either treatment. Consistency links the observed outcome to the well-defined treatment received; no interference and appropriate missingness/selection assumptions also matter. Randomization in the original trial does not automatically justify selection into a complete-case cohort. The grf convention is treated minus control; for our mortality-benefit convention, reverse the sign before sorting.</p>
 <p>We can descriptively sort forest predictions and compare tail profiles. Forest pointwise intervals do not automatically give valid simultaneous SPE bands or inference for selected tail characteristics. Nor can a forest be passed directly into the current SortedEffects spe()/ca() model interface. Suitable theory and inference would need to be established for that combination; no such analysis was run here. With only 593 complete-baseline patients, flexibility is a reason to validate carefully, not a guarantee of better results.</p>
+<style type="text/css">
+span.MJX_Assistive_MathML {
+position:absolute!important;
+clip: rect(1px, 1px, 1px, 1px);
+padding: 1px 0 0 0!important;
+border: 0!important;
+height: 1px!important;
+width: 1px!important;
+overflow: hidden!important;
+display:block!important;
+}</style></aside>
+</section>
+<section id="forest-intuition" class="slide level2">
+<h2>How a forest builds a comparison</h2>
+<p>For a patient profile, which treated and control patients are comparable?</p>
+<div class="sorting-steps">
+<div class="fragment fade-up">
+<p><strong>1 · Grow a tree</strong></p>
+<p>Split baseline profiles to find groups with different treatment–control contrasts.</p>
+</div>
+<div class="fragment fade-up">
+<p><strong>2 · Grow many trees</strong></p>
+<p>Different samples and candidate splits give different groups of similar patients.</p>
+</div>
+<div class="fragment fade-up">
+<p><strong>3 · Combine the comparisons</strong></p>
+<p>Patients repeatedly grouped with the target profile get more weight in its treatment comparison.</p>
+</div>
+</div>
+<div class="prompt">
+<p>Many trees reduce dependence on any one noisy split.</p>
+</div>
+<div class="source">
+<p>“Honest” fitting uses separate observations to choose splits and estimate effects. Randomized-trial intuition; no forest was fitted here. <span class="citation" data-cites="athey2019">(<a href="#/references" role="doc-biblioref" onclick>Athey, Tibshirani, and Wager 2019</a>)</span></p>
+</div>
+<aside class="notes">
+<p>Allow about one minute. One tree might split first on age; another might split first on tumour burden. These are illustrations of possible splits, not patterns discovered in the colon data. Trees seek treatment-effect variation rather than simply identifying patients at high outcome risk. We never observe an individual’s treatment effect: the comparisons use different treated and control patients with similar baseline profiles.</p>
+<p>Each tree supplies a different definition of comparable patients. Across trees, shared leaves define adaptive-neighbor weights, including normalization for leaf size. In generalized random forests, those weights enter a local treatment-effect estimating equation; the final estimate is not exactly a simple average of raw leaf risk differences. The forest can capture nonlinearities and interactions without choosing each term in advance, but repeated noisy comparisons can still mislead when data are sparse.</p>
+<p>Honesty separates observations used to choose splits from those used for within-tree estimation. This reduces reuse of the same outcome noise; it neither guarantees correct effects nor replaces external validation. The identification and inference requirements on the preceding slide and in backup still apply. Observational analyses additionally need appropriate confounding adjustment. The target is a conditional average effect, not a realized individual effect. Reverse grf’s usual treated-minus-control sign to retain our observation-minus-treatment mortality-benefit convention.</p>
 <style type="text/css">
 span.MJX_Assistive_MathML {
 position:absolute!important;

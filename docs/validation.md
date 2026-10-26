@@ -1,7 +1,7 @@
 # Validation of this session
 
 Analyses validated on 22 October 2026; presentation revised and checked on
-23 October 2026 in the prepared cloud environment: R 4.5.0, ggplot2 3.5.1,
+26 October 2026 in the prepared cloud environment: R 4.5.0, ggplot2 3.5.1,
 Quarto 1.8.27 and XeLaTeX (TeX Live 2025/Debian).
 
 ## Retained simulation and benchmark outputs
@@ -125,8 +125,8 @@ its tests and full package-check results. It was developed and tested in isolate
 libraries; the package used for the saved slide results remains unchanged.
 
 - `bash scripts/render.sh`: passed full-site rendering, including the portable
-  RevealJS HTML export and matching 43-page, 16:9 Beamer handout. The colon
-  trial is the sole worked trial: 32 slides through discussion (including
+  RevealJS HTML export and matching 44-page, 16:9 Beamer handout. The colon
+  trial is the sole worked trial: 33 slides through discussion (including
   title and chapter covers), followed by 11 optional backup slides.
 - All PDF pages were visually inspected. Figure sizes and source-note typography
   were adjusted to avoid caption clipping. The foundational and tutorial
@@ -134,6 +134,9 @@ libraries; the package used for the saved slide results remains unchanged.
 - The revised model, full SPE/CA calls, forest teaser and assumptions backup
   were visually checked in the updated PDF. The teaser distinguishes flexible
   estimation from sorted summaries, with shared causal assumptions visible.
+- The additional forest-intuition slide was checked in HTML and PDF, including
+  its three sequential reveals. It explains shared tree groups and weighted
+  treatment comparisons without adding a fitted forest or simulated trial.
 - The displayed full model reproduces the recorded model coefficients within
   1e-10. Displayed SPE/CA calls parse and match the recorded contrast, grid/tail,
   bootstrap and characteristic arguments; no new bootstrap analysis was run.
@@ -141,7 +144,7 @@ libraries; the package used for the saved slide results remains unchanged.
   explanations. Four groups per call passed 14 forward/backward states and six
   direct-jump/re-entry checks, including reduced motion. All explanations remain
   visible; static PDFs show complete code and explanations together.
-- Headless Chromium exercised all 43 HTML slides, verified image loading,
+- Headless Chromium exercised all 44 HTML slides, verified image loading,
   checked slide boundaries and JavaScript errors, and confirmed native MathML
   rendering. Math and fonts do not require external services.
 - Six main chapter stacks and one backup stack form the two-dimensional deck.

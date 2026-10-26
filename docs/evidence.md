@@ -1,6 +1,6 @@
 # Source and interpretation notes
 
-Initial source checks on 20 October 2026; updated on 23 October 2026 for the
+Initial source checks on 20 October 2026; updated on 26 October 2026 for the
 single-trial presentation and causal-forest teaser. This is the evidence ledger for the
 sorted-effects session. The colon results are our exploratory reanalysis of
 public trial data, not published subgroup findings. The earlier simulated
@@ -64,6 +64,13 @@ were checked for this conceptual slide (source snapshot reporting version 2.6.1)
   effects. Splits target treatment-effect heterogeneity; the forest supplies
   adaptive-neighbor weights for estimation. Honesty separates split selection
   from effect estimation within each tree.
+- The companion intuition slide describes repeated tree groupings as weighted
+  local treatment comparisons. Shared leaves define weights, with leaf-size
+  normalization; the generalized forest solves a local estimating equation.
+  The slide does not assert that its prediction is exactly the simple mean of
+  raw leaf risk differences. Example split variables in the notes are illustrative,
+  not discovered colon subgroups. Many trees and honesty do not replace causal
+  identification, adequate local data or external validation.
 - Forest estimates can be sorted and their selected tails described. This is
   a descriptive connection, not an assertion that the native SortedEffects
   interface accepts forests or that its current inference applies to them.
