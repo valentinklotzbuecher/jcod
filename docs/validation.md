@@ -213,7 +213,8 @@ Second revision, 26 October 2026:
   with `archive/scm-2026/`; every comparison passed.
 - Source whitespace checks passed. The byte-preserved archive and generated
   HTML/session logs retain their original/upstream whitespace. The first
-  revision was made on `main`; the second is on `claude/happy-volta-rzbbhy`.
+  revision was made on `main`; the second was made on
+  `claude/happy-volta-rzbbhy` and fast-forwarded into `main`.
 
 These checks validate the current instance and generated artifacts. Website
 publication and restoration in a fresh cloud task have not been performed.
