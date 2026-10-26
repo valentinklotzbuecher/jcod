@@ -7,11 +7,16 @@ clinical-statistics journal club with 35–40 minutes of presentation and discus
 `slides.qmd` renders to RevealJS HTML and Beamer PDF; `index.qmd` is the landing page.
 Speaker notes are in `::: notes` blocks. The current theme is `theme.scss`.
 
-The main example is the public colon chemotherapy trial, with three-year
+Two warm-up slides use constructed population risks with the same average
+benefit and different effect distributions. These are known conditional-average
+effects, not sampled outcomes or an inferential simulation. Generate and check
+them with `Rscript scripts/illustrate-warmup.R`.
+
+The empirical example is the public colon chemotherapy trial, with three-year
 mortality, twelve classification traits and one fixed held-out split. Its
 findings are preliminary: the primary interaction p=.014 changes to p=.054
 in the all-618 working-imputation sensitivity. Do not claim harm in women,
-individual effects or verified clinical novelty. Colon is the sole worked trial
+individual effects or verified clinical novelty. Colon is the sole empirical trial
 in the deck; IST remains a separate report. Preserve the exploratory context:
 colon was the third trial pilot, without adjustment across datasets.
 

@@ -1,0 +1,7 @@
+"scenario","profile","population_weight","risk_control","risk_treated","benefit"
+"Constant benefit","A",0.333333333333333,0.4,0.3,0.1
+"Constant benefit","B",0.333333333333333,0.4,0.3,0.1
+"Constant benefit","C",0.333333333333333,0.4,0.3,0.1
+"Heterogeneous benefit","A",0.333333333333333,0.4,0.5,-0.1
+"Heterogeneous benefit","B",0.333333333333333,0.4,0.3,0.1
+"Heterogeneous benefit","C",0.333333333333333,0.4,0.1,0.3

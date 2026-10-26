@@ -1,0 +1,5 @@
+"scenario","lower_percentile","upper_percentile","benefit_pp"
+"Constant benefit",0,100,10
+"Heterogeneous benefit",0,33.3333333333333,-10
+"Heterogeneous benefit",33.3333333333333,66.6666666666667,10
+"Heterogeneous benefit",66.6666666666667,100,30

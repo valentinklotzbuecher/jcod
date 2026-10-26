@@ -4,6 +4,16 @@ Analyses validated on 22 October 2026; presentation revised and checked on
 26 October 2026 in the prepared cloud environment: R 4.5.0, ggplot2 3.5.1,
 Quarto 1.8.27 and XeLaTeX (TeX Live 2025/Debian).
 
+## Constructed warm-up
+
+- `Rscript scripts/illustrate-warmup.R` generates six profile/scenario rows from
+  specified probabilities. It checks probabilities in [0,1], weights summing to
+  one within each scenario, equal marginal risks (40% control, 30% treated),
+  equal 10 pp mean benefits, and the exact inverse-CDF step values and boundaries.
+- The table and figure use the generated population quantities. No outcomes
+  were sampled, no models fitted and no bootstrap inference attached. The
+  earlier teaching simulation and all colon analysis outputs remain unchanged.
+
 ## Retained simulation and benchmark outputs
 
 - `Rscript R/demo.R`: completed 499 successful refit-and-sort bootstrap draws
@@ -126,8 +136,12 @@ libraries; the package used for the saved slide results remains unchanged.
 
 - `bash scripts/render.sh`: passed full-site rendering, including the portable
   RevealJS HTML export and matching 44-page, 16:9 Beamer handout. The colon
-  trial is the sole worked trial: 33 slides through discussion (including
+  trial is the sole empirical analysis: 33 slides through discussion (including
   title and chapter covers), followed by 11 optional backup slides.
+- Two warm-up slides precede the trial and replace two basic percentile slides.
+  The overall slide count is unchanged. Speaker notes were reduced from roughly
+  2,000 to 750 words, retaining estimand, inference and interpretation details.
+  Repeated caveats and drafting directions were removed from the presentation.
 - All PDF pages were visually inspected. Figure sizes and source-note typography
   were adjusted to avoid caption clipping. The foundational and tutorial
   references render correctly.

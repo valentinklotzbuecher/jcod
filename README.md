@@ -1,8 +1,10 @@
 # JCOD: sorted partial effects
 
 A one-hour session for statisticians, with about 35–40 minutes of presentation
-and time for discussion. The public colon chemotherapy trial is the sole worked
-example: sorted partial effects describe differences in estimated three-year
+and time for discussion. A two-slide constructed example shows how identical
+average benefits can conceal different effect distributions. The public colon
+chemotherapy trial is the empirical example: sorted partial effects describe
+differences in estimated three-year
 mortality benefit, and classification compares twelve patient characteristics.
 The earlier trial pilots and simulation remain separate resources; the previous
 Synthetic Control Methods session is preserved in `archive/scm-2026/`.
@@ -29,6 +31,7 @@ To check the slide calculations or refresh the slide figures from saved results:
 ```sh
 Rscript R/colon-walkthrough.R
 Rscript scripts/plot-colon-slides.R
+Rscript scripts/illustrate-warmup.R
 ```
 
 ## Presenting
@@ -51,7 +54,7 @@ Use the clickable session map or chapter dock to jump to a topic.
 Transitions and auto-animation respect reduced-motion preferences. The PDF shows
 the completed slides in reading order, with fragment states consolidated.
 
-The six main chapters cover the literature, trial data, effects, classification,
+The six main chapters cover method and motivation, trial data, effects, classification,
 inference and discussion. R examples show the model, predictions and full
 `spe()` and `ca()` calls, with stepwise highlighting of the important arguments.
 The classification table and dumbbell plots describe the lowest- and
@@ -61,6 +64,14 @@ the next session introduce causal forests: what flexible effect estimation adds,
 how repeated tree groupings define weighted comparisons between similar profiles,
 how this relates to sorted summaries, and which assumptions support a causal reading.
 No forest is fitted in this session.
+
+The warm-up uses known population risks for three equally common profiles.
+Constant benefits of 10/10/10 pp and heterogeneous benefits of −10/10/30 pp
+both average 10 pp. Its quantile curves are exact and discrete; no outcomes,
+models or confidence intervals are simulated. The script validates the risks,
+population means and quantile steps before writing `results/warmup/`.
+The warm-up replaces two basic percentile slides, retaining 44 slides in total.
+Speaker notes retain statistical details rather than repeating slide content.
 
 `R/colon-walkthrough.R` contains executable versions of the slide calculations.
 It fits the two specified models and verifies the saved point estimates.
@@ -167,6 +178,7 @@ and the saved analysis outputs were not replaced by this contribution.
 - `index.qmd`: session landing page and reading links.
 - `R/colon-walkthrough.R`: executable R calculations for the main trial example.
 - `scripts/plot-colon-slides.R`: slide figures from the saved colon results.
+- `scripts/illustrate-warmup.R`: validated population-risk construction and exact quantile figures for the warm-up.
 - `colon-pilot.qmd` and `ist-pilot.qmd`: complete trial reports and their limitations.
 - `R/demo.R`: simulated data, figures and teaching bootstrap.
 - `R/example-walkthrough.R`: earlier simulated treated/control walkthrough.

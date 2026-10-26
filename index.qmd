@@ -26,15 +26,16 @@ One hour together: around 35–40 minutes of examples and interpretation, with t
 
 ## What we will cover
 
-A short introduction to the method and papers, followed by a public randomized
-**colon chemotherapy trial**: does the average reduction in three-year mortality
-hide differences between patient profiles?
+A short introduction to the method and papers, followed by two constructed
+populations with identical average benefit but different effect distributions.
+We then analyze a public randomized **colon chemotherapy trial**: does the
+average reduction in three-year mortality hide differences between patient profiles?
 
 R examples show how to predict each profile under observation and chemotherapy,
 then use the full `spe()` and `ca()` calls with highlighted arguments. We sort
 the estimated risk reductions, compare twelve characteristics in the bottom and
-top 10%, and check the ranking in held-out patients. Colon is the one worked
-trial throughout.
+top 10%, and check the ranking in held-out patients. Colon is the empirical
+analysis; the warm-up uses explicitly specified population risks.
 
 We close with a teaser for next time: what causal forests add to effect
 estimation, how they relate to sorted effects, and what makes an effect estimate

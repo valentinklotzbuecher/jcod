@@ -1,0 +1,3 @@
+"scenario","risk_control","risk_treated","mean_benefit"
+"Constant benefit",0.4,0.3,0.1
+"Heterogeneous benefit",0.4,0.3,0.1

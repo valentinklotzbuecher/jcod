@@ -12,6 +12,7 @@ project:
     - ist-pilot.html
     - colon-pilot.html
     - results/figures/
+    - results/warmup/
     - results/*.csv
     - results/ist/*.csv
     - results/ist/*.png

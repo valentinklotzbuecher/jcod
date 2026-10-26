@@ -1,7 +1,7 @@
 # Source and interpretation notes
 
 Initial source checks on 20 October 2026; updated on 26 October 2026 for the
-single-trial presentation and causal-forest teaser. This is the evidence ledger for the
+constructed warm-up, colon analysis and causal-forest teaser. This is the evidence ledger for the
 sorted-effects session. The colon results are our exploratory reanalysis of
 public trial data, not published subgroup findings. The earlier simulated
 example remains a separate teaching resource.
@@ -136,6 +136,22 @@ brainstorming notes was not independently verified here.
 The benchmark implementation and any local plotting compatibility fix must be
 documented alongside the benchmark output. Successful plotting alone does not
 validate bootstrap or classification inference.
+
+## Constructed warm-up
+
+The two-slide introduction specifies population risks directly. It is not a
+sampled trial or a fitted model. Three generic baseline profiles A–C each have
+probability 1/3. Control risk is 40% in every profile. Treated risks are either
+30/30/30% (constant 10 pp benefit) or 50/30/10% (−10/10/30 pp benefit).
+Both marginal treated risks are 30%, hence both average benefits are 10 pp.
+
+`scripts/illustrate-warmup.R` checks valid probabilities, total profile weights,
+weighted means and inverse-CDF quantiles. It writes the risks, means and exact
+quantile segments under `results/warmup/`. The heterogeneous quantile function
+has three steps of probability 1/3, with the lower step including its upper
+quantile boundary. Open and filled endpoints show this convention in the figure.
+No confidence intervals or empirical claims are attached. The discrete example
+illustrates the estimand and does not establish regularity or bootstrap coverage.
 
 ## Public trial analyses and retained resources
 

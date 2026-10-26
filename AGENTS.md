@@ -8,6 +8,9 @@ This is a Quarto website with a sorted-partial-effects slide deck. Key paths:
 - Styling in `theme.scss` and `beamer-unibas.tex`.
 - `R/colon-walkthrough.R` is the executable walkthrough for the main trial example;
   `scripts/plot-colon-slides.R` builds slide figures from saved colon results.
+- `scripts/illustrate-warmup.R` generates the two-slide constructed population
+  example and validates its risks, equal means and exact discrete quantiles.
+  Its `results/warmup/` outputs are known quantities, not fitted trial results.
 - `R/demo.R` generates the earlier age-and-sex simulation, retained as a teaching
   resource; `results/` holds its figures and tables.
 - `scripts/` holds numerical validation and an optional original-package benchmark.
@@ -46,6 +49,7 @@ Generated artifacts: `_site/`, `*_cache/`, `*_files/` (do not edit by hand).
 - `Rscript scripts/plot-colon.R` - refresh the descriptive colon figures.
 - `Rscript R/colon-walkthrough.R` - fit the two colon models and verify the saved point estimates.
 - `Rscript scripts/plot-colon-slides.R` - refresh slide figures from saved results without fitting models or bootstraps.
+- `Rscript scripts/illustrate-warmup.R` - validate and redraw the constructed population warm-up.
 - `quarto publish quarto-pub` - publishes externally; run only when explicitly requested.
 
 In the prepared cloud environment, first run `source /workspace/.tools/activate`.
@@ -66,7 +70,7 @@ Keep simulated truth, model estimates, published study findings and uncertainty 
 
 Colon SPE bands use native SortedEffects 1.7.0 and have been independently reconstructed. Native colon CA is numerically invalid; any displayed CA inference must be explicitly identified as the separately audited stabilized reconstruction. Dumbbell endpoints are descriptive means, not confidence intervals. A sorted-effect quantile is not the average effect in a tail or a women-specific treatment effect. Held-out tertiles differ from the full-sample classification deciles. Do not claim coverage guarantees or individual causal effects. Rendering reads saved results and does not require new bootstrap runs.
 
-Colon is the sole worked trial in the deck. IST remains a separate report with its data and analysis intact. Retain the exploratory provenance: colon was the third trial pilot, with no across-dataset inference adjustment. The earlier simulated treated/control example is retained for teaching and backup; its model is `outcome ~ group * age_z * sex`, with `sex` coded 0 for male and 1 for female. Its original-package inference, resampling scope, separate teaching bootstrap and membership diagnostics remain documented in `docs/example-inference.md`.
+Colon is the sole empirical trial analysis in the deck. The preceding two-slide warm-up uses constructed population risks: three equally common profiles, control risk 40%, treated risks 30/30/30% or 50/30/10%. Both average benefits are 10 pp. Do not label these quantities as sampled or fitted outcomes, attach sampling intervals, or use this discrete illustration to claim inferential coverage. IST remains a separate report with its data and analysis intact. Retain the exploratory provenance: colon was the third trial pilot, with no across-dataset inference adjustment. The earlier simulated treated/control example is retained for teaching and backup; its model is `outcome ~ group * age_z * sex`, with `sex` coded 0 for male and 1 for female. Its original-package inference, resampling scope, separate teaching bootstrap and membership diagnostics remain documented in `docs/example-inference.md`.
 
 The main slides show full `spe()` and `ca()` calls with meaningful argument highlighting. Preserve the CA numerical-stability disclosure when showing its call. The closing causal-forest teaser is for a future session: distinguish causal identification assumptions, effect estimation and sorted summaries. Do not imply that sorting creates causality, that SPE requires a parametric model, or that a forest was fitted in this session.
 
