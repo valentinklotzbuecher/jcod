@@ -21,9 +21,6 @@ format:
     controls-tutorial: true
     touch: true
     embed-resources: true
-    title-slide-attributes:
-      data-background-color: "#261b37"
-      data-background-transition: fade
     auto-animate-duration: 0.65
     auto-animate-easing: ease-in-out
     controls: true
@@ -131,9 +128,11 @@ What would convince us?
 
 ::: notes
 35–40 minutes of presentation and 20–25 minutes for discussion. The constructed example introduces the estimand; colon is the empirical analysis. The forest teaser is intended for a future session.
+
+Suggested pacing (about 40 minutes): Method 6 · Trial 6 · Effects 8 · Classification 6 · Inference 10 · Discussion opener 4. If time runs short, summarize the band construction and the native-CA failure in one sentence each. Leave the discussion questions up during open discussion; close with the forest teaser.
 :::
 
-# Method and motivation {#literature .chapter-slide data-chapter-label="Method" data-background-color="#261b37" data-background-transition="fade"}
+# Method and motivation {#literature .chapter-slide data-chapter-label="Method"}
 
 ::: {.chapter-number}
 01
@@ -188,7 +187,7 @@ Tail comparisons, with **bootstrap standard errors and joint p-values**.
 :::
 
 ::: {.source}
-SortedEffects 1.7.0. Native SPE inference; audited numerical stabilization for colon CA (details in backup).
+SortedEffects 1.7.0. Native SPE inference; audited numerical stabilization for colon CA (details in chapter 05).
 :::
 
 
@@ -248,7 +247,7 @@ Exact population quantiles of constructed conditional-average effects; no fitted
 The quantile function uses the inverse-CDF convention: at a jump, the filled point belongs to the lower step. The discrete profiles illustrate what sorting summarizes, not the regularity conditions or coverage of the inferential method. Colon provides the empirical analysis.
 :::
 
-# The trial {#example .chapter-slide data-chapter-label="Trial" data-background-color="#261b37" data-background-transition="fade"}
+# The trial {#example .chapter-slide data-chapter-label="Trial"}
 
 ::: {.chapter-number}
 02
@@ -262,17 +261,19 @@ Does chemotherapy reduce mortality by the same amount for every patient profile?
 
 ## A public colon cancer trial {#trial-data}
 
-- Patients with **resected colon cancer**, randomized to three arms.
+- Patients with resected **stage III colon cancer**, randomized to three arms.
 - We compare **levamisole + 5-FU** with **observation**: 619 patients.
 - Outcome: **death within three years**; known for 618 patients.
 - Primary analysis: **593 patients** with complete baseline variables.
 
 ::: {.source}
-`survival::colon`, death records; levamisole-only arm excluded. Moertel et al. (1990, 1995): PMIDs 2300087 and 7847642.
+`survival::colon`, death records; levamisole-only arm excluded. Trial reports [@moertel1990; @moertel1995].
 :::
 
 ::: notes
 Death records only. One participant was censored before three years; 25 further participants lacked node count or differentiation. Complete-case estimates target the retained cohort rather than the full randomized population.
+
+The final report covers 929 eligible stage III (Dukes' C) patients: levamisole plus fluorouracil reduced the recurrence rate by 40% and the death rate by 33% (median follow-up 6.5 years). Levamisole alone had little effect.
 :::
 
 ## Start with the average {#trial-average data-auto-animate="true"}
@@ -346,7 +347,7 @@ An algebraic illustration, not an estimate from the colon trial.
 For odds ratio theta and control risk p, treated risk is theta*p/(1-p+theta*p). Absolute benefit is not globally monotone in baseline risk.
 :::
 
-# Estimated effects {#distribution .chapter-slide data-chapter-label="Effects" data-background-color="#261b37" data-background-transition="fade"}
+# Estimated effects {#distribution .chapter-slide data-chapter-label="Effects"}
 
 ::: {.chapter-number}
 03
@@ -403,6 +404,22 @@ benefit <- predict(fit, control, type = "response") -
 Both predictions use the same baseline profile. The contrast is standardized over the observed covariate distribution.
 :::
 
+## What is being sorted? {#what-is-sorted}
+
+$$
+\mathrm{SPE}(u)=Q_{\Delta(X)}(u), \qquad
+\mathrm{APE}=E[\Delta(X)].
+$$
+
+- The distribution of $X$ defines the population summarized: here, 593 observed profiles.
+- Classification describes covariates in selected tails of $\Delta(X)$.
+- A quantile of effects differs from a difference of outcome quantiles.
+- Randomization supports identification; sorting does not replace it.
+
+::: notes
+Sorting the 593 fitted benefits gives the curve on the next slide, for u from .10 to .90; the APE is their mean.
+:::
+
 ## The sorted-effects curve {#sorted-curve .figure-slide data-auto-animate="true"}
 
 ::: columns
@@ -440,10 +457,10 @@ Native 95% uniform bands over the 10th–90th percentiles, calibrated separately
 :::
 
 ::: notes
-The likelihood-ratio test assesses six treatment interactions on the log-odds scale. It is not a test of constant risk differences.
+The likelihood-ratio test assesses six treatment interactions on the log-odds scale. It is not a test of constant risk differences. With a single treatment coefficient, absolute benefit varies only through baseline risk, the logic of risk-based analysis; the six interactions are effect modeling (see discussion).
 :::
 
-# Classification {#classification .chapter-slide data-chapter-label="Classification" data-background-color="#261b37" data-background-transition="fade"}
+# Classification {#classification .chapter-slide data-chapter-label="Classification"}
 
 ::: {.chapter-number}
 04
@@ -498,7 +515,7 @@ High − low means, across all twelve traits.
 :::
 
 ::: {.source}
-Colon CA inference uses the audited stabilization of failed native bootstrap fits (backup).
+Colon CA inference uses the audited stabilization of failed native bootstrap fits (chapter 05).
 :::
 
 ::: notes
@@ -560,7 +577,7 @@ Assessing harm requires a treatment contrast and its uncertainty for a defined p
 Classification tests tail composition, not a treatment-by-sex interaction. Tail membership was learned using the outcomes in this sample.
 :::
 
-# Inference and validation {#uncertainty .chapter-slide data-chapter-label="Inference" data-background-color="#261b37" data-background-transition="fade"}
+# Inference and validation {#uncertainty .chapter-slide data-chapter-label="Inference"}
 
 ::: {.chapter-number}
 05
@@ -621,6 +638,26 @@ Uniform coverage concerns the chosen percentile grid and requires valid effect e
 spe() refits from the formula. The compare order yields the second prediction minus the first. In the full-sample path, refitting uses bootstrap weights while effect quantiles retain the original profile weights.
 :::
 
+## How is the uniform band built? {#band-construction}
+
+1. Refit in each of **499** bootstrap draws and re-sort the fitted benefits at 81 percentiles, 10th–90th.
+2. Scale each percentile by its bootstrap interquartile range ÷ 1.349.
+3. Critical value: 95th percentile of the **largest** scaled deviation across all 81 percentiles.
+4. Band: estimate ± critical value × scale; endpoints rearranged to stay monotone.
+
+| Model | Uniform critical value | Pointwise |
+|:--|--:|--:|
+| Six treatment interactions | 2.79 | 1.96 |
+| Constant treatment odds ratio | 2.17 | 1.96 |
+
+::: {.source}
+Native SortedEffects 1.7.0 IQR/max bootstrap, independently reconstructed; critical values recovered from the saved bands and scales. Rearrangement: @chernozhukov2009.
+:::
+
+::: notes
+The constant-odds-ratio curve moves almost as one piece across bootstrap draws, so its critical value stays near 1.96. For comparison only, ±1.96 scales at the interaction model's 10th percentile would give −20.2 to +0.6 pp; the uniform band, −24.6 to +5.1 pp, covers all 81 percentiles at once.
+:::
+
 ## Uncertainty in the lower tail {#sorted-band .figure-slide data-auto-animate="true"}
 
 ::: columns
@@ -637,6 +674,10 @@ spe() refits from the formula. The compare order yields the second prediction mi
 
 ::: {.source}
 Native 95% uniform SPE band; separate 95% interval for the average benefit.
+:::
+
+::: notes
+The band holds for all 81 percentiles at once: its critical value is 2.79 rather than 1.96 (previous slide). It is calibrated over the 10th–90th percentile grid only.
 :::
 
 
@@ -660,6 +701,25 @@ Audited stabilized CA, 499 draws. Full twelve-trait table in backup.
 The adjustment covers twelve traits, not dataset, model or tail-size selection. P-values near .04 remain sensitive to Monte Carlo variability with 499 draws.
 :::
 
+## What went wrong in native CA? {#native-ca}
+
+- CA rescales bootstrap fitting weights to total **20,000**.
+- **141/499 fits did not converge**; 137 draws had undefined tail moments.
+- The routine still returned finite-looking inference, which we do not use.
+- Stable starting coefficients recovered **499 converged, finite draws**, with none discarded.
+
+::: {.prompt}
+Check every bootstrap fit: finite-looking output is not necessarily valid.
+:::
+
+::: {.source}
+Reconstruction preserves resamples, likelihood, threshold definitions and moment formulas.
+:::
+
+::: notes
+Weight scaling leaves the exact weighted-likelihood maximizer unchanged but can destabilize default GLM initialization. Empty tails produced undefined moments; native handling of invalid draws distorted joint p-values.
+:::
+
 ## Does the ranking work in held-out patients? {.figure-slide}
 
 ::: columns
@@ -669,7 +729,7 @@ The adjustment covers twelve traits, not dataset, model or tail-size selection. 
 ::: {.column width="30%" .figure-notes}
 - Fit on **296**; freeze predictions for **297**.
 - One split; three groups of **99**.
-- Ranking slope: **1.10**, CI **0.24–1.97**; adjusted **p = .025**.
+- Ranking slope **1.10** (0 = no signal, 1 = calibrated); CI **0.24–1.97**, adjusted **p = .025**.
 - Low-third benefit: **−8.5 pp**, CI **−25.9 to +9.0**.
 :::
 :::
@@ -679,14 +739,14 @@ Pointwise, unadjusted 95% intervals in the plot. Slope p-value: Holm adjustment 
 :::
 
 ::: notes
-The split is stratified by treatment. Validation uses AIPW with nominal propensity 0.5 and HC3 standard errors. The top-minus-bottom tertile contrast is 28.3 pp (95% CI 2.1–54.4; Holm p = .068). These tertiles differ from the full-sample deciles; the split analysis is not independent replication.
+The slope regresses held-out AIPW benefit pseudo-outcomes on centered predicted benefit; tested against one, unadjusted p = .82. The split is stratified by treatment. Validation uses AIPW with nominal propensity 0.5 and HC3 standard errors. The top-minus-bottom tertile contrast is 28.3 pp (95% CI 2.1–54.4; Holm p = .068). These tertiles differ from the full-sample deciles; the split analysis is not independent replication.
 :::
 
 ## Robustness and scope
 
 - **Missing-data sensitivity:** a simple fill-and-indicator analysis of all 618 known outcomes changes interaction p from **.014 to .054**.
 - **One held-out split:** useful, but not external validation.
-- **Small tails and flexible modeling:** 60 patients per tail, 19 parameters.
+- **Small tails and flexible modeling:** 60 patients per tail; 19 parameters for 179 deaths.
 - **Exploratory search:** our third trial pilot; no adjustment across datasets.
 
 ::: {.prompt}
@@ -697,7 +757,7 @@ Exploratory evidence for a ranking; further validation is needed before treatmen
 The all-618 sensitivity uses a fixed node fill of two and missingness indicators; its average benefit is 8.4 pp. Both the model and reference population differ from the complete-case analysis.
 :::
 
-# Discussion {#discussion .chapter-slide data-chapter-label="Discussion" data-background-color="#261b37" data-background-transition="fade"}
+# Discussion {#discussion .chapter-slide data-chapter-label="Discussion"}
 
 ::: {.chapter-number}
 06
@@ -721,6 +781,38 @@ Which result would you want to see before taking this pattern seriously?
 
 ::: notes
 Discussion: model complexity with 179 deaths, missing-data handling, and the data needed for external validation. Treatment decisions would additionally require harms, preferences and policy-value assessment.
+:::
+
+## Where do sorted effects fit? {#hte-tools}
+
+| Approach | Question | Watch for |
+|:--|:--|:--|
+| Subgroup forest plot | Does the effect differ by one trait? | One trait at a time; many tests |
+| Risk modeling | Does absolute benefit change with baseline risk? | Misses modifiers unrelated to risk |
+| Effect modeling | Which traits modify the effect? | Overfitting; needs validation |
+| Sorted effects + classification | How are fitted effects distributed, and who is in the tails? | Only as good as the effect estimates |
+
+::: {.prompt}
+Here, the constant-odds-ratio model is risk-based; the six interactions are effect modeling.
+:::
+
+::: {.source}
+Risk and effect modeling as defined in the PATH statement [@kent2020].
+:::
+
+::: notes
+PATH defines risk modeling (a multivariable risk model disaggregates trial patients by predicted risk) and effect modeling (treatment-by-covariate interactions); both predict absolute effects, which it calls the most relevant scale for clinical decisions. It encourages reporting results stratified by a risk model when the overall trial result is positive, as here. Our held-out slope is a calibration-for-benefit check; the c-for-benefit is a related discrimination measure [@vanklaveren2018].
+:::
+
+## Questions for discussion {#discussion-questions}
+
+- **Spread or noise?** The interaction model gives 29% of patients a negative fitted benefit, with 19 parameters for 179 deaths. Shrink before sorting?
+- **Prespecification:** Where would sorted effects belong in a trial's analysis plan: secondary or exploratory?
+- **Robustness:** Keeping all 618 patients moves the interaction p-value from .014 to .054. Which analysis should lead?
+- **Scale:** Absolute benefit varies even with a constant odds ratio. On which scale should heterogeneity be claimed?
+
+::: notes
+The 29% is a property of the fitted model, not an estimate of harm: the uniform band at the 10th percentile still reaches +5.1 pp. Shrinkage options include penalized or Bayesian interaction models; their sorted summaries would need their own inference. Treatment decisions would additionally require harms, preferences and policy-value assessment.
 :::
 
 ## Next time: causal forests {#causal-forests}
@@ -785,30 +877,17 @@ Shared leaves define adaptive-neighbor weights, normalized for leaf size. GRF us
 - **Code and slides:** [github.com/valentinklotzbuecher/jcod](https://github.com/valentinklotzbuecher/jcod).
 
 
-# Additional material {#backup .chapter-slide .backup-chapter data-chapter-label="Backup" data-background-color="#261b37" data-background-transition="fade"}
+# Additional material {#backup .chapter-slide .backup-chapter data-chapter-label="Backup"}
 
 ::: {.chapter-number}
 \+
 :::
 ::: {.chapter-lead}
-Full tables, model specification and software checks.
+Full tables, causal assumptions and resampling details.
 :::
 ::: {.chapter-cue}
 ↓ Optional slides for questions
 :::
-
-## Backup · What is being sorted?
-
-$$
-\mathrm{SPE}(u)=Q_{\Delta(X)}(u), \qquad
-\mathrm{APE}=E[\Delta(X)].
-$$
-
-- The distribution of $X$ defines the population summarized.
-- Classification describes covariates in selected tails of $\Delta(X)$.
-- A quantile of effects differs from a difference of outcome quantiles.
-- Randomization supports identification; sorting does not replace it.
-
 
 ## Backup · When is the heterogeneity causal?
 
@@ -873,21 +952,6 @@ lapply(tails, function(i)
 Descriptive calculation only. `R/colon-walkthrough.R` verifies these means against the saved classification table.
 :::
 
-## Backup · What went wrong in native CA?
-
-- CA rescales bootstrap fitting weights to total **20,000**.
-- **141/499 fits did not converge**; 137 draws had undefined tail moments.
-- The routine still returned finite-looking inference, which we do not use.
-- Stable starting coefficients recovered **499 converged, finite draws**, with none discarded.
-
-::: {.source}
-Reconstruction preserves resamples, likelihood, threshold definitions and moment formulas.
-:::
-
-::: notes
-Weight scaling leaves the exact weighted-likelihood maximizer unchanged but can destabilize default GLM initialization. Empty tails produced undefined moments; native handling of invalid draws distorted joint p-values.
-:::
-
 ## Backup · What is resampled?
 
 - **`spe()` full sample:** refits with bootstrap weights; effect quantiles retain original profile weights.
@@ -923,7 +987,7 @@ Tutorial benchmark: adjusted observational disparity [@chen2020; @munnell1996].
 Published tutorial: bias-corrected disparity 5.1 pp, 90% CI 2.1–8.1, 500 draws. The retained benchmark uses uncorrected estimates, 95% bands and 199 draws.
 :::
 
-## References {.references-slide}
+## References {.references-slide .scrollable .allowframebreaks}
 
 ::: {#refs}
 :::

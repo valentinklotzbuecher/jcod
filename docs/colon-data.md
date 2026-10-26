@@ -19,9 +19,23 @@ plus fluorouracil, and cites the original and final trial reports. These sources
 establish randomized allocation, but we have not independently reconstructed
 the trial's exact allocation algorithm or original data processing.
 
-The dictionary title says stage C, whereas the vignette says stage B/C. We use
-**resected colon cancer** pending reconciliation with the original cohort
-description. The source describes historical therapies; the pilot is a method
+The dictionary title says stage C, whereas the vignette says stage B/C. This was
+reconciled on 26 October 2026 using the trial abstracts. Neither publisher nor
+PubMed pages were reachable from this environment, so the abstracts were read
+from two independent captures each, held in public GitHub bibliographies.
+
+- The 1990 report enrolled 1,296 patients with stage B2 or C disease. Only stage
+  C patients could also be randomized to levamisole alone.
+- The final report describes "929 eligible patients" with "stage III (Dukes stage
+  C) colon cancer", randomized to observation, levamisole, or levamisole plus
+  fluorouracil.
+- The dictionary adds that the data set "is closest to that of the final report".
+
+The three-arm 929-patient cohort is therefore described as **resected stage III
+colon cancer**. Two records nevertheless report zero positive nodes (one
+observation, one levamisole). This conflicts with stage III, and the records are
+retained as recorded. The observation patient is in the 593-patient primary
+cohort. The source describes historical therapies; the pilot is a method
 illustration rather than a contemporary treatment recommendation.
 
 The package declares LGPL >= 2; no separate dataset-specific license is supplied.

@@ -16,7 +16,10 @@ The empirical example is the public colon chemotherapy trial, with three-year
 mortality, twelve classification traits and one fixed held-out split. Its
 findings are preliminary: the primary interaction p=.014 changes to p=.054
 in the all-618 working-imputation sensitivity. Do not claim harm in women,
-individual effects or verified clinical novelty. Colon is the sole empirical trial
+individual effects or verified clinical novelty. The cohort is resected stage III
+disease. Prior subgroup leads in `docs/evidence.md` are unverified and stay off the
+slides; the PATH slide attributes only the risk- and effect-modeling definitions.
+Colon is the sole empirical trial
 in the deck; IST remains a separate report. Preserve the exploratory context:
 colon was the third trial pilot, without adjustment across datasets.
 

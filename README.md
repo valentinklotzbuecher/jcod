@@ -43,7 +43,10 @@ The HTML embeds its figures, styles and scripts and uses no external assets.
 
 The presentation uses two dimensions: six main chapters run horizontally, and
 their examples run vertically. An optional seventh stack holds technical backup.
-Use the clickable session map or chapter dock to jump to a topic.
+Use the clickable session map or chapter dock to jump to a topic. The dock shows
+on the title and chapter covers; on content slides it tucks away so it never
+covers a heading on 16:9 screens, and returns when the pointer reaches the top
+edge or keyboard focus enters it. Touch devices keep it visible.
 
 - **Left / right:** switch chapters (or reveal the next fragment).
 - **Up / down:** move within a chapter.
@@ -55,11 +58,17 @@ Transitions and auto-animation respect reduced-motion preferences. The PDF shows
 the completed slides in reading order, with fragment states consolidated.
 
 The six main chapters cover method and motivation, trial data, effects, classification,
-inference and discussion. R examples show the model, predictions and full
+inference and discussion. Title and chapter covers use a light layout with a
+slim accent rule. R examples show the model, predictions and full
 `spe()` and `ca()` calls, with stepwise highlighting of the important arguments.
+The main chapters also define the estimand formally, show how the uniform band
+is built (critical value 2.79 rather than 1.96 for the interaction model) and
+explain the native classification bootstrap failure.
 The classification table and dumbbell plots describe the lowest- and
 highest-benefit tails; one fixed held-out split checks whether the estimated
-ranking predicts differences in observed benefit. Two short closing slides for
+ranking predicts differences in observed benefit. The discussion chapter
+relates sorted effects to subgroup forest plots and to PATH risk and effect
+modeling, then poses four discussion questions. Two short closing slides for
 the next session introduce causal forests: what flexible effect estimation adds,
 how repeated tree groupings define weighted comparisons between similar profiles,
 how this relates to sorted summaries, and which assumptions support a causal reading.
@@ -70,8 +79,10 @@ Constant benefits of 10/10/10 pp and heterogeneous benefits of −10/10/30 pp
 both average 10 pp. Its quantile curves are exact and discrete; no outcomes,
 models or confidence intervals are simulated. The script validates the risks,
 population means and quantile steps before writing `results/warmup/`.
-The warm-up replaces two basic percentile slides, retaining 44 slides in total.
-Speaker notes retain statistical details rather than repeating slide content.
+The deck has 47 slides: 38 through the discussion, including the title,
+session map and chapter covers, and 9 in the optional backup stack. Speaker
+notes retain statistical details rather than repeating slide content, and the
+session-map notes suggest a pacing per chapter (about 40 minutes).
 
 `R/colon-walkthrough.R` contains executable versions of the slide calculations.
 It fits the two specified models and verifies the saved point estimates.

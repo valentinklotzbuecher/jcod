@@ -11,7 +11,12 @@
     element.textContent = text;
     element.setAttribute("aria-label", label);
     element.title = label;
-    element.addEventListener("click", action);
+    element.addEventListener("click", (event) => {
+      action(event);
+      // Release focus after pointer clicks; a later arrow key would otherwise
+      // make the button :focus-visible and keep the dock over the slides.
+      if (event.detail) element.blur();
+    });
     return element;
   };
 
@@ -79,6 +84,28 @@
     navigation.append(overview);
     document.body.append(navigation);
 
+    // On 16:9 screens the dock would cover content-slide headings. It tucks
+    // away there and returns on covers, at the top edge and on keyboard focus.
+    // Touch devices, which cannot hover, keep it visible.
+    const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)");
+    let pointerAtTop = false;
+    const tuck = () => {
+      const cover = !!reveal.getCurrentSlide()?.matches("#title-slide, .chapter-slide");
+      navigation.classList.toggle("is-tucked",
+        finePointer.matches && !cover && !pointerAtTop);
+    };
+    document.addEventListener("pointermove", (event) => {
+      const atTop = event.clientY < 80 || navigation.contains(event.target);
+      if (atTop === pointerAtTop) return;
+      pointerAtTop = atTop;
+      tuck();
+    }, {capture: true, passive: true});
+    document.documentElement.addEventListener("mouseleave", () => {
+      pointerAtTop = false;
+      tuck();
+    });
+    if (finePointer.addEventListener) finePointer.addEventListener("change", tuck);
+
     const hint = document.createElement("div");
     hint.className = "deck-keyboard-hint";
     hint.setAttribute("aria-hidden", "true");
@@ -124,11 +151,9 @@
       position.title = chapter ?
         `Slide ${v + 1} of ${chapter.vertical.length || 1} in ${chapter.label}` :
         position.textContent;
-      document.body.classList.toggle("deck-dark-slide", !!current?.matches(
-        "#title-slide, .chapter-slide"
-      ));
       document.body.classList.toggle("deck-overview-open", reveal.isOverview());
       overview.setAttribute("aria-pressed", String(reveal.isOverview()));
+      tuck();
       updateCodeCallouts();
     };
     // Reveal lazily loads images. Populate every thumbnail on first overview,

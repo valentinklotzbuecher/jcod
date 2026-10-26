@@ -11,6 +11,14 @@ function Image(image)
 end
 
 function Div(div)
+  -- Chapter cues describe HTML keyboard navigation; the handout has none.
+  if beamer and div.classes:includes("chapter-cue") then
+    return {}
+  end
+  if beamer and div.identifier == "refs" then
+    return {pandoc.RawBlock("latex", "\\begingroup\\footnotesize"), div,
+            pandoc.RawBlock("latex", "\\par\\endgroup")}
+  end
   if beamer and div.classes:includes("source") then
     local blocks = pandoc.List({pandoc.RawBlock("latex", "\\begingroup\\scriptsize")})
     blocks:extend(div.content)

@@ -2,7 +2,10 @@
 
 Analyses validated on 22 October 2026; presentation revised and checked on
 26 October 2026 in the prepared cloud environment: R 4.5.0, ggplot2 3.5.1,
-Quarto 1.8.27 and XeLaTeX (TeX Live 2025/Debian).
+Quarto 1.8.27 and XeLaTeX (TeX Live 2025/Debian). A second presentation revision
+the same day used a fresh cloud environment: R 4.3.3, Quarto 1.8.27 and XeLaTeX
+(TeX Live 2023/Debian). It re-rendered the slides only; no analysis, figure or
+report was regenerated.
 
 ## Constructed warm-up
 
@@ -134,10 +137,40 @@ The separate SortedEffects repair is recorded in
 its tests and full package-check results. It was developed and tested in isolated
 libraries; the package used for the saved slide results remains unchanged.
 
+Second revision, 26 October 2026:
+
+- **Baseline:** before any change, re-rendering reproduced the committed
+  `presentation.html` byte for byte, and the PDF text exactly.
+- **Dock fix:** the fixed chapter dock covered 35 of 44 slide headings on every
+  16:9 viewport, from 1280×720 to 1920×1080. There was no overlap on 16:10 or
+  4:3. The dock now tucks away on content slides.
+- **Dock behaviour, 21 headless-Chromium checks:**
+  - visible on the title and chapter covers;
+  - shown when the pointer reaches the top edge, and on keyboard Tab focus;
+  - stays tucked after a chapter click followed by arrow or PageDown keys;
+  - hidden in the overview, always visible on touch devices, no transition
+    under reduced motion;
+  - zero heading overlaps at 1280×720, 1366×768, 1536×864 and 1920×1080.
+- **Deck changes:**
+  - title and chapter covers lost their dark backdrops;
+  - three backup slides (estimand, uniform-band construction, native-CA
+    failure) moved into the main chapters;
+  - two discussion slides added (PATH positioning and questions).
+- **Uniform critical values:** recovered from the saved bands and scales. They
+  are 2.791 for the interaction model (72 of 81 upper endpoints unaffected by
+  rearrangement) and 2.173 for the constant model. All other slide numbers were
+  checked against `results/colon/*.csv`.
+- **Portable export:** loaded from a local HTTP server with every other request
+  blocked. All 47 slides and 9 images loaded, with no failed requests or
+  JavaScript errors. Session-map links and both code-callout sequences worked.
+- **Handout:** all 48 PDF pages were inspected; the reference list now spans two
+  pages. The two trial reports differed only in unused slide CSS, so their
+  committed exports were kept.
+
 - `bash scripts/render.sh`: passed full-site rendering, including the portable
-  RevealJS HTML export and matching 44-page, 16:9 Beamer handout. The colon
-  trial is the sole empirical analysis: 33 slides through discussion (including
-  title and chapter covers), followed by 11 optional backup slides.
+  RevealJS HTML export and matching 48-page, 16:9 Beamer handout. The colon
+  trial is the sole empirical analysis: 38 slides through discussion (including
+  title, session map and chapter covers), followed by 9 optional backup slides.
 - Two warm-up slides precede the trial and replace two basic percentile slides.
   The overall slide count is unchanged. Speaker notes were reduced from roughly
   2,000 to 750 words, retaining estimand, inference and interpretation details.
@@ -158,7 +191,7 @@ libraries; the package used for the saved slide results remains unchanged.
   explanations. Four groups per call passed 14 forward/backward states and six
   direct-jump/re-entry checks, including reduced motion. All explanations remain
   visible; static PDFs show complete code and explanations together.
-- Headless Chromium exercised all 44 HTML slides, verified image loading,
+- Headless Chromium exercised all HTML slides (44 then, 47 now), verified image loading,
   checked slide boundaries and JavaScript errors, and confirmed native MathML
   rendering. Math and fonts do not require external services.
 - Six main chapter stacks and one backup stack form the two-dimensional deck.
@@ -179,7 +212,8 @@ libraries; the package used for the saved slide results remains unchanged.
 - All 51 original tracked files at commit `c23405b` were compared byte for byte
   with `archive/scm-2026/`; every comparison passed.
 - Source whitespace checks passed. The byte-preserved archive and generated
-  HTML/session logs retain their original/upstream whitespace. Work is on `main`.
+  HTML/session logs retain their original/upstream whitespace. The first
+  revision was made on `main`; the second is on `claude/happy-volta-rzbbhy`.
 
 These checks validate the current instance and generated artifacts. Website
 publication and restoration in a fresh cloud task have not been performed.

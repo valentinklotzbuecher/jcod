@@ -28,14 +28,19 @@ One hour together: around 35–40 minutes of examples and interpretation, with t
 
 A short introduction to the method and papers, followed by two constructed
 populations with identical average benefit but different effect distributions.
-We then analyze a public randomized **colon chemotherapy trial**: does the
-average reduction in three-year mortality hide differences between patient profiles?
+We then analyze a public randomized **colon chemotherapy trial** in resected stage
+III disease: does the average reduction in three-year mortality hide differences
+between patient profiles?
 
 R examples show how to predict each profile under observation and chemotherapy,
 then use the full `spe()` and `ca()` calls with highlighted arguments. We sort
 the estimated risk reductions, compare twelve characteristics in the bottom and
 top 10%, and check the ranking in held-out patients. Colon is the empirical
 analysis; the warm-up uses explicitly specified population risks.
+
+The discussion relates sorted effects to subgroup forest plots and to PATH risk
+and effect modeling, then turns to open questions: overfitting, prespecification,
+robustness and the effect scale.
 
 We close with a teaser for next time: what causal forests add to effect
 estimation, how they relate to sorted effects, and what makes an effect estimate
@@ -47,7 +52,7 @@ The HTML presentation has a chapter map and a two-dimensional overview: use **�
 
 - **Suggested reading:** Chen, Chernozhukov, Fernández-Val and Luo (2020), [*SortedEffects: Sorted Causal Effects in R*](https://doi.org/10.32614/RJ-2020-006). Start with the introduction and mortgage example.
 - **Optional theory:** Chernozhukov, Fernández-Val and Luo (2018), [*The Sorted Effects Method*](https://doi.org/10.3982/ECTA14415).
-- **Optional application (suggested):** Bilancini et al. (2022), [*Prosocial behavior in emergencies: Evidence from blood donors recruitment and retention during the COVID-19 pandemic*](https://pubmed.ncbi.nlm.nih.gov/36327632/). A health-related observational application suggested in the review; source verification is pending in the [evidence notes](docs/evidence.md).
+- **Optional application (suggested):** Bilancini et al. (2022), [*Prosocial behavior in emergencies: Evidence from blood donors recruitment and retention during the COVID-19 pandemic*](https://pubmed.ncbi.nlm.nih.gov/36327632/). An observational health application: sorted effects of the COVID-19 pandemic on blood donations by new donors. Full-text verification is still pending; see the [evidence notes](docs/evidence.md).
 
 ## Explore the example
 

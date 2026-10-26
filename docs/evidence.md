@@ -1,7 +1,8 @@
 # Source and interpretation notes
 
 Initial source checks on 20 October 2026; updated on 26 October 2026 for the
-constructed warm-up, colon analysis and causal-forest teaser. This is the evidence ledger for the
+constructed warm-up, colon analysis and causal-forest teaser, and later that day
+for the trial stage, the PATH discussion slide and prior-evidence leads. This is the evidence ledger for the
 sorted-effects session. The colon results are our exploratory reanalysis of
 public trial data, not published subgroup findings. The earlier simulated
 example remains a separate teaching resource.
@@ -159,7 +160,11 @@ illustrates the estimand and does not establish regularity or bootstrap coverage
 
 The unchanged `survival::colon` source data and dictionary are pinned to the
 survival maintainer's repository. The source vignette documents randomization
-to three arms. The retained comparison is observation versus levamisole plus
+to three arms. The trial abstracts identify the three-arm cohort as 929
+eligible patients with resected stage III (Dukes' C) colon cancer; see
+[`docs/colon-data.md`](colon-data.md) for the reconciliation and two zero-node
+records. The final report found 40% fewer recurrences and a 33% lower death rate
+with levamisole plus fluorouracil (median follow-up 6.5 years). The retained comparison is observation versus levamisole plus
 fluorouracil, using one death record per person and death by three years.
 There are 619 selected participants, 618 known outcomes and 593 patients with
 complete baseline covariates in the primary analysis. The exact source hashes,
@@ -205,11 +210,70 @@ the intended weighted fitting and classification definitions. Raw native output
 is retained separately. These checks address computation, not statistical
 coverage, clinical validity or replication.
 
-The source dictionary cites the historical trial reports, but their full texts
-and prior subgroup analyses were not accessible for review. Do not claim that
-this pattern is a new clinical discovery, and do not use this historical regimen
-to recommend present-day treatment. The original trial data, the exploratory
-model, and evidence from other trials remain distinct.
+The trial abstracts were read from public copies, but the full texts were not
+accessible. Prior subgroup evidence is listed below as leads to check, not as
+verified findings. Do not claim that this pattern is a new clinical discovery,
+and do not use this historical regimen to recommend present-day treatment. The
+original trial data, the exploratory model, and evidence from other trials
+remain distinct.
+
+### Prior subgroup evidence: leads to verify before use
+
+On 26 October 2026, publisher, PubMed, PMC, Europe PMC and Crossref pages were
+blocked by this environment's network policy. The items below come from
+search-engine extracts. Their wording may be inexact, and none appears in
+the slides.
+
+- Moertel et al. (1990), *NEJM* 322:352–358, reportedly states that levamisole plus
+  fluorouracil "appeared to have the greatest advantage among male patients".
+  It notes "striking contradictions" with an earlier NCCTG subset analysis,
+  which favoured women for recurrence. If confirmed, this is an exploratory
+  sex signal from the same trial, pointing the same way as our bottom tail.
+  Check the full text before mentioning it.
+- Sargent et al. (2001), *NEJM* 345:1091–1097, pooled seven trials of 3,351
+  patients and reportedly found "no significant interaction" between age and
+  treatment efficacy.
+- Gill et al. (2004), *J Clin Oncol* 22:1797–1806, pooled 3,302 patients from
+  seven fluorouracil-based trials. They reportedly found benefits "consistent
+  across sex, location, age, T-stage, and grade", with greater benefit in
+  stage III than stage II.
+- Cheung et al. (2013), *Clin Colorectal Cancer* 12:179–187: ACCENT, 33,345
+  patients. They reportedly found no sex-by-treatment interaction, though the
+  pool includes later regimens.
+- Elsaleh et al. (2000), *Lancet* 355:1745–1750: a non-randomized series. It
+  reported larger survival benefits for women and for right-sided tumours.
+- Sloan et al. (2002), *J Clin Oncol* 20:1491–1498: women had more
+  fluorouracil toxicity. This concerns harms, not efficacy.
+
+If these hold, the pooled randomized evidence does not support sex or age as
+established effect modifiers for this regimen. That is useful context for the
+discussion of whether the bottom-tail pattern is noise.
+
+### Discussion slide: PATH statement
+
+Kent et al. (2020), *The Predictive Approaches to Treatment effect Heterogeneity
+(PATH) Statement*, **Annals of Internal Medicine** 172(1), 35–45,
+DOI [10.7326/M18-3667](https://doi.org/10.7326/M18-3667).
+
+- **Citation:** confirmed from a PubMed export and PMC reference metadata.
+- **Abstract:** read from a copy of its Semantic Scholar record.
+- **Definitions:** risk modeling applies a multivariable risk model to
+  disaggregate trial patients by predicted risk. Effect modeling adds
+  treatment-by-covariate interactions. Both predict absolute effects, which the
+  abstract calls "the most relevant scale for clinical decision making".
+- **Risk-stratified reporting:** the guidance encourages it "when overall trial
+  results are positive". This is quoted verbatim by co-author Steyerberg.
+- **Effect-modeling cautions:** later reviews describe the Statement as
+  recommending effect modeling only for previously established effect
+  modifiers, with overfitting control and external validation. These cautions
+  were not read in the Statement itself, so the slide attributes only the
+  definitions to PATH.
+- **Slide mapping:** the constant-odds-ratio model corresponds to risk-based
+  heterogeneity; the six-interaction model is effect modeling.
+- **c-for-benefit:** van Klaveren et al. (2018), *J Clin Epidemiol* 94:59–68,
+  DOI [10.1016/j.jclinepi.2017.10.021](https://doi.org/10.1016/j.jclinepi.2017.10.021),
+  is cited in the speaker notes as the discrimination counterpart of our held-out
+  calibration slope.
 
 ### Separate resource: International Stroke Trial
 
@@ -246,6 +310,17 @@ findings, causal claims or subgroup conclusions in the slides:
   and tail comparisons; those method and finding claims remain unverified and
   are not presented as results in the slides. Fresh attempts to retrieve PMC,
   PubMed, EuropePMC full-text XML, Crossref and OpenAlex all returned HTTP 403.
+  On 26 October 2026, four independent search-engine extracts agreed on the
+  following. The full text has still not been read, so treat these as leads.
+  - **Authors:** seven (Bilancini, Boncinelli, Di Paolo, Menicagli, Pizziol,
+    Ricciardi and Serti); the BibTeX entry now lists them.
+  - **DOI:** 10.1016/j.socscimed.2022.115438.
+  - **Method:** Section 2.4 is titled "The sorted effects method" and cites
+    Chernozhukov, Fernández-Val and Luo.
+  - **Application:** sorted partial effects of COVID-19 on donations within five
+    months by new blood donors, from a linear model with interactions. 95%
+    uniform bands come from bootstrapping the whole estimation (500
+    repetitions).
 - *Heterogeneous gender gaps in mental wellbeing* (2023),
   [PubMed 37535987](https://pubmed.ncbi.nlm.nih.gov/37535987/).
 - *Lessons on the COVID-19 pandemic: who are the most affected* (2023),
