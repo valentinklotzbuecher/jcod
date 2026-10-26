@@ -86,12 +86,12 @@ ca_table <- function(variables) {
 ::: {.map-card}
 [01 · Method](#literature){.map-title}
 
-Literature and a constructed example.
+Literature, effect scales and a constructed example.
 :::
 ::: {.map-card}
 [02 · Trial](#example){.map-title}
 
-Chemotherapy and three-year mortality.
+Chemotherapy, three-year mortality and the estimand.
 :::
 ::: {.map-card}
 [03 · Sorted effects](#distribution){.map-title}
@@ -120,7 +120,7 @@ What would convince us?
 :::
 
 ::: {.content-visible when-format="beamer"}
-1. Method, software and a constructed example.
+1. Method, software, effect scales and a constructed example.
 2. A public colon cancer trial.
 3. Sorted effects and characteristics of the tails.
 4. Inference, validation and discussion.
@@ -129,7 +129,7 @@ What would convince us?
 ::: notes
 35–40 minutes of presentation and 20–25 minutes for discussion. The constructed example introduces the estimand; colon is the empirical analysis. The forest teaser is intended for a future session.
 
-Suggested pacing (about 40 minutes): Method 6 · Trial 6 · Effects 8 · Classification 6 · Inference 10 · Discussion opener 4. If time runs short, summarize the band construction and the native-CA failure in one sentence each. Leave the discussion questions up during open discussion; close with the forest teaser.
+Suggested pacing (about 40 minutes): Method 7 · Trial 5 · Effects 8 · Classification 6 · Inference 10 · Discussion opener 4. If time runs short, summarize the band construction and the native-CA failure in one sentence each. Leave the discussion questions up during open discussion; close with the forest teaser.
 :::
 
 # Method and motivation {#literature .chapter-slide data-chapter-label="Method"}
@@ -190,6 +190,28 @@ Tail comparisons, with **bootstrap standard errors and joint p-values**.
 SortedEffects 1.7.0. Native SPE inference; audited numerical stabilization for colon CA (details in chapter 05).
 :::
 
+
+## Heterogeneity depends on the scale {#effect-scale .figure-slide}
+
+::: columns
+::: {.column width="70%"}
+![](results/figures/baseline-risk.png){.panel-figure width=100%}
+:::
+::: {.column width="30%" .figure-notes}
+- Odds ratio **0.60** at every baseline risk.
+- **10%** baseline risk → **3.8 pp**.
+- **40%** baseline risk → **11.4 pp**.
+- Constant odds ratio, yet heterogeneous absolute benefit.
+:::
+:::
+
+::: {.source}
+Algebraic illustration with known risks; no data or estimation.
+:::
+
+::: notes
+For odds ratio theta and control risk p, treated risk is theta*p/(1-p+theta*p). Absolute benefit is not globally monotone in baseline risk. Benefit throughout this session is on the absolute scale: control risk minus treated risk.
+:::
 
 ## Same average, different effect patterns {#warmup-average}
 
@@ -276,75 +298,30 @@ Death records only. One participant was censored before three years; 25 further 
 The final report covers 929 eligible stage III (Dukes' C) patients: levamisole plus fluorouracil reduced the recurrence rate by 40% and the death rate by 33% (median follow-up 6.5 years). Levamisole alone had little effect.
 :::
 
-## Start with the average {#trial-average data-auto-animate="true"}
+## The average effect {#trial-average}
 
-::: columns
-::: {.column width="48%" .profile-card .fragment .fade-up fragment-index="0"}
-### Observation
-
-::: {.metric}
-34.7%
-:::
-
-109 deaths / 314 patients
-:::
-::: {.column width="48%" .profile-card .fragment .fade-up fragment-index="1"}
-### Levamisole + 5-FU
-
-::: {.metric}
-25.7%
-:::
-
-78 deaths / 304 patients
-:::
-:::
-
-::: {.prompt .fragment .fade-up fragment-index="2"}
-**9.1 percentage points** lower three-year mortality.
-:::
-
-::: {.source}
-Crude risks: 618 known outcomes. Standardized analyses: 593 complete cases.
-:::
+- Observation: **34.7%** died within three years (109/314).
+- Levamisole + 5-FU: **25.7%** (78/304).
+- Crude risk difference: **9.1 pp**, in the 618 patients with known outcome.
+- Model-standardized over the 593 complete cases: **8.1 pp** (95% CI 1.4 to 14.9).
 
 ::: notes
-The crude contrast and the later standardized estimate differ in both cohort and estimation method. Assigning the single unknown outcome either way gives a crude sensitivity range of 8.95–9.26 pp, not a confidence interval.
+The crude contrast and the standardized estimate differ in both cohort and estimation method. Assigning the single unknown outcome either way gives a crude range of 8.95–9.26 pp, not a confidence interval. The standardized value is the six-interaction model's average (chapter 03); the constant-odds-ratio model gives 8.0 pp (1.3 to 14.7).
 :::
 
-## Define benefit before sorting
+## Benefit for a patient profile {#benefit-definition}
 
 $$
-\Delta(x)=\Pr(Y=1\mid A=0,X=x)-\Pr(Y=1\mid A=1,X=x).
+\Delta(x)=\Pr(Y=1\mid A=0,X=x)-\Pr(Y=1\mid A=1,X=x)
 $$
 
-- $Y=1$: death by three years; $A=0$: observation; $A=1$: chemotherapy.
-- $X$: age, sex and tumour characteristics at baseline.
-- **Positive:** lower mortality under treatment. **Negative:** higher mortality.
-- One conditional **average** contrast per profile, not an individual's causal effect.
+- $Y$: death within three years; $A=1$: levamisole + 5-FU, $A=0$: observation.
+- $x$: age, sex, positive nodes, differentiation, extent, obstruction, adherence and surgery-to-registration interval.
+- With randomization, $\Delta(x)=E[Y(0)-Y(1)\mid X=x]$: an average over patients with profile $x$, not an individual effect.
+- $\Delta(x)>0$: lower mortality with chemotherapy; $\Delta(x)<0$: higher.
 
 ::: notes
 Standardization uses the 593 observed baseline profiles. Changing the reference population can change both the average and the sorted-effect distribution.
-:::
-
-## Effect scale matters {.figure-slide}
-
-::: columns
-::: {.column width="70%"}
-![](results/figures/baseline-risk.png){.panel-figure width=100%}
-:::
-::: {.column width="30%" .figure-notes}
-- Treatment odds ratio: **0.60** throughout.
-- Control risks of **10% and 40%** give reductions of **3.8 and 11.4 pp**.
-- Absolute benefit can vary without a treatment interaction on log odds.
-:::
-:::
-
-::: {.source}
-An algebraic illustration, not an estimate from the colon trial.
-:::
-
-::: notes
-For odds ratio theta and control risk p, treated risk is theta*p/(1-p+theta*p). Absolute benefit is not globally monotone in baseline risk.
 :::
 
 # Estimated effects {#distribution .chapter-slide data-chapter-label="Effects"}

@@ -155,7 +155,11 @@ Second revision, 26 October 2026:
   - title and chapter covers lost their dark backdrops;
   - three backup slides (estimand, uniform-band construction, native-CA
     failure) moved into the main chapters;
-  - two discussion slides added (PATH positioning and questions).
+  - two discussion slides added (PATH positioning and questions);
+  - the effect-scale illustration moved to chapter 01, ahead of the warm-up;
+  - the average-effect and benefit-definition slides were rewritten as plain
+    bullets, with denominators, the crude and standardized averages, and the
+    potential-outcome reading of Δ(x).
 - **Uniform critical values:** recovered from the saved bands and scales. They
   are 2.791 for the interaction model (72 of 81 upper endpoints unaffected by
   rearrangement) and 2.173 for the constant model. All other slide numbers were
