@@ -6,7 +6,9 @@ average benefits can conceal different effect distributions. The public colon
 chemotherapy trial is the empirical example: sorted partial effects describe
 differences in estimated three-year
 mortality benefit, and classification compares twelve patient characteristics.
-The earlier trial pilots and simulation remain separate resources; the previous
+A closing comparison sets its sorted effects next to the two earlier trial pilots
+(International Stroke Trial, ACTG 175), drawn from their saved results. Their
+full reports and the simulation remain separate resources; the previous
 Synthetic Control Methods session is preserved in `archive/scm-2026/`.
 
 ## Build and preview
@@ -63,38 +65,44 @@ model that lets the effect differ gives an estimated benefit for every patient.
 Sorting those benefits shows their spread, and the patients at each end can then
 be described. The four chapters work through this in turn:
 
-- **Is the effect the same for everybody?** Two constructed warm-up slides and
-  an effect-scale illustration.
+- **Is the effect the same for everybody?** Today's papers (method, software
+  and intuition), two constructed warm-up slides and an effect-scale
+  illustration.
 - **Sorted effects, step by step:** model, predict, sort and describe, applied
-  to the colon trial.
-- **How far can the pattern be trusted?** The uniform band, model choice, one
-  held-out split and the sensitivity analysis.
-- **Discussion:** questions, plus a causal-forest teaser for the next session.
+  to the colon trial, with the three estimands in symbols, both tail-profile
+  figures and a table of tail differences with jointly adjusted p-values.
+- **How far can the pattern be trusted?** The uniform band and why it is wider
+  than pointwise intervals, model choice, one held-out split and the
+  sensitivity analysis.
+- **Discussion:** the three trial pilots side by side, lessons, the PATH
+  comparison, questions, and a causal-forest teaser for the next session.
   No forest is fitted in this session.
 
 Two figures show per-patient predictions. They come from
 `scripts/plot-colon-patients.R`, which refits the specified interaction model
 (point estimates only) and reproduces the saved sorted effects before plotting.
-The backup stack holds the technical material: the R code, the bootstrap
-construction of the band, the native classification failure, full twelve-trait
-tables, the PATH comparison and the causal assumptions. Title and chapter
-covers use a light layout with a slim accent rule.
+The backup stack holds the technical material: the R code, the native
+classification failure, full twelve-trait tables, the specifications of the two
+other pilots and the causal assumptions. Title and chapter covers use a light
+layout with a slim accent rule.
 
 The warm-up uses known population risks for three equally common profiles.
 Constant benefits of 10/10/10 pp and heterogeneous benefits of −10/10/30 pp
 both average 10 pp. Its quantile curves are exact and discrete; no outcomes,
 models or confidence intervals are simulated. The script validates the risks,
 population means and quantile steps before writing `results/warmup/`.
-The deck has 43 slides: 23 in the main flow, including the title, session map
-and chapter covers, and 20 in the backup stack, including references. Speaker
-notes keep the statistical qualifications, and the session-map notes suggest a
-pacing per chapter (about 33 minutes).
+The deck has 47 slides: 31 in the main flow, including the title, session map
+and chapter covers, and 16 in the backup stack, including references (49 PDF
+pages). Speaker notes keep the statistical qualifications, and the session-map
+notes suggest a pacing per chapter (about 38 minutes).
 
 `R/colon-walkthrough.R` contains executable versions of the slide calculations.
 It fits the two specified models and verifies the saved point estimates.
 `scripts/plot-colon-slides.R` creates the slide figures under
-`results/colon/slides/` from existing results. The full analysis commands are
-listed below; rendering does not require rerunning them.
+`results/colon/slides/` from existing results. `scripts/plot-trial-examples.R`
+draws the closing three-trial figure from the saved colon, IST and ACTG 175
+results without refitting (run it under a UTF-8 locale). The full analysis
+commands are listed below; rendering does not require rerunning them.
 
 Colon SPE bands use the native SortedEffects 1.7.0 IQR/max bootstrap on the
 observed profiles and have been independently reconstructed. Native colon CA
@@ -118,7 +126,9 @@ pilot; inference is not adjusted for searching across datasets.
 The [International Stroke Trial report](ist-pilot.html) compares two specified
 aspirin-effect models and checks their rankings on one fixed held-out sample.
 The corrected public data, dictionary, licence and source hashes are retained in
-`data/ist/`. This remains a separate report; the deck focuses on colon throughout.
+`data/ist/`. This remains a separate report; the deck shows only its saved
+sorted-effect curves and headline checks in the closing three-trial comparison,
+next to the [ACTG 175 pilot](docs/actg175-pilot.md).
 Download the HTML to read it in a browser; [its Quarto source](ist-pilot.qmd)
 shows how the saved results enter the report.
 
@@ -196,6 +206,7 @@ and the saved analysis outputs were not replaced by this contribution.
 - `R/colon-walkthrough.R`: executable R calculations for the main trial example.
 - `scripts/plot-colon-slides.R`: slide figures from the saved colon results.
 - `scripts/plot-colon-patients.R`: per-patient prediction figures, from a point-estimate refit checked against the saved results.
+- `scripts/plot-trial-examples.R`: the closing three-trial figure, from saved SPE/APE results only.
 - `scripts/illustrate-warmup.R`: validated population-risk construction and exact quantile figures for the warm-up.
 - `colon-pilot.qmd` and `ist-pilot.qmd`: complete trial reports and their limitations.
 - `R/demo.R`: simulated data, figures and teaching bootstrap.

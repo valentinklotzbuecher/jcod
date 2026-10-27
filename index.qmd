@@ -42,8 +42,10 @@ Then we ask how far to trust the pattern:
 - a check in held-out patients;
 - sensitivity to missing data.
 
-Colon is the empirical analysis; the warm-up uses explicitly specified
-population risks.
+Colon is the worked example; the warm-up uses explicitly specified
+population risks. We then set the colon curve next to the two earlier trial
+pilots (stroke and HIV), whose similar-looking curves did not hold up in
+held-out patients.
 
 The discussion turns to open questions: overfitting, prespecification,
 risk-based versus interaction models, and the effect scale. We close with a

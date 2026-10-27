@@ -15,6 +15,16 @@ function Div(div)
   if beamer and div.classes:includes("chapter-cue") then
     return {}
   end
+  -- Paper cards become three Beamer columns instead of stacked paragraphs.
+  if beamer and div.classes:includes("paper-cards") then
+    local columns = pandoc.List()
+    for _, card in ipairs(div.content) do
+      if card.t == "Div" then
+        columns:insert(pandoc.Div(card.content, pandoc.Attr("", {"column"}, {width = "32%"})))
+      end
+    end
+    return pandoc.Div(columns, pandoc.Attr("", {"columns"}))
+  end
   if beamer and div.identifier == "refs" then
     return {pandoc.RawBlock("latex", "\\begingroup\\footnotesize"), div,
             pandoc.RawBlock("latex", "\\par\\endgroup")}

@@ -309,7 +309,28 @@ in `data/ist/`; the [data notes](ist-data.md) document the mirror and the limits
 source verification. The [pilot report](../ist-pilot.qmd) compares two specified
 aspirin-effect models for six-month death or dependence. Its fixed held-out
 check did not support the interaction-model ranking. The report is retained
-as a separate resource; the presentation now uses only the colon trial.
+as a separate resource. The presentation shows only its saved sorted-effect
+curves and headline checks, next to colon and ACTG 175, in the closing
+three-trial comparison.
+
+### Closing comparison: trial references
+
+- **IST:** International Stroke Trial Collaborative Group (1997), *Lancet*
+  349(9065):1569–1581, DOI
+  [10.1016/S0140-6736(97)04011-7](https://doi.org/10.1016/S0140-6736(97)04011-7),
+  as linked from the IST report; a PubMed search record (27 October 2026)
+  confirms journal, volume, issue and first page. The database paper,
+  Sandercock, Niewada and Członkowska (2011), *Trials* 12:101, DOI
+  [10.1186/1745-6215-12-101](https://doi.org/10.1186/1745-6215-12-101), matches
+  the retained PDF and its PMC record. The figure slide carries the ODC-By
+  attribution.
+- **ACTG 175:** Hammer et al. (1996), *NEJM* 335(15):1081–1090, as supplied by
+  the `speff2trial` documentation. The DOI
+  [10.1056/NEJM199610103351501](https://doi.org/10.1056/NEJM199610103351501)
+  comes from the ClinicalTrials.gov NCT00000625 reference list; the publisher
+  page was not read.
+- The slides use only saved pilot results and make no clinical claims about
+  aspirin or HIV-therapy subgroups.
 
 ## Clinical applications: useful leads, not verified teaching claims
 

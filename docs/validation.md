@@ -202,11 +202,46 @@ Third revision (intuitive redo), 26 October 2026:
   come from "our checked re-run with stable starting values". The adjusted
   p-values state what they adjust for. Speaker notes keep the technical terms.
 
+Fourth revision (journal-club statistics pass), 27 October 2026:
+
+- **References up front:** a "Today's papers" slide presents the method paper,
+  the R Journal tutorial and *The Effect* §22.3. The reading slide again lists
+  PATH and the suggested Bilancini application. The IST trial report, the IST
+  database paper and the ACTG 175 trial report were added to `references.bib`
+  (sources in `docs/evidence.md`).
+- **More statistics in the main flow:**
+  - the three estimands (Δ(x), APE and SPE, CA) in symbols after Step 3;
+  - Step 4 shows both tail-profile figures, then a table of tail differences
+    with stabilized-bootstrap SEs and jointly adjusted p-values, computed from
+    `classification-stabilized.csv` during rendering (the other six traits have
+    adjusted p ≥ .76);
+  - "Why is the band so wide?": critical value 2.79 (constant odds ratio 2.17)
+    versus 1.96. The pointwise (−20.2 to +0.6 pp) and uniform (−24.6 to
+    +5.1 pp) intervals at the 10th percentile are computed from the saved
+    scales during rendering;
+  - the PATH comparison moved from backup to the discussion chapter.
+- **Three trials:** `scripts/plot-trial-examples.R` draws the saved native SPE
+  results of colon, IST and ACTG 175 without refitting. It checks each 81-point
+  grid and the band ordering. The table slide reads averages, 10th/90th
+  percentiles, interaction tests and held-out slopes from the three result
+  directories. The IST attribution (ODC-By 1.0) is on the figure slide.
+- **Figure wording:** dumbbell legends now read "10% least benefit" and "10%
+  most benefit", as on the slides.
+- **Locale:** under the container's POSIX locale, knitr printed `<U+2212>` in
+  table cells. R output now uses HTML entities for "−" and "³", which pandoc
+  converts in both formats.
+- **Checks:**
+  - 47 slides (31 main, 16 backup) passed all 21 dock checks, with zero heading
+    overlaps at four 16:9 sizes and no slide overflow;
+  - the portable export loaded all 11 images offline, with no failed requests
+    or JavaScript errors;
+  - the new PDF pages were inspected (49 pages; the references span three).
+
 - `bash scripts/render.sh`: passed full-site rendering, including the portable
-  RevealJS HTML export and matching 44-page, 16:9 Beamer handout. The colon
-  trial is the sole empirical analysis: 23 main-flow slides (including title,
-  session map and chapter covers), followed by 20 backup slides including
-  references.
+  RevealJS HTML export and matching 49-page, 16:9 Beamer handout. The colon
+  trial is the worked example, and the closing three-trial slides draw saved
+  IST and ACTG 175 results: 31 main-flow slides (including title, session map
+  and chapter covers), followed by 16 backup slides including references.
 - Two warm-up slides precede the trial and replace two basic percentile slides.
   The overall slide count is unchanged. Speaker notes were reduced from roughly
   2,000 to 750 words, retaining estimand, inference and interpretation details.
@@ -227,10 +262,10 @@ Third revision (intuitive redo), 26 October 2026:
   explanations. Four groups per call passed 14 forward/backward states and six
   direct-jump/re-entry checks, including reduced motion. All explanations remain
   visible; static PDFs show complete code and explanations together.
-- Headless Chromium exercised all HTML slides (44, then 47, now 43), verified image loading,
+- Headless Chromium exercised all HTML slides (44, then 47, then 43, now 47), verified image loading,
   checked slide boundaries and JavaScript errors, and confirmed native MathML
   rendering. Math and fonts do not require external services.
-- Six main chapter stacks and one backup stack form the two-dimensional deck.
+- Four main chapter stacks and one backup stack form the two-dimensional deck.
   Session-map links, chapter buttons, native overview, fragment reveals and
   keyboard navigation passed browser checks. Overview thumbnails preload their
   figures. Reduced-motion settings and mobile navigation were checked.

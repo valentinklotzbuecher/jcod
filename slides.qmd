@@ -63,6 +63,15 @@ stopifnot(all(abs(warmup_means$mean_benefit - .10) < 1e-12))
 patients <- read.csv("results/colon/patient-benefits.csv")
 stopifnot(nrow(patients) == 593L, abs(mean(patients$benefit) - ape$estimate) < 1e-10)
 near_average <- sprintf("%.0f%%", 100 * mean(abs(patients$benefit - ape$estimate) <= .03))
+# HTML entities keep R output ASCII under any locale; pandoc turns them into characters.
+minus <- function(x) gsub("-", "&minus;", x, fixed = TRUE)
+constant_spe <- read.csv("results/colon/constant-spe.csv")
+at10 <- function(d) d[abs(d$percentile - .10) < 1e-9, ]
+critical <- function(d) with(at10(d), (upper_uniform - estimate) / standard_error)
+band10 <- with(at10(spe_data), c(lower_uniform, upper_uniform))
+pointwise10 <- with(at10(spe_data), estimate + c(-1, 1) * qnorm(.975) * standard_error)
+stopifnot(abs(critical(spe_data) - with(at10(spe_data), (estimate - lower_uniform) / standard_error)) < 1e-8)
+interval <- function(x) minus(sprintf("%+.1f to %+.1f", 100 * x[1], 100 * x[2]))
 ca_table <- function(variables) {
   d <- classification[match(variables, classification$variable), ]
   labels <- c(age = "Age (years)", female = "Female (%)",
@@ -89,7 +98,7 @@ ca_table <- function(variables) {
 ::: {.map-card}
 [01 · The question](#question){.map-title}
 
-Is the effect the same for everybody?
+Is the effect the same for everybody? Today's papers.
 :::
 ::: {.map-card}
 [02 · Sorted effects](#steps){.map-title}
@@ -99,12 +108,12 @@ Four steps, on a colon cancer trial.
 ::: {.map-card}
 [03 · Trust](#trust){.map-title}
 
-How sure are we, and what could fool us?
+Uniform bands, model choice and new patients.
 :::
 ::: {.map-card}
 [04 · Discussion](#discussion){.map-title}
 
-What would convince us?
+Three trials side by side. What would convince us?
 :::
 :::
 ::: {.key-hint}
@@ -113,14 +122,14 @@ What would convince us?
 :::
 
 ::: {.content-visible when-format="beamer"}
-1. Is the effect the same for everybody?
+1. Is the effect the same for everybody? Today's papers.
 2. Sorted effects, step by step: a colon cancer trial.
-3. Can we trust the pattern?
-4. Discussion.
+3. Can we trust the pattern? Uniform bands, model choice and new patients.
+4. Three trials side by side, and discussion.
 :::
 
 ::: notes
-About 33 minutes, then open discussion: Question 7 · Sorted effects 12 · Trust 10 · Discussion opener 4. The framing follows Huntington-Klein, The Effect, section 22.3. Code, bootstrap details, why the package's tail bootstrap failed, and full tables are in the backup stack.
+About 38 minutes, then open discussion: Question 8 · Sorted effects 13 · Trust 9 · Three trials and discussion opener 8. If time runs short, skip the symbols slide and the tumour-characteristics profile, and give the band slide one sentence. The framing follows Huntington-Klein, The Effect, section 22.3. Code, why the package's tail bootstrap failed, and full tables are in the backup stack.
 :::
 
 # Is the effect the same for everybody? {#question .chapter-slide data-chapter-label="Question"}
@@ -147,6 +156,52 @@ A trial reports one average effect. Whom does it describe?
 
 ::: notes
 The Effect: causal inference would be much easier if each effect were the same for everybody, but we live in a world of heterogeneous effects. Instead of treating heterogeneity as a nuisance, estimate the distribution of effects and look at who is affected most and least. Sorted effects [@chernozhukov2018] does this from a model that already allows the effect to differ.
+:::
+
+## Today's papers {#papers}
+
+::: {.paper-cards}
+::: {.fragment .fade-up}
+[**Method · Econometrica 2018**]{.paper-kicker}
+
+*The sorted effects method: discovering heterogeneous effects beyond their averages*
+
+@chernozhukov2018
+
+- Sorted partial effects: the percentiles of the effect
+- Classification analysis: who is most and least affected
+- Bootstrap bands for the whole curve
+:::
+::: {.fragment .fade-up}
+[**Software · The R Journal 2020**]{.paper-kicker}
+
+*SortedEffects: sorted causal effects in R*
+
+@chen2020
+
+- `spe()`: sorted effects with uniform bands
+- `ca()`: compare the most and least affected
+- Worked example: mortgage denials (backup)
+:::
+::: {.fragment .fade-up}
+[**Intuition · The Effect 2025, §22.3**]{.paper-kicker}
+
+*The Effect: an introduction to research design and causality*
+
+@huntingtonklein2025
+
+- Model the effect, predict it for everyone, sort, describe
+- Free online textbook
+- Also causal forests: next time
+:::
+:::
+
+::: {.source}
+Our worked example: a public colon cancer trial [@moertel1990]. Full references at the end.
+:::
+
+::: notes
+The Econometrica paper's subtitle is "discovering heterogeneous effects beyond their averages". It defines the sorted partial effect, the classification analysis of the most and least affected, and bootstrap inference that holds over a whole range of percentiles. The R Journal paper documents the package we use, including the mortgage-denial example (backup).
 :::
 
 ## Same average, different stories {#warmup-average}
@@ -318,35 +373,107 @@ Point estimates; uncertainty follows in chapter 03. In R: `SortedEffects::spe()`
 The 10th and 90th percentiles are −9.8 and 27.3 pp. Percentiles of the sorted benefits are the sorted partial effects; the band in chapter 03 covers the 10th to 90th percentiles, where estimation is more stable than at the extremes.
 :::
 
-## Step 4 · Who is at each end? {#step-describe}
+## In symbols: three estimands {#estimand}
+
+$$
+\Delta(x)=\Pr(Y=1\mid A=0,X=x)-\Pr(Y=1\mid A=1,X=x)
+$$
+
+$$
+\mathrm{APE}=E[\Delta(X)], \qquad \mathrm{SPE}(u)=Q_{\Delta(X)}(u), \quad u\in[0.1,\,0.9]
+$$
+
+$$
+\mathrm{CA}(Z)=E[Z\mid \Delta(X)\ge \mathrm{SPE}(0.9)]-E[Z\mid \Delta(X)\le \mathrm{SPE}(0.1)]
+$$
+
+- $Y$: death within three years; $A$: chemotherapy (1) or observation (0); $X$: the eight traits in the model.
+- Estimates plug the fitted model into $\Delta$ for all 593 patients; CA compares a trait $Z$ between the two 10% tails.
+- With randomization, $\Delta(x)=E[Y(0)-Y(1)\mid X=x]$: an average for profile $x$, not an individual effect.
+
+::: {.source}
+Notation after @chernozhukov2018. SPE is a quantile of effects, not a difference between outcome quantiles.
+:::
+
+::: notes
+APE is the average partial effect, SPE the sorted partial effect, CA the classification analysis. The distribution of X, here the 593 observed profiles, defines the population summarized; changing it can change both APE and SPE. Randomization supports identification; sorting does not replace it.
+:::
+
+## Step 4 · Who is at each end? {#step-describe .figure-slide}
+
+::: columns
+::: {.column width="70%"}
+![](results/colon/slides/classification-demographics.png){.panel-figure width=100%}
+:::
+::: {.column width="30%" .figure-notes}
+- Least benefit: **all women**, mean age **43**.
+- Most benefit: **92% men**, mean age **53**.
+- More than four positive nodes: **13% vs 88%**.
+:::
+:::
+
+::: {.source}
+The 60 patients (10%) at each end. Points are tail means; the lines are not confidence intervals.
+:::
+
+::: notes
+In R this is SortedEffects::ca(), classification analysis (call in backup). Only 4 of the 60 high-tail patients are men aged at least 65. The demographic rows overlap (women under 55 are a subset of women) and are not independent findings. Tail membership depends jointly on age, sex and tumour characteristics, and was learned from this sample's outcomes.
+:::
+
+## Step 4 · Tumour characteristics {#step-describe-clinical .figure-slide}
+
+::: columns
+::: {.column width="70%"}
+![](results/colon/slides/classification-clinical.png){.panel-figure width=100%}
+:::
+::: {.column width="30%" .figure-notes}
+- Poor differentiation: **10% vs 42%**.
+- Bowel obstruction: **35% vs 20%**.
+- Perforation: **3%** in both tails.
+:::
+:::
+
+::: {.source}
+Same 60 + 60 patients. “Adherence”: tumour adherence to nearby organs.
+:::
+
+## Step 4 · Which differences are beyond chance? {#step-describe-test}
 
 ```{r}
 #| label: tail_table
 #| results: asis
 rows <- c(female = "Women", younger_women = "Women under 55", age = "Mean age (years)",
-          nodes_over4 = "More than 4 positive nodes", poor_diff = "Poor differentiation")
+          nodes = "Mean positive nodes", nodes_over4 = "More than 4 positive nodes",
+          poor_diff = "Poor differentiation")
 d <- classification[match(names(rows), classification$variable), ]
-share <- function(x, multiplier) ifelse(multiplier == 100, sprintf("%.0f%%", 100 * x), sprintf("%.0f", x))
+digits <- ifelse(d$variable == "nodes", 1, 0)
+level <- function(x) ifelse(d$multiplier == 100, sprintf("%.0f%%", 100 * x),
+                            sprintf(paste0("%.", digits, "f"), x))
+difference <- ifelse(d$multiplier == 100,
+  sprintf("%+.0f (%.0f)", 100 * d$difference, 100 * d$standard_error),
+  sprintf("%+.1f (%.1f)", d$difference, d$standard_error))
 knitr::kable(data.frame(
   Characteristic = unname(rows),
-  `10% least benefit` = share(d$low_mean, d$multiplier),
-  `10% most benefit` = share(d$high_mean, d$multiplier),
+  `10% least benefit` = level(d$low_mean),
+  `10% most benefit` = level(d$high_mean),
+  `Difference (SE)` = minus(difference),
   `Adjusted p` = sub("^0", "", sprintf("%.2f", d$joint_p)), check.names = FALSE),
-  align = c("l", "r", "r", "r"))
+  align = c("l", "r", "r", "r", "r"))
+others <- classification[!classification$variable %in% names(rows), ]
 ```
 
-- Least benefit: younger women with few positive nodes. Most: mostly men with many nodes.
+The other six traits: adjusted p ≥ `r sub("^0", "", sprintf("%.2f", floor(100 * min(others$joint_p)) / 100))`.
 
 ::: {.prompt}
 This describes who sits at each end. It is not the effect of chemotherapy in women.
 :::
 
 ::: {.source}
-60 patients per tail. p-values are adjusted for comparing 12 traits. The package's own bootstrap broke down for these data, so they come from our checked re-run with stable starting values (backup).
+Differences of percentages in pp. p-values adjusted jointly across all 12 traits (499 bootstrap resamples). The package's own bootstrap broke down for these data, so they come from our checked re-run with stable starting values (backup).
 :::
 
 ::: notes
-Across all twelve traits compared, only the sex-related differences stand out. In R this is SortedEffects::ca() (classification analysis). For these data many of its bootstrap refits did not converge, yet it still printed normal-looking p-values; we use a checked re-run of the same bootstrap with stable starting values instead. Tail membership depends jointly on age, sex and tumour characteristics, and was learned from this sample's outcomes. Classification tests tail composition, not a treatment-by-sex interaction. The adjustment covers twelve traits, not dataset, model or tail-size choices; p-values near .04 remain sensitive to Monte Carlo variability with 499 draws.
+The adjustment uses the bootstrap distribution of the largest standardized difference across all twelve traits. Women: difference/SE = 4.3, adjusted p = .04; more than four nodes: 3.4, adjusted p = .13, although 3.4 would be far beyond 1.96 for a single trait. For these data many of the package's bootstrap refits did not converge, yet it still printed normal-looking p-values; we use a checked re-run of the same bootstrap with stable starting values instead. Classification tests tail composition, not a treatment-by-sex interaction. The adjustment covers twelve traits, not dataset, model or tail-size choices; p-values near .04 remain sensitive to Monte Carlo variability with 499 draws.
 :::
 
 # Can we trust the pattern? {#trust .chapter-slide data-chapter-label="Trust"}
@@ -379,7 +506,29 @@ The average benefit is clear; the shape of the spread is much less certain.
 :::
 
 ::: notes
-The band comes from the package's bootstrap (499 resamples) and covers the 10th–90th percentiles; how it is built is in backup. A band for the whole curve is wider than pointwise intervals: its critical value is 2.79 rather than 1.96. It describes uncertainty about the curve, not a range for any individual patient.
+The band comes from the package's bootstrap (499 resamples) and covers the 10th–90th percentiles; why it is wider than pointwise intervals is on the next slide. It describes uncertainty about the curve, not a range for any individual patient.
+:::
+
+## Why is the band so wide? {#uniform-band}
+
+$$
+\widehat{\mathrm{SPE}}(u)\ \pm\ c\cdot\widehat{\mathrm{se}}(u), \qquad u=0.10,\,0.11,\,\ldots,\,0.90
+$$
+
+- **Pointwise** 95% interval: $c=1.96$. Right for one percentile; across 81 percentiles, some would miss.
+- **Uniform** 95% band: $c$ covers all 81 at once. It is the 95th percentile of the **largest** standardized deviation across the 81, over 499 bootstrap refits.
+
+| At the 10th percentile | $c$ | 95% interval (pp) |
+|:--|--:|--:|
+| Pointwise | 1.96 | `r interval(pointwise10)` |
+| Uniform, whole curve | `r sprintf("%.2f", critical(spe_data))` | `r interval(band10)` |
+
+::: {.source}
+Uniform bands as in @chernozhukov2018 and SortedEffects; $\widehat{\mathrm{se}}$: bootstrap interquartile range ÷ 1.349. Constant-odds-ratio model: $c$ = `r sprintf("%.2f", critical(constant_spe))`. Band ends rearranged to stay monotone [@chernozhukov2009].
+:::
+
+::: notes
+The constant-odds-ratio curve moves almost as one piece across bootstrap draws, so its critical value stays closer to 1.96. The pointwise interval is for comparison only. The band is the package's own bootstrap, which we reproduced independently; critical values are read off the saved bands. Uniform coverage concerns the chosen percentile grid and requires valid effect estimation and regularity conditions.
 :::
 
 ## You find what your model allows {#model-comparison .figure-slide}
@@ -401,7 +550,7 @@ The band comes from the package's bootstrap (499 resamples) and covers the 10th�
 :::
 
 ::: notes
-The likelihood-ratio test assesses six treatment interactions on the log-odds scale; it is not a test of constant risk differences. The constant-odds-ratio model is risk-based heterogeneity; the six interactions are effect modeling (backup: PATH comparison).
+The likelihood-ratio test assesses six treatment interactions on the log-odds scale; it is not a test of constant risk differences. The constant-odds-ratio model is risk-based heterogeneity; the six interactions are effect modeling (PATH comparison in chapter 04).
 :::
 
 ## Does it hold up in new patients? {#held-out .figure-slide}
@@ -429,7 +578,7 @@ The slope regresses held-out AIPW benefit pseudo-outcomes on centered predicted 
 
 - **Noise looks like spread:** 19 parameters for 179 deaths; 60 patients per tail.
 - **Missing data:** keeping all 618 patients moves the p-value for the interactions from **.014 to .054**.
-- **One split, one trial:** and colon was the third trial we tried, with no adjustment for that search.
+- **One split, one trial:** colon was the third trial we tried (all three in chapter 04), with no adjustment for that search.
 
 ::: {.prompt}
 A promising ranking to test in other trials, not a treatment rule.
@@ -448,17 +597,106 @@ The all-618 sensitivity uses a fixed node fill of two and missingness indicators
 What would make sorted effects useful in our own trials?
 :::
 ::: {.chapter-cue}
-↓ Lessons, questions and next time
+↓ Three trials, lessons and questions
+:::
+
+## Three trials, three pictures {#three-trials .figure-slide .wide-figure}
+
+![](results/trials/three-trials.png){.panel-figure width=100%}
+
+::: {.source}
+Exploratory pilots, plans fixed before fitting; each band within its own model [@moertel1990; @ist1997; @hammer1996]. IST data: International Stroke Trial database v2 [@sandercock2011], doi:10.7488/ds/104, ODC-By 1.0.
+:::
+
+::: notes
+IST was the primary pilot and ACTG 175 a secondary pilot alongside it; colon came third. IST: aspirin, death or dependence at six months, 19,285 patients with an observed outcome; the aspirin contrast averages over the factorial heparin allocation. ACTG 175: zidovudine plus didanosine versus zidovudine, CD4 count at 20 weeks, the public 1,054-row export of those two arms. No adjustment across trials. A linear model without interactions gives one constant effect, hence ACTG 175's flat line; logistic models spread absolute benefits even with a constant odds ratio. The IST bootstrap treats patients as independent and does not reflect hospital clustering. ACTG 175 therapies are historical. Plans: docs/ist-analysis-plan.md and docs/actg175-pilot.md.
+:::
+
+## Three trials in numbers {#three-trials-numbers}
+
+```{r}
+#| label: three_trials_table
+#| results: asis
+p_text <- function(p) sub("^0", "", ifelse(p < .1, sprintf("%.3f", p), sprintf("%.2f", p)))
+spe_at <- function(d, u) d$estimate[abs(d$percentile - u) < 1e-9]
+ist_spe <- read.csv("results/ist/interaction-spe.csv")
+ist_ape <- read.csv("results/ist/interaction-ape.csv")
+actg_spe <- subset(read.csv("results/actg175/spe.csv"), model == "interaction")
+actg_ape <- subset(read.csv("results/actg175/ape.csv"), model == "interaction")
+colon_test <- subset(read.csv("results/colon/interaction-test.csv"), scenario == "primary")
+ist_test <- read.csv("results/ist/interaction-test.csv")
+actg_test <- read.csv("results/actg175/interaction-test.csv")
+colon_slope <- subset(read.csv("results/colon/validation-calibration.csv"),
+                      term == "ranking_slope" & model == "interaction")
+ist_slope <- subset(read.csv("results/ist/validation-calibration.csv"),
+                    term == "ranking_slope" & model == "interaction")
+actg_slope <- subset(read.csv("results/actg175/validation-calibration.csv"), model == "interaction")
+ist_n <- subset(read.csv("results/ist/model-summary.csv"), model == "interaction")$n
+actg_n <- subset(read.csv("results/actg175/model-summary.csv"), model == "interaction")$n
+stopifnot(nrow(ist_spe) == 81L, nrow(actg_spe) == 81L, ist_n == 19285L, actg_n == 1054L)
+pp_ci <- function(a) minus(sprintf("%.1f pp (%.1f to %.1f)", 100 * a$estimate, 100 * a$lower, 100 * a$upper))
+pp_range <- function(d) minus(sprintf("%.1f to %.1f pp", 100 * spe_at(d, .1), 100 * spe_at(d, .9)))
+knitr::kable(data.frame(
+  Measure = c("Patients", "Average benefit (95% CI)", "10th to 90th percentile",
+              "Interactions: terms, joint p", "Held-out ranking slope (p)"),
+  Colon = c(format(nrow(patients), big.mark = ","), pp_ci(ape), pp_range(spe_data),
+            sprintf("%d, p = %s", colon_test$df, p_text(colon_test$p_value)),
+            sprintf("%.2f (p = %s)", colon_slope$estimate, p_text(colon_slope$p_holm_two_rankings))),
+  IST = c(format(ist_n, big.mark = ","), pp_ci(ist_ape), pp_range(ist_spe),
+          sprintf("%d, p = %s", ist_test$df, p_text(ist_test$p_value)),
+          sprintf("%.2f (p = %s)", ist_slope$estimate, p_text(ist_slope$p_holm_two_rankings))),
+  ACTG = c(format(actg_n, big.mark = ","),
+           sprintf("%.0f cells/mm&sup3; (%.0f to %.0f)", actg_ape$estimate, actg_ape$lower, actg_ape$upper),
+           sprintf("%.0f to %.0f cells/mm&sup3;", spe_at(actg_spe, .1), spe_at(actg_spe, .9)),
+           sprintf("%d, p = %s", actg_test$numerator_df, p_text(actg_test$p_value)),
+           sprintf("%.2f (p = %s)", actg_slope$estimate, p_text(actg_slope$p_null_zero)))),
+  col.names = c("", "Colon cancer", "Stroke (IST)", "HIV (ACTG 175)"),
+  align = c("l", "r", "r", "r"))
+ist_risk_slope <- subset(read.csv("results/ist/validation-calibration.csv"),
+                         term == "ranking_slope" & model == "constant")
+```
+
+::: {.prompt}
+Every interaction curve slopes, but only colon's ranking held up in held-out patients, and colon was the third trial we looked at.
+:::
+
+::: {.source}
+Interaction models; joint likelihood-ratio tests (colon, IST) or F test (ACTG 175). Held-out slope: 1 = as predicted, 0 = no signal; p for no signal, Holm-adjusted over two models for colon and IST.
+:::
+
+::: notes
+In IST the simpler risk-based ranking did better in held-out patients: slope `r sprintf("%.1f", ist_risk_slope$estimate)` (unadjusted p = `r p_text(ist_risk_slope$p_zero)`, Holm p = `r p_text(ist_risk_slope$p_holm_two_rankings)`), whereas its interaction ranking showed no signal. ACTG 175 has only one ranking: its model without interactions predicts the same effect for everybody. Each slope regresses AIPW benefit pseudo-outcomes on predicted benefit in the held-out half: 297 patients for colon, 9,643 for IST and 527 for ACTG 175.
 :::
 
 ## What did we learn? {#learned}
 
 - The average (**8 pp**) hid a wide range of estimated benefits.
-- Sorting turned a 19-parameter model into one curve and a table of who sits at each end.
-- The pattern is uncertain and depends on the model; it needs other trials.
+- Sorting turned a 19-parameter model into one curve and a profile of who sits at each end.
+- The pattern is uncertain and depends on the model; in two other trials, similar curves did not hold up in new patients.
 
 ::: {.prompt}
 Which result would convince you that the pattern is real?
+:::
+
+## Where do sorted effects fit? {#hte-tools}
+
+| Approach | Question | Watch for |
+|:--|:--|:--|
+| Subgroup forest plot | Does the effect differ by one trait? | One trait at a time; many tests |
+| Risk modeling | Does absolute benefit change with baseline risk? | Misses modifiers unrelated to risk |
+| Effect modeling | Which traits modify the effect? | Overfitting; needs validation |
+| Sorted effects + classification | How are fitted effects distributed, and who is in the tails? | Only as good as the effect estimates |
+
+::: {.prompt}
+Here, the constant-odds-ratio model is risk-based; the six interactions are effect modeling.
+:::
+
+::: {.source}
+Risk and effect modeling as defined in the PATH statement [@kent2020].
+:::
+
+::: notes
+PATH defines risk modeling (a multivariable risk model disaggregates trial patients by predicted risk) and effect modeling (treatment-by-covariate interactions); both predict absolute effects, which it calls the most relevant scale for clinical decisions. It encourages reporting results stratified by a risk model when the overall trial result is positive, as here. In IST, the risk-based ranking held up better in held-out patients than the interaction ranking. Our held-out slope is a calibration-for-benefit check; the c-for-benefit is a related discrimination measure [@vanklaveren2018].
 :::
 
 ## Questions for discussion {#discussion-questions}
@@ -469,7 +707,7 @@ Which result would convince you that the pattern is real?
 - **Scale:** absolute or relative benefit?
 
 ::: notes
-The 29% is a property of the fitted model, not an estimate of harm: the band at the 10th percentile still reaches +5.1 pp. Shrinkage options include penalized or Bayesian interaction models; their sorted summaries would need their own inference. Risk-based versus effect modeling: PATH comparison in backup. Treatment decisions would additionally require harms, preferences and policy-value assessment.
+The 29% is a property of the fitted model, not an estimate of harm: the band at the 10th percentile still reaches +5.1 pp. Shrinkage options include penalized or Bayesian interaction models; their sorted summaries would need their own inference. Risk-based versus effect modeling: see the PATH slide. Treatment decisions would additionally require harms, preferences and policy-value assessment.
 :::
 
 ## Next time: causal forests {#causal-forests}
@@ -488,9 +726,10 @@ The flexibility gain is relative to our specified regression; sorted effects can
 
 ## Reading and materials {#reading}
 
-- **Intuition:** *The Effect*, chapter 10 (treatment effects) and §22.3 (heterogeneous effects), free online.
-- **Tutorial:** the SortedEffects R package [@chen2020].
-- **Method:** the sorted effects paper [@chernozhukov2018].
+- **Intuition:** *The Effect*, chapter 10 (treatment effects) and §22.3 (heterogeneous effects), free online [@huntingtonklein2025].
+- **Method and software:** the sorted effects paper and the SortedEffects tutorial [@chernozhukov2018; @chen2020].
+- **Risk versus effect modeling:** the PATH statement [@kent2020].
+- **An application (suggested):** blood donors during the COVID-19 pandemic [@bilancini2022].
 - **Code, report and slides:** [github.com/valentinklotzbuecher/jcod](https://github.com/valentinklotzbuecher/jcod).
 
 # Additional material {#backup .chapter-slide .backup-chapter data-chapter-label="Backup"}
@@ -503,26 +742,6 @@ Code, bootstrap details, full tables and assumptions.
 :::
 ::: {.chapter-cue}
 ↓ Optional slides for questions
-:::
-
-## Backup · The estimand {#estimand}
-
-$$
-\Delta(x)=\Pr(Y=1\mid A=0,X=x)-\Pr(Y=1\mid A=1,X=x)
-$$
-
-$$
-\mathrm{SPE}(u)=Q_{\Delta(X)}(u), \qquad \mathrm{APE}=E[\Delta(X)]
-$$
-
-- $Y$: death within three years; $A=1$: levamisole + 5-FU, $A=0$: observation; $x$: the eight baseline characteristics in the model.
-- With randomization, $\Delta(x)=E[Y(0)-Y(1)\mid X=x]$: an average over patients with profile $x$, not an individual effect.
-- The distribution of $X$, here the 593 observed profiles, defines the population summarized.
-- SPE(u), the sorted partial effect, is the u-th percentile of the effects; APE is their average.
-- A quantile of effects differs from a difference of outcome quantiles.
-
-::: notes
-Changing the reference population can change both the average and the sorted-effect distribution. Randomization supports identification; sorting does not replace it.
 :::
 
 ## Backup · The model in R {#outcome-model .code-slide}
@@ -617,26 +836,6 @@ Uniform coverage concerns the chosen percentile grid and requires valid effect e
 
 ::: notes
 spe() refits from the formula. The compare order yields the second prediction minus the first. In the full-sample path, refitting uses bootstrap weights while effect quantiles retain the original profile weights.
-:::
-
-## Backup · How is the uniform band built? {#band-construction}
-
-1. Refit in each of **499** bootstrap draws and re-sort the fitted benefits at 81 percentiles, 10th–90th.
-2. Scale each percentile by its bootstrap interquartile range ÷ 1.349.
-3. Critical value: 95th percentile of the **largest** scaled deviation across all 81 percentiles.
-4. Band: estimate ± critical value × scale; endpoints rearranged to stay monotone.
-
-| Model | Uniform critical value | Pointwise |
-|:--|--:|--:|
-| Six treatment interactions | 2.79 | 1.96 |
-| Constant treatment odds ratio | 2.17 | 1.96 |
-
-::: {.source}
-The package's own bootstrap (SortedEffects 1.7.0), which we reproduced independently; critical values read off the saved bands. Rearrangement: @chernozhukov2009.
-:::
-
-::: notes
-The constant-odds-ratio curve moves almost as one piece across bootstrap draws, so its critical value stays near 1.96. For comparison only, ±1.96 scales at the interaction model's 10th percentile would give −20.2 to +0.6 pp; the uniform band, −24.6 to +5.1 pp, covers all 81 percentiles at once.
 :::
 
 ## Backup · Comparing the tails with ca() {#ca-call .code-slide .code-focus}
@@ -756,46 +955,6 @@ Difference = high − low, in percentage points.
 “Long surgery interval”: surgery-to-registration category. SEs and p-values from our checked re-run of the tail bootstrap, adjusted across all twelve traits.
 :::
 
-## Backup · Tail profiles: age, sex and nodes {.figure-slide}
-
-::: columns
-::: {.column width="70%"}
-![](results/colon/slides/classification-demographics.png){.panel-figure width=100%}
-:::
-::: {.column width="30%" .figure-notes}
-- Low tail: **all women**, mean age **43**.
-- High tail: **92% men**, mean age **53**.
-- More than four nodes: **13% vs 88%**.
-- Men aged 65+: **7% of the high tail**.
-:::
-:::
-
-::: {.source}
-Descriptive means; 60 patients per tail. Connecting segments are not confidence intervals.
-:::
-
-::: notes
-Only 4 of the 60 high-tail patients are men aged at least 65. The demographic indicators overlap and should not be interpreted as independent findings.
-:::
-
-## Backup · Tail profiles: clinical characteristics {.figure-slide}
-
-::: columns
-::: {.column width="70%"}
-![](results/colon/slides/classification-clinical.png){.panel-figure width=100%}
-:::
-::: {.column width="30%" .figure-notes}
-- Poor differentiation: **10% vs 42%**.
-- Bowel obstruction: **35% vs 20%**.
-- Perforation: **3% in both tails**.
-- Adjusted p-values: classification tables.
-:::
-:::
-
-::: {.source}
-“Adherence” denotes tumour adherence to nearby organs.
-:::
-
 ## Backup · What is resampled?
 
 - **`spe()`:** refits the model in each resample, then sorts the predicted effects for the original 593 patients.
@@ -818,6 +977,20 @@ Only 4 of the 60 high-tail patients are men aged at least 65. The demographic in
 The primary model uses continuous log node count. The separate coding check compares two binary-node models; it does not replace the primary specification.
 :::
 
+## Backup · The other two trial pilots {#other-pilots .compact-table}
+
+| | Stroke (IST) | HIV (ACTG 175) |
+|:--|:--|:--|
+| Comparison | Aspirin vs none, averaged over heparin | Zidovudine + didanosine vs zidovudine |
+| Outcome | Death or dependence at 6 months | CD4 count at 20 weeks |
+| Models | Logistic: constant odds ratio vs 8 interactions | Linear: main effects vs 8 interactions |
+| Effect may vary with | Age, sex, age × sex, blood pressure, delay, consciousness, atrial fibrillation, leg deficit | Age, sex, weight, CD4, CD8, Karnofsky score, symptoms, prior antiretrovirals |
+| Watch for | Bootstrap ignores hospital clustering; 150 missing outcomes | Public export of two arms; historical therapies |
+
+::: {.source}
+Plans recorded before fitting: `docs/ist-analysis-plan.md`, `docs/actg175-pilot.md`; full IST report on the session page. Native SortedEffects 1.7.0 inference, 499 draws, one held-out split each.
+:::
+
 ## Backup · When is the heterogeneity causal?
 
 - **Identification, both:** randomization or no unmeasured confounding; overlap; consistency/no interference; appropriate handling of selection and missing data.
@@ -831,27 +1004,6 @@ Both concern conditional average effects. Fitted spread alone does not establish
 
 ::: notes
 Effect-quantile inference requires suitable estimator convergence and regularity at the requested quantiles. The discrete warm-up illustrates the estimand, not a coverage result. Randomization does not automatically justify complete-case selection.
-:::
-
-## Backup · Where do sorted effects fit? {#hte-tools}
-
-| Approach | Question | Watch for |
-|:--|:--|:--|
-| Subgroup forest plot | Does the effect differ by one trait? | One trait at a time; many tests |
-| Risk modeling | Does absolute benefit change with baseline risk? | Misses modifiers unrelated to risk |
-| Effect modeling | Which traits modify the effect? | Overfitting; needs validation |
-| Sorted effects + classification | How are fitted effects distributed, and who is in the tails? | Only as good as the effect estimates |
-
-::: {.prompt}
-Here, the constant-odds-ratio model is risk-based; the six interactions are effect modeling.
-:::
-
-::: {.source}
-Risk and effect modeling as defined in the PATH statement [@kent2020].
-:::
-
-::: notes
-PATH defines risk modeling (a multivariable risk model disaggregates trial patients by predicted risk) and effect modeling (treatment-by-covariate interactions); both predict absolute effects, which it calls the most relevant scale for clinical decisions. It encourages reporting results stratified by a risk model when the overall trial result is positive, as here. Our held-out slope is a calibration-for-benefit check; the c-for-benefit is a related discrimination measure [@vanklaveren2018].
 :::
 
 ## Backup · How a forest builds a comparison {#forest-intuition}

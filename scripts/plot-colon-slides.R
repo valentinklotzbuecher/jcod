@@ -136,12 +136,12 @@ classification_plot <- function(variables) {
   d <- classification[match(variables, classification$variable), ]
   stopifnot(!anyNA(d$variable))
   d$panel <- factor(d$variable, levels = variables, labels = panel_labels[variables])
-  low <- transform(d, tail = "Bottom 10%", value = low_mean * multiplier,
+  low <- transform(d, tail = "10% least benefit", value = low_mean * multiplier,
                    point_y = .04, label_y = .22)
-  high <- transform(d, tail = "Top 10%", value = high_mean * multiplier,
+  high <- transform(d, tail = "10% most benefit", value = high_mean * multiplier,
                     point_y = -.04, label_y = -.22)
   endpoints <- rbind(low, high)
-  endpoints$tail <- factor(endpoints$tail, levels = c("Bottom 10%", "Top 10%"))
+  endpoints$tail <- factor(endpoints$tail, levels = c("10% least benefit", "10% most benefit"))
   endpoints$label <- sprintf("%.1f", endpoints$value)
   bounds <- do.call(rbind, lapply(seq_len(nrow(d)), function(i) {
     limits <- switch(d$variable[i], age = c(18, 85), nodes = c(0, 27), c(0, 100))
@@ -157,8 +157,8 @@ classification_plot <- function(variables) {
     geom_text(data = endpoints, aes(value, label_y, label = label, colour = tail),
                size = 5, fontface = "bold", show.legend = FALSE) +
     facet_wrap(~ panel, scales = "free_x", ncol = 3) +
-    scale_colour_manual(values = c("Bottom 10%" = orange, "Top 10%" = purple)) +
-    scale_shape_manual(values = c("Bottom 10%" = 16, "Top 10%" = 17)) +
+    scale_colour_manual(values = c("10% least benefit" = orange, "10% most benefit" = purple)) +
+    scale_shape_manual(values = c("10% least benefit" = 16, "10% most benefit" = 17)) +
     scale_x_continuous(breaks = function(x) pretty(x, n = 3),
                        expand = expansion(mult = .12)) +
     scale_y_continuous(limits = c(-.42, .42), breaks = NULL) +

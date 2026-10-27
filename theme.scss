@@ -92,13 +92,15 @@ $code-block-font-size: 0.7em;
 .reveal .figure-notes li { margin-bottom: 0.8em; }
 .reveal .figure-slide .panel-figure { width: 100%; max-height: 450px; }
 .reveal .figure-slide .source { margin-top: 0.5em; }
+/* A full-width figure without notes may use a little more height. */
+.reveal .wide-figure .panel-figure { max-height: 470px; }
 .reveal table { font-size: 0.78em; margin: 0.8em 0; width: 100%; border-collapse: collapse; }
-.reveal table th { color: #5a317e; border-bottom: 2px solid #5a317e; }
+.reveal table th { color: #5a317e; border-bottom: 2px solid #5a317e; white-space: nowrap; }
 .reveal table td, .reveal table th { padding: 0.35em 0.5em; }
 .reveal table tbody tr:nth-child(even) { background: #eee8f138; }
 .reveal .figure img, .reveal img { max-height: 470px; object-fit: contain; }
 .reveal .figure-caption { font-size: 0.5em; }
-.reveal .references { font-size: 0.88em; }
+.reveal .references { font-size: 0.76em; }
 .reveal pre { box-shadow: none; }
 .reveal .code-slide pre.sourceCode {
   box-sizing: border-box;
@@ -252,6 +254,21 @@ $code-block-font-size: 0.7em;
 }
 .reveal .sorting-steps p { margin: 0; }
 .reveal .sorting-steps strong { display: block; font-size: 0.65em; letter-spacing: 0.1em; color: #a55b39; margin-bottom: 0.4em; }
+/* Journal-club paper cards: kicker, title, authors, three takeaways. */
+.reveal .paper-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.8em; margin-top: 0.9em; }
+.reveal .paper-cards > div {
+  background: #f0eaf4;
+  border: 1px solid #ded4e5;
+  border-radius: 10px;
+  padding: 0.75em 0.85em;
+  font-size: 0.72em;
+  line-height: 1.38;
+}
+.reveal .paper-cards p { margin: 0 0 0.55em; }
+.reveal .paper-cards .paper-kicker { display: block; font-size: 0.8em; letter-spacing: 0.08em; color: #a55b39; }
+.reveal .paper-cards em { font-style: italic; font-weight: 600; color: #2b2240; }
+.reveal .paper-cards ul { margin: 0.5em 0 0 1em; }
+.reveal .paper-cards li { margin-bottom: 0.35em; }
 
 /* Native 2D overview: readable thumbnails and clear chapter landmarks. */
 .reveal.overview { background: #eee9f1; }
