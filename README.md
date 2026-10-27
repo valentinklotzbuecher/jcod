@@ -75,16 +75,16 @@ be described. The four chapters work through this in turn:
 - **How far can the pattern be trusted?** The uniform band and why it is wider
   than pointwise intervals, model choice, one held-out split and the
   sensitivity analysis.
-- **Discussion:** the three trial pilots side by side, lessons, the PATH
-  comparison, questions, and a causal-forest teaser for the next session.
-  No forest is fitted in this session.
+- **Discussion:** the three trial pilots side by side, lessons, a
+  causal-forest teaser for the next session and reading, ending on the
+  discussion questions. No forest is fitted in this session.
 
 Two figures show per-patient predictions. They come from
 `scripts/plot-colon-patients.R`, which refits the specified interaction model
 (point estimates only) and reproduces the saved sorted effects before plotting.
 The backup stack holds the technical material: the model and prediction code,
 the native classification failure, full twelve-trait tables, the specifications of the two
-other pilots and the causal assumptions. Title and chapter covers use a light
+other pilots, the PATH comparison and the causal assumptions. Title and chapter covers use a light
 layout with a slim accent rule.
 
 The warm-up uses known population risks for three equally common profiles.
@@ -92,10 +92,11 @@ Constant benefits of 10/10/10 pp and heterogeneous benefits of −10/10/30 pp
 both average 10 pp. Its quantile curves are exact and discrete; no outcomes,
 models or confidence intervals are simulated. The script validates the risks,
 population means and quantile steps before writing `results/warmup/`.
-The deck has 47 slides: 33 in the main flow, including the title, session map
-and chapter covers, and 14 in the backup stack, including references (49 PDF
+The deck has 47 slides: 32 in the main flow, including the title, session map
+and chapter covers, and 15 in the backup stack, including references (49 PDF
 pages). Speaker notes keep the statistical qualifications, and the session-map
-notes suggest a pacing per chapter (about 40 minutes).
+notes suggest a pacing per chapter (about 38 minutes) and which slides are
+optional.
 
 `R/colon-walkthrough.R` contains executable versions of the slide calculations.
 It fits the two specified models and verifies the saved point estimates.

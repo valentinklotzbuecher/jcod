@@ -245,6 +245,31 @@ Fifth revision, 27 October 2026:
   synchronized callouts are unchanged. The `ca()` slide keeps the
   stabilized-re-run disclosure. Main flow: 33 slides; backup: 14.
 
+Sixth revision (review pass), 27 October 2026, after an external review:
+
+- **Conditional, not individual, effects:** the warm-up now says one kind of
+  patient in three has a higher risk with treatment, and that sorted effects
+  estimate this curve for kinds of patients, not individuals. The
+  same wording runs through Step 3, the paper card and the discussion question
+  (a negative estimated benefit for 29% of patient profiles).
+- **Held-out check:** retitled "Does the ranking hold up in held-out patients?"
+  and described as internal validation in one split, not replication. The
+  three-trial prompt and lessons say only colon's held-out check found a
+  ranking signal; the notes add the slope intervals (IST −0.60 to 0.76, which
+  excludes 1; ACTG 175 −0.43 to 1.02, inconclusive).
+- **Classification:** "Who does the model rank at each end?" and "How
+  different are the two tails?", with a visible note that the tails differ in
+  modelled traits partly by design, and a prompt that the tests do not test
+  effect modification.
+- **Trial slide:** the source gives 619 patients, 618 with known three-year
+  status and 593 in the models, and calls levamisole + 5-FU a historical
+  regimen.
+- **PATH:** moved to backup and reframed: sorted effects summarize estimated
+  effects from a risk or effect model, rather than competing with them. The
+  model-comparison slide cites the two PATH terms.
+- **Ending:** the main flow now closes on the discussion questions, after the
+  forest teaser and reading. Main flow: 32 slides; backup: 15.
+
 - `bash scripts/render.sh`: passed full-site rendering, including the portable
   RevealJS HTML export and matching 49-page, 16:9 Beamer handout. The colon
   trial is the worked example, and the closing three-trial slides draw saved
