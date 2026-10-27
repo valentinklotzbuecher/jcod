@@ -237,6 +237,14 @@ Fourth revision (journal-club statistics pass), 27 October 2026:
     or JavaScript errors;
   - the new PDF pages were inspected (49 pages; the references span three).
 
+Fifth revision, 27 October 2026:
+
+- The full `spe()` and `ca()` calls moved from backup into the main flow:
+  `spe()` after the symbols slide (Step 3), `ca()` between the tail profiles and
+  the adjusted table (Step 4). Their slide ids, line-highlight fragments and
+  synchronized callouts are unchanged. The `ca()` slide keeps the
+  stabilized-re-run disclosure. Main flow: 33 slides; backup: 14.
+
 - `bash scripts/render.sh`: passed full-site rendering, including the portable
   RevealJS HTML export and matching 49-page, 16:9 Beamer handout. The colon
   trial is the worked example, and the closing three-trial slides draw saved

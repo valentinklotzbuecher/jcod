@@ -103,7 +103,7 @@ Is the effect the same for everybody? Today's papers.
 ::: {.map-card}
 [02 · Sorted effects](#steps){.map-title}
 
-Four steps, on a colon cancer trial.
+Four steps on a colon cancer trial, with the R code.
 :::
 ::: {.map-card}
 [03 · Trust](#trust){.map-title}
@@ -123,13 +123,13 @@ Three trials side by side. What would convince us?
 
 ::: {.content-visible when-format="beamer"}
 1. Is the effect the same for everybody? Today's papers.
-2. Sorted effects, step by step: a colon cancer trial.
+2. Sorted effects, step by step, with the R code: a colon cancer trial.
 3. Can we trust the pattern? Uniform bands, model choice and new patients.
 4. Three trials side by side, and discussion.
 :::
 
 ::: notes
-About 38 minutes, then open discussion: Question 8 · Sorted effects 13 · Trust 9 · Three trials and discussion opener 8. If time runs short, skip the symbols slide and the tumour-characteristics profile, and give the band slide one sentence. The framing follows Huntington-Klein, The Effect, section 22.3. Code, why the package's tail bootstrap failed, and full tables are in the backup stack.
+About 40 minutes, then open discussion: Question 8 · Sorted effects 15 · Trust 9 · Three trials and discussion opener 8. If time runs short, skip the symbols slide and the tumour-characteristics profile, show only the first and last step of each code call, and give the band slide one sentence. The framing follows Huntington-Klein, The Effect, section 22.3. The model code, why the package's tail bootstrap failed, and full tables are in the backup stack.
 :::
 
 # Is the effect the same for everybody? {#question .chapter-slide data-chapter-label="Question"}
@@ -366,7 +366,7 @@ Each prediction keeps the patient's baseline characteristics and changes only tr
 :::
 
 ::: {.source}
-Point estimates; uncertainty follows in chapter 03. In R: `SortedEffects::spe()` (call in backup).
+Point estimates; uncertainty follows in chapter 03.
 :::
 
 ::: notes
@@ -399,6 +399,55 @@ Notation after @chernozhukov2018. SPE is a quantile of effects, not a difference
 APE is the average partial effect, SPE the sorted partial effect, CA the classification analysis. The distribution of X, here the 593 observed profiles, defines the population summarized; changing it can change both APE and SPE. Randomization supports identification; sorting does not replace it.
 :::
 
+## Step 3 in R: spe() {#spe-call .code-slide .code-focus}
+
+::: columns
+::: {.column width="68%"}
+```{.r code-line-numbers="2-3|4-5|6|7-9"}
+spe_result <- SortedEffects::spe(
+  fm = fm, data = dat,
+  method = "logit",
+  var_type = "categorical", var = "treatment",
+  compare = c("chemotherapy", "observation"),
+  us = seq(.10, .90, .01),
+  b = 499,
+  alpha = .05, bc = FALSE,
+  seed = 420
+)
+```
+:::
+::: {.column width="32%" .code-explanations}
+::: {.code-callout data-code-lines="2-3"}
+**Fit the outcome model**
+
+Our chosen formula and a logistic link.
+:::
+::: {.code-callout data-code-lines="4-5"}
+**Set the contrast**
+
+This ordering gives observation − chemotherapy.
+:::
+::: {.code-callout data-code-lines="6"}
+**Choose the percentiles**
+
+10th–90th, in one-percentile steps.
+:::
+::: {.code-callout data-code-lines="7-9"}
+**Quantify uncertainty**
+
+499 resamples; 95% band; no bias correction.
+:::
+:::
+:::
+
+::: {.source}
+`fm` is the Step 1 model (code in backup). The band covers the chosen percentile grid; coverage needs valid effect estimates and regularity conditions.
+:::
+
+::: notes
+spe() refits from the formula. The compare order yields the second prediction minus the first. In the full-sample path, refitting uses bootstrap weights while effect quantiles retain the original profile weights.
+:::
+
 ## Step 4 · Who is at each end? {#step-describe .figure-slide}
 
 ::: columns
@@ -417,7 +466,7 @@ The 60 patients (10%) at each end. Points are tail means; the lines are not conf
 :::
 
 ::: notes
-In R this is SortedEffects::ca(), classification analysis (call in backup). Only 4 of the 60 high-tail patients are men aged at least 65. The demographic rows overlap (women under 55 are a subset of women) and are not independent findings. Tail membership depends jointly on age, sex and tumour characteristics, and was learned from this sample's outcomes.
+In R this is SortedEffects::ca(), classification analysis; the call follows the tumour profiles. Only 4 of the 60 high-tail patients are men aged at least 65. The demographic rows overlap (women under 55 are a subset of women) and are not independent findings. Tail membership depends jointly on age, sex and tumour characteristics, and was learned from this sample's outcomes.
 :::
 
 ## Step 4 · Tumour characteristics {#step-describe-clinical .figure-slide}
@@ -435,6 +484,56 @@ In R this is SortedEffects::ca(), classification analysis (call in backup). Only
 
 ::: {.source}
 Same 60 + 60 patients. “Adherence”: tumour adherence to nearby organs.
+:::
+
+## Step 4 in R: ca() {#ca-call .code-slide .code-focus}
+
+::: columns
+::: {.column width="68%"}
+```{.r code-line-numbers="2-5|6|7-8|9-10"}
+ca_result <- SortedEffects::ca(
+  fm = fm, data = dat,
+  method = "logit",
+  var_type = "categorical", var = "treatment",
+  compare = c("chemotherapy", "observation"),
+  u = .10,
+  interest = "moment", cl = "diff",
+  t = colon_characteristics()$variable,
+  b = 499, alpha = .05,
+  bc = FALSE, seed = 420
+)
+```
+:::
+::: {.column width="32%" .code-explanations}
+::: {.code-callout data-code-lines="2-5"}
+**Model and contrast**
+
+Same mortality model; benefit = observation − chemotherapy.
+:::
+::: {.code-callout data-code-lines="6"}
+**Choose the tails**
+
+Bottom and top 10%: 60 patients each here.
+:::
+::: {.code-callout data-code-lines="7-8"}
+**Compare characteristics**
+
+High − low means, across all twelve traits.
+:::
+::: {.code-callout data-code-lines="9-10"}
+**Bootstrap inference**
+
+499 resamples; SEs and p-values adjusted across the twelve traits.
+:::
+:::
+:::
+
+::: {.source}
+`ca()` is classification analysis. For these data the package's own bootstrap broke down; the p-values on the next slide come from our checked re-run with stable starting values (backup).
+:::
+
+::: notes
+The tails can contain patients from either randomized arm. cl = "diff" compares high-minus-low characteristic means; binary means are proportions. The moment interface returns SEs and joint p-values, not moment confidence intervals.
 :::
 
 ## Step 4 · Which differences are beyond chance? {#step-describe-test}
@@ -738,7 +837,7 @@ The flexibility gain is relative to our specified regression; sorted effects can
 \+
 :::
 ::: {.chapter-lead}
-Code, bootstrap details, full tables and assumptions.
+Model code, the tail-bootstrap failure, full tables and assumptions.
 :::
 ::: {.chapter-cue}
 ↓ Optional slides for questions
@@ -787,105 +886,6 @@ benefit <- predict(fit, control, type = "response") -
 
 ::: notes
 Both predictions use the same baseline profile. The contrast is standardized over the observed covariate distribution.
-:::
-
-## Backup · Sorted effects with spe() {#spe-call .code-slide .code-focus}
-
-::: columns
-::: {.column width="68%"}
-```{.r code-line-numbers="2-3|4-5|6|7-9"}
-spe_result <- SortedEffects::spe(
-  fm = fm, data = dat,
-  method = "logit",
-  var_type = "categorical", var = "treatment",
-  compare = c("chemotherapy", "observation"),
-  us = seq(.10, .90, .01),
-  b = 499,
-  alpha = .05, bc = FALSE,
-  seed = 420
-)
-```
-:::
-::: {.column width="32%" .code-explanations}
-::: {.code-callout data-code-lines="2-3"}
-**Fit the outcome model**
-
-Our chosen formula and a logistic link.
-:::
-::: {.code-callout data-code-lines="4-5"}
-**Set the contrast**
-
-This ordering gives observation − chemotherapy.
-:::
-::: {.code-callout data-code-lines="6"}
-**Choose the percentiles**
-
-10th–90th, in one-percentile steps.
-:::
-::: {.code-callout data-code-lines="7-9"}
-**Quantify uncertainty**
-
-499 resamples; 95% band; no bias correction.
-:::
-:::
-:::
-
-::: {.source}
-Uniform coverage concerns the chosen percentile grid and requires valid effect estimation and regularity conditions.
-:::
-
-::: notes
-spe() refits from the formula. The compare order yields the second prediction minus the first. In the full-sample path, refitting uses bootstrap weights while effect quantiles retain the original profile weights.
-:::
-
-## Backup · Comparing the tails with ca() {#ca-call .code-slide .code-focus}
-
-::: columns
-::: {.column width="68%"}
-```{.r code-line-numbers="2-5|6|7-8|9-10"}
-ca_result <- SortedEffects::ca(
-  fm = fm, data = dat,
-  method = "logit",
-  var_type = "categorical", var = "treatment",
-  compare = c("chemotherapy", "observation"),
-  u = .10,
-  interest = "moment", cl = "diff",
-  t = colon_characteristics()$variable,
-  b = 499, alpha = .05,
-  bc = FALSE, seed = 420
-)
-```
-:::
-::: {.column width="32%" .code-explanations}
-::: {.code-callout data-code-lines="2-5"}
-**Model and contrast**
-
-Same mortality model; benefit = observation − chemotherapy.
-:::
-::: {.code-callout data-code-lines="6"}
-**Choose the tails**
-
-Bottom and top 10%: 60 patients each here.
-:::
-::: {.code-callout data-code-lines="7-8"}
-**Compare characteristics**
-
-High − low means, across all twelve traits.
-:::
-::: {.code-callout data-code-lines="9-10"}
-**Bootstrap inference**
-
-499 resamples; SEs and p-values adjusted across the twelve traits.
-:::
-:::
-:::
-
-::: {.source}
-`ca()` is classification analysis. For these data its own bootstrap breaks down; the p-values we show come from our checked re-run with stable starting values (next slide).
-:::
-
-::: notes
-The tails can contain patients from either randomized arm. cl = "diff" compares high-minus-low characteristic means; binary means are proportions. The moment interface returns SEs and joint p-values, not moment confidence intervals.
 :::
 
 ## Backup · Why the package's tail bootstrap failed here {#native-ca}
