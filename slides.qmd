@@ -108,7 +108,7 @@ Four steps on a colon cancer trial, with the R code.
 ::: {.map-card}
 [03 · Trust](#trust){.map-title}
 
-Uniform bands, model choice and held-out patients.
+Uncertainty, model choice and held-out patients.
 :::
 ::: {.map-card}
 [04 · Discussion](#discussion){.map-title}
@@ -124,12 +124,12 @@ Three trials side by side. What would convince us?
 ::: {.content-visible when-format="beamer"}
 1. Is the effect the same for everybody? Today's papers.
 2. Sorted effects, step by step, with the R code: a colon cancer trial.
-3. Can we trust the pattern? Uniform bands, model choice and held-out patients.
+3. Can we trust the pattern? Uncertainty, model choice and held-out patients.
 4. Three trials side by side, and discussion.
 :::
 
 ::: notes
-About 38 minutes, then open discussion: Question 8 · Sorted effects 15 · Trust 9 · Three trials and discussion opener 6. Optional if time runs short: the symbols slide, the tumour profiles, the tails table and the three-trial table; show only the first and last step of each code call and give the band slide one minute. End on the discussion questions. The framing follows Huntington-Klein, The Effect, section 22.3. The model code, why the package's tail bootstrap failed, and full tables are in the backup stack.
+About 37 minutes, then open discussion: Question 8 · Sorted effects 15 · Trust 8 · Three trials and discussion opener 6. Chapter 02 tells the four steps first, then shows them in symbols and in R; chapter 03 shows the inference. Optional if time runs short: the symbols slide, the tumour profiles, the tails table and the three-trial table; show only the first and last step of each code call. End on the discussion questions. The framing follows Huntington-Klein, The Effect, section 22.3. The model code, how the band is built, why the package's tail bootstrap failed, and full tables are in the backup stack.
 :::
 
 # Is the effect the same for everybody? {#question .chapter-slide data-chapter-label="Question"}
@@ -373,6 +373,45 @@ Point estimates; uncertainty follows in chapter 03.
 The 10th and 90th percentiles are −9.8 and 27.3 pp. Percentiles of the sorted benefits are the sorted partial effects; the band in chapter 03 covers the 10th to 90th percentiles, where estimation is more stable than at the extremes.
 :::
 
+## Step 4 · Who does the model rank at each end? {#step-describe .figure-slide}
+
+::: columns
+::: {.column width="70%"}
+![](results/colon/slides/classification-demographics.png){.panel-figure width=100%}
+:::
+::: {.column width="30%" .figure-notes}
+- Least estimated benefit: **all women**, mean age **43**.
+- Most estimated benefit: **92% men**, mean age **53**.
+- More than four positive nodes: **13% vs 88%**.
+- Partly by design: the model lets the effect vary with sex, age and nodes.
+:::
+:::
+
+::: {.source}
+The 60 patients (10%) at each end. Points are tail means; the lines are not confidence intervals.
+:::
+
+::: notes
+In R this is SortedEffects::ca(), classification analysis; the call closes this chapter. Only 4 of the 60 high-tail patients are men aged at least 65. The demographic rows overlap (women under 55 are a subset of women) and are not independent findings. Tail membership depends jointly on age, sex and tumour characteristics, and was learned from this sample's outcomes.
+:::
+
+## Step 4 · Tumour characteristics {#step-describe-clinical .figure-slide}
+
+::: columns
+::: {.column width="70%"}
+![](results/colon/slides/classification-clinical.png){.panel-figure width=100%}
+:::
+::: {.column width="30%" .figure-notes}
+- Poor differentiation: **10% vs 42%**.
+- Bowel obstruction: **35% vs 20%**.
+- Perforation: **3%** in both tails.
+:::
+:::
+
+::: {.source}
+Same 60 + 60 patients. “Adherence”: tumour adherence to nearby organs.
+:::
+
 ## In symbols: three estimands {#estimand}
 
 $$
@@ -399,7 +438,7 @@ Notation after @chernozhukov2018. SPE is a quantile of effects, not a difference
 APE is the average partial effect, SPE the sorted partial effect, CA the classification analysis. The distribution of X, here the 593 observed profiles, defines the population summarized; changing it can change both APE and SPE. Randomization supports identification; sorting does not replace it.
 :::
 
-## Step 3 in R: spe() {#spe-call .code-slide .code-focus}
+## Steps 1–3 in R: spe() {#spe-call .code-slide .code-focus}
 
 ::: columns
 ::: {.column width="68%"}
@@ -441,50 +480,11 @@ This ordering gives observation − chemotherapy.
 :::
 
 ::: {.source}
-`fm` is the Step 1 model (code in backup). The band covers the chosen percentile grid; coverage needs valid effect estimates and regularity conditions.
+`fm` is the Step 1 model (code in backup). The band (chapter 03) covers the chosen percentile grid; coverage needs valid effect estimates and regularity conditions.
 :::
 
 ::: notes
 spe() refits from the formula. The compare order yields the second prediction minus the first. In the full-sample path, refitting uses bootstrap weights while effect quantiles retain the original profile weights.
-:::
-
-## Step 4 · Who does the model rank at each end? {#step-describe .figure-slide}
-
-::: columns
-::: {.column width="70%"}
-![](results/colon/slides/classification-demographics.png){.panel-figure width=100%}
-:::
-::: {.column width="30%" .figure-notes}
-- Least estimated benefit: **all women**, mean age **43**.
-- Most estimated benefit: **92% men**, mean age **53**.
-- More than four positive nodes: **13% vs 88%**.
-- Partly by design: the model lets the effect vary with sex, age and nodes.
-:::
-:::
-
-::: {.source}
-The 60 patients (10%) at each end. Points are tail means; the lines are not confidence intervals.
-:::
-
-::: notes
-In R this is SortedEffects::ca(), classification analysis; the call follows the tumour profiles. Only 4 of the 60 high-tail patients are men aged at least 65. The demographic rows overlap (women under 55 are a subset of women) and are not independent findings. Tail membership depends jointly on age, sex and tumour characteristics, and was learned from this sample's outcomes.
-:::
-
-## Step 4 · Tumour characteristics {#step-describe-clinical .figure-slide}
-
-::: columns
-::: {.column width="70%"}
-![](results/colon/slides/classification-clinical.png){.panel-figure width=100%}
-:::
-::: {.column width="30%" .figure-notes}
-- Poor differentiation: **10% vs 42%**.
-- Bowel obstruction: **35% vs 20%**.
-- Perforation: **3%** in both tails.
-:::
-:::
-
-::: {.source}
-Same 60 + 60 patients. “Adherence”: tumour adherence to nearby organs.
 :::
 
 ## Step 4 in R: ca() {#ca-call .code-slide .code-focus}
@@ -530,14 +530,47 @@ High − low means, across all twelve traits.
 :::
 
 ::: {.source}
-`ca()` is classification analysis. For these data the package's own bootstrap broke down; the p-values on the next slide come from our checked re-run with stable starting values (backup).
+`ca()` is classification analysis. For these data the package's own bootstrap broke down; the p-values in chapter 03 come from our checked re-run with stable starting values (backup).
 :::
 
 ::: notes
 The tails can contain patients from either randomized arm. cl = "diff" compares high-minus-low characteristic means; binary means are proportions. The moment interface returns SEs and joint p-values, not moment confidence intervals.
 :::
 
-## Step 4 · How different are the two tails? {#step-describe-test}
+# Can we trust the pattern? {#trust .chapter-slide data-chapter-label="Trust"}
+
+::: {.chapter-number}
+03
+:::
+::: {.chapter-lead}
+Is the spread real, or noise from one model and one trial?
+:::
+::: {.chapter-cue}
+↓ Uncertainty, model choice and held-out patients
+:::
+
+## How sure are we? {#sorted-band .figure-slide}
+
+::: columns
+::: {.column width="70%"}
+![](results/colon/slides/sorted-effects-band.png){.panel-figure width=100%}
+:::
+::: {.column width="30%" .figure-notes}
+- Shaded: a 95% band for the **whole curve**, not one point at a time.
+- Near the bottom (10th percentile): **−9.8 pp**, band **−24.6 to +5.1**: we cannot tell whether these patients benefit.
+- Average: **8.1 pp**, 95% CI **1.4 to 14.9**, which excludes zero.
+:::
+:::
+
+::: {.prompt}
+The estimated average is above zero; the shape of the spread is uncertain.
+:::
+
+::: notes
+The band comes from the package's bootstrap (499 resamples) and covers the 10th–90th percentiles; it is wider than pointwise intervals because it covers all 81 percentiles at once (critical value 2.79 rather than 1.96; backup). It describes uncertainty about the curve, not a range for any individual patient.
+:::
+
+## How different are the two tails? {#step-describe-test}
 
 ```{r}
 #| label: tail_table
@@ -574,61 +607,6 @@ Differences of percentages in pp. p-values adjusted jointly across all 12 traits
 
 ::: notes
 The adjustment uses the bootstrap distribution of the largest standardized difference across all twelve traits. Women: difference/SE = 4.3, adjusted p = .04; more than four nodes: 3.4, adjusted p = .13, although 3.4 would be far beyond 1.96 for a single trait. For these data many of the package's bootstrap refits did not converge, yet it still printed normal-looking p-values; we use a checked re-run of the same bootstrap with stable starting values instead. Classification tests tail composition, not a treatment-by-sex interaction. The model allowed the effect to vary with sex, age and nodes, so the tails differ in these traits partly by design. The adjustment covers twelve traits, not dataset, model or tail-size choices; p-values near .04 remain sensitive to Monte Carlo variability with 499 draws.
-:::
-
-# Can we trust the pattern? {#trust .chapter-slide data-chapter-label="Trust"}
-
-::: {.chapter-number}
-03
-:::
-::: {.chapter-lead}
-Is the spread real, or noise from one model and one trial?
-:::
-::: {.chapter-cue}
-↓ Uncertainty, model choice and held-out patients
-:::
-
-## How sure are we? {#sorted-band .figure-slide}
-
-::: columns
-::: {.column width="70%"}
-![](results/colon/slides/sorted-effects-band.png){.panel-figure width=100%}
-:::
-::: {.column width="30%" .figure-notes}
-- Shaded: a 95% band for the **whole curve**, not one point at a time.
-- Near the bottom (10th percentile): **−9.8 pp**, band **−24.6 to +5.1**: we cannot tell whether these patients benefit.
-- Average: **8.1 pp**, 95% CI **1.4 to 14.9**, which excludes zero.
-:::
-:::
-
-::: {.prompt}
-The estimated average is above zero; the shape of the spread is uncertain.
-:::
-
-::: notes
-The band comes from the package's bootstrap (499 resamples) and covers the 10th–90th percentiles; why it is wider than pointwise intervals is on the next slide. It describes uncertainty about the curve, not a range for any individual patient.
-:::
-
-## Why is the band so wide? {#uniform-band}
-
-$$
-\widehat{\mathrm{SPE}}(u)\ \pm\ c\cdot\widehat{\mathrm{se}}(u), \qquad u=0.10,\,0.11,\,\ldots,\,0.90
-$$
-
-- **Pointwise** 95% interval: $c=1.96$. Right for one percentile; across 81 percentiles, some would miss.
-- **Uniform** 95% band: $c$ covers all 81 at once. It is the 95th percentile of the **largest** standardized deviation across the 81, over 499 bootstrap refits.
-
-| At the 10th percentile | $c$ | 95% interval (pp) |
-|:--|--:|--:|
-| Pointwise | 1.96 | `r interval(pointwise10)` |
-| Uniform, whole curve | `r sprintf("%.2f", critical(spe_data))` | `r interval(band10)` |
-
-::: {.source}
-Uniform bands as in @chernozhukov2018 and SortedEffects; $\widehat{\mathrm{se}}$: bootstrap interquartile range ÷ 1.349. Constant-odds-ratio model: $c$ = `r sprintf("%.2f", critical(constant_spe))`. Band ends rearranged to stay monotone [@chernozhukov2009].
-:::
-
-::: notes
-The constant-odds-ratio curve moves almost as one piece across bootstrap draws, so its critical value stays closer to 1.96. The pointwise interval is for comparison only. The band is the package's own bootstrap, which we reproduced independently; critical values are read off the saved bands. Uniform coverage concerns the chosen percentile grid and requires valid effect estimation and regularity conditions.
 :::
 
 ## You find what your model allows {#model-comparison .figure-slide}
@@ -818,7 +796,7 @@ The 29% is a property of the fitted model, not an estimate of harm: the band at 
 \+
 :::
 ::: {.chapter-lead}
-Model code, the tail-bootstrap failure, full tables and assumptions.
+Model code, the band, the tail-bootstrap failure, full tables and assumptions.
 :::
 ::: {.chapter-cue}
 ↓ Optional slides for questions
@@ -867,6 +845,28 @@ benefit <- predict(fit, control, type = "response") -
 
 ::: notes
 Both predictions use the same baseline profile. The contrast is standardized over the observed covariate distribution.
+:::
+
+## Backup · Why is the band so wide? {#uniform-band}
+
+$$
+\widehat{\mathrm{SPE}}(u)\ \pm\ c\cdot\widehat{\mathrm{se}}(u), \qquad u=0.10,\,0.11,\,\ldots,\,0.90
+$$
+
+- **Pointwise** 95% interval: $c=1.96$. Right for one percentile; across 81 percentiles, some would miss.
+- **Uniform** 95% band: $c$ covers all 81 at once. It is the 95th percentile of the **largest** standardized deviation across the 81, over 499 bootstrap refits.
+
+| At the 10th percentile | $c$ | 95% interval (pp) |
+|:--|--:|--:|
+| Pointwise | 1.96 | `r interval(pointwise10)` |
+| Uniform, whole curve | `r sprintf("%.2f", critical(spe_data))` | `r interval(band10)` |
+
+::: {.source}
+Uniform bands as in @chernozhukov2018 and SortedEffects; $\widehat{\mathrm{se}}$: bootstrap interquartile range ÷ 1.349. Constant-odds-ratio model: $c$ = `r sprintf("%.2f", critical(constant_spe))`. Band ends rearranged to stay monotone [@chernozhukov2009].
+:::
+
+::: notes
+The constant-odds-ratio curve moves almost as one piece across bootstrap draws, so its critical value stays closer to 1.96. The pointwise interval is for comparison only. The band is the package's own bootstrap, which we reproduced independently; critical values are read off the saved bands. Uniform coverage concerns the chosen percentile grid and requires valid effect estimation and regularity conditions.
 :::
 
 ## Backup · Why the package's tail bootstrap failed here {#native-ca}

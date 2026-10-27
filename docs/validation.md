@@ -270,6 +270,15 @@ Sixth revision (review pass), 27 October 2026, after an external review:
 - **Ending:** the main flow now closes on the discussion questions, after the
   forest teaser and reading. Main flow: 32 slides; backup: 15.
 
+Seventh revision, 27 October 2026:
+
+- Chapter 02 now tells the four steps first, ending with both tail profiles,
+  then shows the estimands in symbols and the `spe()` ("Steps 1–3 in R") and
+  `ca()` calls. The adjusted tail table moved to chapter 03, after the band,
+  so both inference results sit together.
+- "Why is the band so wide?" moved to backup; the band slide's notes give the
+  critical value. Main flow: 31 slides; backup: 16.
+
 - `bash scripts/render.sh`: passed full-site rendering, including the portable
   RevealJS HTML export and matching 49-page, 16:9 Beamer handout. The colon
   trial is the worked example, and the closing three-trial slides draw saved

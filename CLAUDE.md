@@ -27,12 +27,12 @@ pilot, without adjustment across datasets.
 
 The main slides follow the intuition of Huntington-Klein's *The Effect* (§22.3):
 model, predict, sort, describe, then how far to trust the pattern. Keep them
-intuitive, with a journal-club level of statistics: today's papers, the three
-estimands in symbols, both tail profiles with a jointly adjusted table, and why
-the uniform band is wider than pointwise intervals. The full `spe()` and `ca()`
-calls, with stepwise argument highlighting, follow Steps 3 and 4 in the main
-flow. The model code, the native CA failure and full tables belong in the
-backup stack. A closing teaser introduces causal forests for a future session,
+intuitive, with a journal-club level of statistics. Chapter 02 tells the four
+steps first (ending with both tail profiles), then shows the three estimands in
+symbols and the full `spe()` and `ca()` calls with stepwise argument
+highlighting. Chapter 03 holds the inference: the uniform band and the jointly
+adjusted tail table. How the band is built, the model code, the native CA
+failure and full tables belong in the backup stack. A closing teaser introduces causal forests for a future session,
 distinguishing flexible effect estimation from sorted summaries and the
 assumptions needed for causal interpretation. No forest is fitted here.
 
