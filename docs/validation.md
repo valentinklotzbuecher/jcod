@@ -279,6 +279,28 @@ Seventh revision, 27 October 2026:
 - "Why is the band so wide?" moved to backup; the band slide's notes give the
   critical value. Main flow: 31 slides; backup: 16.
 
+Eighth revision (website style), 27 October 2026:
+
+- `theme.scss` and `beamer-unibas.tex` now follow the light theme of
+  valentinklotzbuecher.github.io: ivory paper, spruce-green ink, one mauve
+  accent, slide titles with a hairline to the right margin, short mauve rules
+  under cover titles, ruled-row callouts, square cards and plate-mounted
+  figures. Slide text uses medium weight for projection.
+- Fonts are local (`assets/fonts/`, OFL; provenance in its README). The
+  portable HTML embeds 3 Zen Kaku Gothic New and 6 IBM Plex Mono web-font files;
+  a headless check found all five faces loaded with every external request
+  blocked. The PDF embeds Zen Kaku Gothic New and IBM Plex Mono, with DejaVu Sans
+  only for ≥, ≤ and ł.
+- Code steps keep an opaque background so stacked highlight steps cover one
+  another; the code uses the website's atom-one highlighting.
+- Checks: 21 dock checks passed with no heading overlaps; no slide overflow; a
+  new check found no slide text under the controls, footer, slide number or
+  keyboard hint at 1280×720, 1366×768, 1536×864 and 1920×1080 (after tightening
+  two slides); offline export loaded all 11 images with no failed requests or
+  JavaScript errors; the 48-page PDF was inspected.
+- The landing page shares `theme.scss` and now matches too. The committed
+  pilot-report exports were kept unchanged.
+
 - `bash scripts/render.sh`: passed full-site rendering, including the portable
   RevealJS HTML export and matching 49-page, 16:9 Beamer handout. The colon
   trial is the worked example, and the closing three-trial slides draw saved

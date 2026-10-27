@@ -5,7 +5,10 @@ Read `AGENTS.md` and `README.md` for current commands and statistical scope.
 The active session is **Who benefits most? Sorted partial effects**, a one-hour
 clinical-statistics journal club with 35–40 minutes of presentation and discussion.
 `slides.qmd` renders to RevealJS HTML and Beamer PDF; `index.qmd` is the landing page.
-Speaker notes are in `::: notes` blocks. The current theme is `theme.scss`.
+Speaker notes are in `::: notes` blocks. The current theme is `theme.scss`, in the
+"Old Print" style of valentinklotzbuecher.github.io (ivory paper, spruce ink, one
+mauve accent, Zen Kaku Gothic New and IBM Plex Mono). Keep its fonts local in
+`assets/fonts/` so the portable HTML stays offline; do not import web fonts.
 
 Two warm-up slides use constructed population risks with the same average
 benefit and different effect distributions. These are known conditional-average

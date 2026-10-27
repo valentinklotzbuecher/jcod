@@ -60,6 +60,12 @@ edge or keyboard focus enters it. Touch devices keep it visible.
 Transitions and auto-animation respect reduced-motion preferences. The PDF shows
 the completed slides in reading order, with fragment states consolidated.
 
+The deck, its PDF and the landing page follow the style of
+[valentinklotzbuecher.github.io](https://github.com/valentinklotzbuecher/valentinklotzbuecher.github.io):
+ivory paper, spruce-green ink, one mauve accent, hairline rules, Zen Kaku Gothic
+New for text and IBM Plex Mono for code and labels. The fonts are stored in
+`assets/fonts/` (OFL), so the portable HTML embeds them and needs no network.
+
 The deck follows the intuition of Huntington-Klein's *The Effect* (§22.3). A
 model that lets the effect differ gives an estimated benefit for every patient.
 Sorting those benefits shows their spread, and the patients at each end can then
@@ -94,7 +100,7 @@ both average 10 pp. Its quantile curves are exact and discrete; no outcomes,
 models or confidence intervals are simulated. The script validates the risks,
 population means and quantile steps before writing `results/warmup/`.
 The deck has 47 slides: 31 in the main flow, including the title, session map
-and chapter covers, and 16 in the backup stack, including references (49 PDF
+and chapter covers, and 16 in the backup stack, including references (48 PDF
 pages). Speaker notes keep the statistical qualifications, and the session-map
 notes suggest a pacing per chapter (about 37 minutes) and which slides are
 optional.

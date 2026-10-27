@@ -5,6 +5,8 @@ author: "Valentin Klotzbücher · Department of Clinical Research"
 format:
   revealjs:
     theme: [default, theme.scss]
+    css: assets/fonts/fonts.css
+    highlight-style: atom-one
     slide-number: h.v
     incremental: false
     toc: false
@@ -35,8 +37,7 @@ format:
     section-titles: false
     aspectratio: 169
     pdf-engine: xelatex
-    mainfont: DejaVu Sans
-    sansfont: DejaVu Sans
+    highlight-style: atom-one
     include-in-header: beamer-unibas.tex
     fonttheme: professionalfonts
     classoption: [t, 10pt, handout]
@@ -235,7 +236,7 @@ Constructed example with known risks, not data. Benefit = risk without treatment
 Treated risks are 30/30/30% or 50/30/10%, so both populations have 30% marginal treated risk. Negative benefit means higher risk under treatment. These are specified population quantities: no estimation or confidence interval is involved.
 :::
 
-## Sorting tells them apart {#warmup-distribution .figure-slide}
+## Sorting tells them apart {#warmup-distribution .figure-slide .short-figure}
 
 ::: columns
 ::: {.column width="70%"}
@@ -570,7 +571,7 @@ The estimated average is above zero; the shape of the spread is uncertain.
 The band comes from the package's bootstrap (499 resamples) and covers the 10th–90th percentiles; it is wider than pointwise intervals because it covers all 81 percentiles at once (critical value 2.79 rather than 1.96; backup). It describes uncertainty about the curve, not a range for any individual patient.
 :::
 
-## How different are the two tails? {#step-describe-test}
+## How different are the two tails? {#step-describe-test .compact-table}
 
 ```{r}
 #| label: tail_table
@@ -598,11 +599,11 @@ others <- classification[!classification$variable %in% names(rows), ]
 The other six traits: adjusted p ≥ `r sub("^0", "", sprintf("%.2f", floor(100 * min(others$joint_p)) / 100))`.
 
 ::: {.prompt}
-These tests compare the model's tails. They do not test whether sex modifies the effect of chemotherapy.
+These tests compare the model's tails; they do not test whether sex modifies the effect.
 :::
 
 ::: {.source}
-Differences of percentages in pp. p-values adjusted jointly across all 12 traits (499 bootstrap resamples). The package's own bootstrap broke down for these data, so they come from our checked re-run with stable starting values (backup).
+Differences of percentages in pp; p-values adjusted across all 12 traits (499 resamples). The package's own tail bootstrap broke down for these data, so they come from our checked re-run with stable starting values (backup).
 :::
 
 ::: notes

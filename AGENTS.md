@@ -5,7 +5,10 @@ This is a Quarto website with a sorted-partial-effects slide deck. Key paths:
 - `_quarto.yml`, `_publish.yml` for site and publish settings.
 - `index.qmd` (landing page), `slides.qmd` (main presentation and speaker notes).
 - `references.bib` and `*.csl` for citations.
-- Styling in `theme.scss` and `beamer-unibas.tex`.
+- Styling in `theme.scss` and `beamer-unibas.tex`, after the light theme of
+  valentinklotzbuecher.github.io. Fonts are local in `assets/fonts/` (`fonts.css`
+  for HTML, TTF files for XeLaTeX; OFL licences and provenance in its README).
+  Never import Google Fonts: the portable HTML must load nothing external.
 - `R/colon-walkthrough.R` is the executable walkthrough for the main trial example;
   `scripts/plot-colon-slides.R` builds slide figures from saved colon results.
 - `scripts/illustrate-warmup.R` generates the two-slide constructed population

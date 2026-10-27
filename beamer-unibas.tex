@@ -1,25 +1,48 @@
-% Clean minimal beamer theme - Light
-% Matches the HTML theme-light.scss
+% Beamer handout in the style of valentinklotzbuecher.github.io ("Old Print"):
+% ivory paper, spruce-green ink, one mauve accent. Fonts are set in slides.qmd.
 
-% Colors (from theme-light.scss)
-\definecolor{lightbg}{HTML}{FAFAFA}        % $body-bg - light background
-\definecolor{darktext}{HTML}{1a1a2e}       % $body-color - dark text
-\definecolor{deeppurple}{HTML}{5A317E}     % $primary - deep rich purple
-\definecolor{purplehover}{HTML}{7A4EA0}    % $primary-hover
-\definecolor{secondary}{HTML}{94A3B8}      % $secondary - muted gray
+% Colors (from the website's theme-light.scss)
+\definecolor{lightbg}{HTML}{FCFAF4}        % paper
+\definecolor{darktext}{HTML}{2C3A2F}       % ink
+\definecolor{deeppurple}{HTML}{5A317E}     % mauve accent
+\definecolor{purplehover}{HTML}{46265F}    % mauve, hover
+\definecolor{secondary}{HTML}{626C62}      % ink at 74% on paper
+\definecolor{hairline}{HTML}{7F877E}       % ink at 60% on paper
+
+% The website's fonts, from assets/fonts/ (provenance and licences there).
+% Zen Kaku Gothic New has no italic, so italics are slanted.
+\setmainfont{ZenKakuGothicNew}[Path=assets/fonts/, Extension=.ttf,
+  UprightFont=*-Regular, BoldFont=*-Bold,
+  ItalicFont=*-Regular, ItalicFeatures={FakeSlant=0.18},
+  BoldItalicFont=*-Bold, BoldItalicFeatures={FakeSlant=0.18}]
+\setsansfont{ZenKakuGothicNew}[Path=assets/fonts/, Extension=.ttf,
+  UprightFont=*-Regular, BoldFont=*-Bold,
+  ItalicFont=*-Regular, ItalicFeatures={FakeSlant=0.18},
+  BoldItalicFont=*-Bold, BoldItalicFeatures={FakeSlant=0.18}]
+\setmonofont{IBMPlexMono}[Path=assets/fonts/, Extension=.ttf,
+  UprightFont=*-Regular, BoldFont=*-Medium, ItalicFont=*-Italic]
+
+% Glyphs missing from Zen Kaku Gothic New fall back to DejaVu Sans.
+\usepackage{newunicodechar}
+\newfontfamily\fallbackfont{DejaVu Sans}[Scale=MatchLowercase]
+\newunicodechar{≥}{{\fallbackfont ≥}}
+\newunicodechar{≤}{{\fallbackfont ≤}}
+\newunicodechar{ł}{{\fallbackfont ł}}
 
 % Set colors
 \setbeamercolor{background canvas}{bg=lightbg}
 \setbeamercolor{normal text}{fg=darktext}
 \setbeamercolor{frametitle}{fg=darktext}
 \setbeamercolor{title}{fg=darktext}
-\setbeamercolor{subtitle}{fg=deeppurple}
-\setbeamercolor{author}{fg=darktext}
+\setbeamercolor{subtitle}{fg=secondary}
+\setbeamercolor{author}{fg=secondary}
 \setbeamercolor{date}{fg=secondary}
 \setbeamercolor{item}{fg=deeppurple}
 \setbeamercolor{block title}{fg=deeppurple}
 \setbeamercolor{structure}{fg=deeppurple}
 \setbeamercolor{alerted text}{fg=purplehover}
+\setbeamerfont{frametitle}{series=\bfseries}
+\setbeamerfont{title}{series=\bfseries}
 
 % Code block colors
 \setbeamercolor{block body}{bg=white}
@@ -27,7 +50,7 @@
 % Remove navigation symbols
 \setbeamertemplate{navigation symbols}{}
 
-% Simple frame title with purple accent line
+% Frame title with a short mauve rule beneath, as under the website's page title
 \setbeamertemplate{frametitle}{
   \vspace{0.5em}
   \insertframetitle
@@ -36,15 +59,15 @@
   \textcolor{deeppurple}{\rule{2cm}{1.5pt}}
 }
 
-% Clean footline with page numbers
+% Clean footline with page numbers in the mono face
 \setbeamertemplate{footline}{
   \hfill
-  \textcolor{secondary}{\footnotesize\insertframenumber/\inserttotalframenumber}
+  \textcolor{secondary}{\ttfamily\footnotesize\insertframenumber/\inserttotalframenumber}
   \hspace{1em}
   \vspace{0.5em}
 }
 
-% Itemize styling - purple bullets
+% Itemize styling - mauve bullets
 \setbeamertemplate{itemize item}{\textcolor{deeppurple}{\textbullet}}
 \setbeamertemplate{itemize subitem}{\textcolor{deeppurple}{\textendash}}
 \setbeamertemplate{itemize subsubitem}{\textcolor{deeppurple}{\guillemotright}}
@@ -56,10 +79,10 @@
 \setbeamercolor{section in toc}{fg=darktext}
 \setbeamercolor{subsection in toc}{fg=darktext!70}
 
-% Hyperlink colors
+% Links keep the ink colour, as on the website
 \hypersetup{
   colorlinks=true,
-  linkcolor=deeppurple,
-  urlcolor=purplehover,
-  citecolor=deeppurple
+  linkcolor=darktext,
+  urlcolor=darktext,
+  citecolor=darktext
 }

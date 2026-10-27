@@ -48,6 +48,7 @@ website:
 format:
   html:
     theme: [cosmo, theme.scss]
+    css: assets/fonts/fonts.css
     toc: false
 
 bibliography: references.bib
